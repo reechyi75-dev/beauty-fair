@@ -1,0 +1,4824 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Beauty Fair</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="app.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#669bbc">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Beauty Fair">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    </head>
+
+<body>
+
+    <div class="container">
+
+        <!-- Login/Signup Initial Page -->
+
+        <div id="initialPage">
+
+            <div class="logo company-font">Beauty Fair</div>
+
+            
+
+            <div class="auth-card" id="authCard">
+
+                <div class="auth-header">
+
+                    <h2 class="auth-title">Welcome Back</h2>
+
+                    <p class="auth-subtitle">Kindly login to access your account</p>
+
+                </div>
+
+
+
+                <form id="authForm">
+
+                    <div class="input-group">
+
+                        <input type="text" class="input-field" id="emailPhone" placeholder="Email or Phone Number" required>
+
+                    </div>
+
+
+
+                    <div class="input-group">
+
+                        <div class="password-container">
+
+                            <input type="password" class="input-field" id="password" placeholder="Password" required>
+
+                            <i class="fas fa-eye password-toggle" id="passwordToggle"></i>
+
+                        </div>
+
+                        <div class="password-strength" id="passwordStrength">
+
+                            <div class="password-strength-bar" id="passwordBar"></div>
+
+                        </div>
+
+                        <div class="password-text" id="passwordText"></div>
+
+                    </div>
+
+
+
+                    <div class="remember-me">
+
+                        <div class="checkbox-container" onclick="toggleCheckbox()">
+
+                            <div class="checkbox" id="rememberCheckbox"></div>
+
+                            <label class="checkbox-label">Remember me</label>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="auth-buttons">
+
+                        <button type="submit" class="auth-btn primary-btn" id="loginBtn">
+
+                            <span>Login</span>
+
+                        </button>
+
+                        
+
+                        <button type="button" class="auth-btn biometric-btn" id="biometricBtn">
+
+                            <i class="fas fa-fingerprint"></i>
+
+                            <span>Use Fingerprint</span>
+
+                        </button>
+
+                        
+
+                        <button type="button" class="auth-btn secondary-btn" id="signupBtn">Sign Up</button>
+
+                    </div>
+
+
+
+                    <div class="forgot-password">
+
+                        <a href="#" class="forgot-link" id="forgotPasswordLink">Forgot Password?</a>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+         <!-- Forgot Password Page -->
+
+<div id="forgotPasswordPage" class="forgot-password-page">
+
+    <div class="logo company-font">Beauty Fair</div>
+
+    
+
+    <div class="auth-card">
+
+        <div class="auth-header">
+
+            <h2 class="auth-title">Forgot Password?</h2>
+
+            <p class="auth-subtitle">Enter your email or phone number to reset your password</p>
+
+        </div>
+
+
+
+        <form id="forgotPasswordForm">
+
+            <div class="input-group">
+
+                <input type="text" class="input-field" id="forgotEmailPhone" placeholder="Email or Phone Number" required>
+
+            </div>
+
+
+
+            <div class="auth-buttons">
+
+                <button type="submit" class="auth-btn primary-btn">
+
+                    <span>Send Reset Code</span>
+
+                </button>
+
+                
+
+                <button type="button" class="auth-btn secondary-btn" onclick="backToLogin()">
+
+                    Back to Login
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- Reset Password OTP Page -->
+
+<div id="resetOtpPage" class="otp-page">
+
+    <h1 class="page-title">Verify Reset Code</h1>
+
+    <p class="page-subtitle" id="resetOtpMessage">Please enter the 4-digit code sent to your email</p>
+
+    
+
+    <div class="otp-input">
+
+        <input type="text" class="otp-digit" maxlength="1" id="resetOtp1">
+
+        <input type="text" class="otp-digit" maxlength="1" id="resetOtp2">
+
+        <input type="text" class="otp-digit" maxlength="1" id="resetOtp3">
+
+        <input type="text" class="otp-digit" maxlength="1" id="resetOtp4">
+
+    </div>
+
+
+
+    <button class="auth-btn primary-btn" onclick="verifyResetOTP()" style="max-width: 300px; margin: 0 auto;">
+
+        Verify Code
+
+    </button>
+
+    
+
+    <div class="resend-code">
+
+        <span>Didn't receive code? </span>
+
+        <a href="#" class="resend-link" onclick="resendResetCode(); return false;">Resend Code</a>
+
+    </div>
+
+</div>
+
+
+
+<!-- New Password Page -->
+
+<div id="newPasswordPage" class="welcome-page">
+
+    <div class="auth-card">
+
+        <div class="auth-header">
+
+            <h2 class="auth-title">Set New Password</h2>
+
+            <p class="auth-subtitle">Create a strong password for your account</p>
+
+        </div>
+
+
+
+        <form id="newPasswordForm">
+
+            <div class="input-group">
+
+                <div class="password-container">
+
+                    <input type="password" class="input-field" id="resetNewPassword" placeholder="New Password" required>
+
+                    <i class="fas fa-eye password-toggle" onclick="togglePassword('resetNewPassword')"></i>
+
+                </div>
+
+                <div class="password-strength">
+
+                    <div class="password-strength-bar" id="resetPasswordBar"></div>
+
+                </div>
+
+                <div class="password-text" id="resetPasswordText"></div>
+
+            </div>
+
+
+
+            <div class="input-group">
+
+                <div class="password-container">
+
+                    <input type="password" class="input-field" id="resetConfirmPassword" placeholder="Confirm Password" required>
+
+                    <i class="fas fa-eye password-toggle" onclick="togglePassword('resetConfirmPassword')"></i>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="auth-buttons">
+
+                <button type="submit" class="auth-btn primary-btn">
+
+                    <span>Reset Password</span>
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- Password Reset Success Page -->
+
+<div id="resetSuccessPage" class="welcome-page">
+
+    <div class="success-icon-large">
+
+        <i class="fas fa-check-circle"></i>
+
+    </div>
+
+    <h1 class="page-title">Password Reset Successful!</h1>
+
+    <p class="page-subtitle">You can now login with your new password</p>
+
+    <div class="loading"></div>
+
+</div>
+
+
+
+        <!-- Welcome Page -->
+
+        <div id="welcomePage" class="welcome-page">
+
+            <h1 class="page-title">Welcome!</h1>
+
+            <p class="page-subtitle">Successfully logged in</p>
+
+            <div class="loading"></div>
+
+        </div>
+
+
+
+        <!-- Signup Page -->
+
+        <div id="signupPage" class="welcome-page">
+
+            <div class="auth-card">
+
+                <div class="auth-header">
+
+                    <h2 class="auth-title">Hey There!</h2>
+
+                    <p class="auth-subtitle">New here? Create an account</p>
+
+                </div>
+
+
+
+                <form id="signupForm">
+
+                    <div class="input-group">
+
+                        <input type="text" class="input-field" id="signupEmailPhone" placeholder="Email or Phone Number" required>
+
+                    </div>
+
+
+
+                    <div class="input-group">
+
+                        <div class="password-container">
+
+                            <input type="password" class="input-field" id="signupPassword" placeholder="Password" required>
+
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('signupPassword')"></i>
+
+                        </div>
+
+                        <div class="password-strength">
+
+                            <div class="password-strength-bar" id="signupPasswordBar"></div>
+
+                        </div>
+
+                        <div class="password-text" id="signupPasswordText"></div>
+
+                    </div>
+
+
+
+                    <div class="input-group">
+
+                        <div class="password-container">
+
+                            <input type="password" class="input-field" id="confirmPassword" placeholder="Confirm Password" required>
+
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('confirmPassword')"></i>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="auth-buttons">
+
+                        <button type="submit" class="auth-btn primary-btn">
+
+                            <span>Create Account</span>
+
+                        </button>
+
+                        
+
+                        <button type="button" class="auth-btn secondary-btn" onclick="showInitialPage()">
+
+                            Back to Login
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+<!-- OTP Verification Page -->
+<div id="otpPage" class="otp-page">
+    <h1 class="page-title">Verify Your Email</h1>
+    <p class="page-subtitle" id="otpMessage">Please check your email for the verification link</p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+        <p style="font-size: 14px; color: #666;">
+            Click the link in your email, then come back and click the button below:
+        </p>
+    </div>
+
+    <button class="auth-btn primary-btn" onclick="verifyOTP()" style="max-width: 300px; margin: 0 auto;">
+        I've Verified My Email
+    </button>
+    
+    <div class="resend-code" style="margin-top: 20px;">
+        <span>Didn't receive email? </span>
+        <a href="#" class="resend-link" onclick="resendVerificationEmail(); return false;">Resend Email</a>
+    </div>
+</div>
+
+
+
+        <!-- Department Selection Page -->
+
+        <div id="departmentPage" class="department-page">
+
+            <h1 class="page-title">Choose Department</h1>
+
+            
+
+            <div class="department-grid">
+
+                <button class="department-btn" data-dept="perfume">Perfume Section</button>
+
+                <button class="department-btn" data-dept="cream">Cream Section</button>
+
+                <button class="department-btn" data-dept="mixing">Mixing Section</button>
+
+                <button class="department-btn" data-dept="driver">Logistics</button>
+
+                <button class="department-btn" data-dept="domestic">Domestic </button>
+
+                <button class="department-btn" data-dept="office">Office-Admin </button>
+
+                <button class="department-btn" data-dept="security">Security</button>
+
+                <button class="department-btn" data-dept="printing">Printing</button>
+
+                <button class="department-btn" data-dept="store">Store</button>
+
+                <button class="department-btn" data-dept="maintenance">Maintenance</button>
+
+            </div>
+
+
+
+            <button class="auth-btn primary-btn hidden" id="submitDeptBtn" onclick="submitDepartment()" style="max-width: 300px; margin: 0 auto;">
+
+                Submit
+
+            </button>
+
+        </div>
+
+
+
+        <!-- Personal Information Page -->
+
+        <div id="personalInfoPage" class="personal-info-page">
+
+            <h1 class="page-title">Personal Information</h1>
+
+            
+
+            <div class="personal-info-form">
+
+                <input type="text" class="date-input" id="fullName" placeholder="Full Name" required style="margin-bottom: 20px;">
+<input type="text" class="date-input" id="birthday" placeholder="Select your birthday" onfocus="(this.type='date')" required>
+
+                <select class="hobby-select" id="hobby" required>
+
+                    <option value="">Select Hobby</option>
+
+                    <option value="cooking">Cooking</option>
+
+                    <option value="coding">Coding</option>
+
+                    <option value="driving">Driving</option>
+
+                    <option value="reading">Reading</option>
+
+                    <option value="sleeping">Sleeping</option>
+
+                    <option value="travelling">Travelling</option>
+
+                    <option value="football">Football</option>
+
+                </select>
+
+
+
+                <button class="auth-btn primary-btn" onclick="submitPersonalInfo()">
+
+                    Continue
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Profile Picture Page -->
+
+        <div id="profilePicPage" class="profile-pic-page">
+
+            <h1 class="page-title">Set Profile Picture</h1>
+
+            
+
+            <div class="profile-pic-upload" id="profilePicUpload">
+
+                <i class="fas fa-camera"></i>
+
+                <span>Tap to select photo</span>
+
+            </div>
+
+            
+
+            <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
+
+            
+
+            <button class="auth-btn primary-btn hidden" id="uploadBtn" onclick="uploadProfilePic()">
+
+                Upload Picture
+
+            </button>
+
+            
+
+            <button class="auth-btn secondary-btn" onclick="skipProfilePic()">
+
+                Skip for Now
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Dashboard -->
+
+    <div id="dashboard" class="dashboard">
+
+        <div class="dashboard-header">
+
+            <h1 class="dashboard-title company-font">Beauty Fair</h1>
+
+            
+
+            <div class="nav-icons">
+
+                <button class="nav-icon active" id="homeIcon">
+
+                    <i class="fas fa-home"></i>
+
+                    <span>Home</span>
+
+                </button>
+
+                
+
+                <button class="nav-icon" id="messageIcon">
+
+                    <i class="fas fa-envelope"></i>
+
+                    <span>Messages</span>
+
+                    <div class="notification-badge">2</div>
+
+                </button>
+
+                
+
+                <button class="nav-icon" id="announcementIcon">
+
+                    <i class="fas fa-bullhorn"></i>
+
+                    <span>Announcements</span>
+
+                    <div class="notification-badge">4</div>
+
+                </button>
+
+                
+
+                <button class="nav-icon" id="notificationIcon">
+
+                    <i class="fas fa-bell"></i>
+
+                    <span>Notifications</span>
+
+                    <div class="notification-badge">7</div>
+
+                </button>
+
+                
+
+                <button class="nav-icon" id="menuIcon">
+
+                    <i class="fas fa-bars"></i>
+
+                    <span>Menu</span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="dashboard-content">
+
+            <div class="welcome-card">
+
+                <div class="user-profile">
+
+                    <div class="profile-pic" id="dashboardProfilePic">loading..</div>
+
+                    <div>
+
+                        <div class="greeting-text" id="greetingText">loading...</div>
+
+                        <div class="live-datetime" id="liveDateTime"></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="feed-container">
+
+                <div class="feed-header">
+
+                    <h2 class="feed-title">Staff Feed</h2>
+
+                </div>
+
+
+
+                <div class="feed-posts" id="feedPosts">
+
+                    <!-- Sample Posts -->
+<div style="text-align:center; padding:40px;">
+    <i class="fas fa-spinner fa-spin" style="font-size:2rem; color:#4CAF50;"></i>
+    <p style="margin-top:10px; color:#666;">Loading posts...</p>
+</div>
+         
+  </div>
+   </div>
+        
+        <div class="bottom-nav">
+
+            <div class="bottom-nav-item" onclick="openRequests()">
+
+                <i class="fas fa-clipboard-list"></i>
+
+                <span>Request</span>
+
+            </div>
+
+            
+
+            <button class="post-btn" onclick="showCreatePost()">
+
+                <i class="fas fa-plus"></i>
+
+            </button>
+
+            
+
+            <div class="bottom-nav-item" onclick="openAnonymous()">
+
+                <i class="fas fa-user-secret"></i>
+
+                <span>Anonymous</span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Notification -->
+
+    <div id="notification" class="notification"></div>
+
+    <!-- ADD THIS HTML TO YOUR BODY, BEFORE DASHBOARD DIV -->
+
+<div id="hamburgerMenu" class="hamburger-menu">
+
+    <button class="hamburger-close" onclick="closeHamburgerMenu()">
+
+        <i class="fas fa-times"></i>
+
+    </button>
+
+    
+
+    <div class="hamburger-header">
+
+        <h2 class="hamburger-title company-font">Menu</h2>
+
+    </div>
+
+    
+
+    <div class="hamburger-grid">
+
+        <div class="hamburger-item" onclick="openComplaints()">
+
+            <i class="fas fa-exclamation-triangle"></i>
+
+            <span>Complaints</span>
+
+        </div>
+
+        
+
+        <div class="hamburger-item" onclick="openAnnouncements()">
+
+            <i class="fas fa-bullhorn"></i>
+
+            <span>Announcements</span>
+
+        </div>
+
+        
+
+        <div class="hamburger-item" onclick="openAnonymous()">
+
+            <i class="fas fa-user-secret"></i>
+
+            <span>Anonymous</span>
+
+        </div>
+
+        
+
+        <div class="hamburger-item" onclick="openQueries()">
+
+            <i class="fas fa-question-circle"></i>
+
+            <span>Queries</span>
+
+        </div>
+
+        
+
+        <div class="hamburger-item" onclick="openRequests()">
+
+            <i class="fas fa-clipboard-list"></i>
+
+            <span>Request</span>
+
+        </div>
+
+        
+
+        <div class="hamburger-item" onclick="openNotifications()">
+
+            <i class="fas fa-bell"></i>
+
+            <span>Notification</span>
+
+        </div>
+
+        
+
+        <div class="hamburger-item" onclick="openDirectMessages()">
+
+            <i class="fas fa-envelope"></i>
+
+            <span>Direct Message</span>
+
+        </div>
+
+        
+
+        <div class="hamburger-item" onclick="openProfile()">
+
+            <i class="fas fa-user"></i>
+
+            <span>Profile</span>
+
+        </div>
+
+        <div class="hamburger-item" onclick="openEmployeeGuide()">
+
+    <i class="fas fa-book"></i>
+
+    <span>Employee Guide</span>
+
+</div>
+
+<div class="hamburger-item" onclick="openStaffAward()">
+
+    <i class="fas fa-trophy"></i>
+
+    <span>Award</span>
+
+</div>
+
+        
+
+        <div class="hamburger-item" onclick="openSettings()">
+
+            <i class="fas fa-cog"></i>
+
+            <span>Settings</span>
+
+        </div>
+
+        
+
+        <div class="hamburger-item logout" onclick="confirmLogout()">
+
+            <i class="fas fa-sign-out-alt"></i>
+
+            <span>Log Out</span>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ADD THIS HTML TO YOUR BODY (AFTER HAMBURGER MENU) -->
+
+<div id="complaintsPage" class="complaints-page">
+
+    <div class="complaints-header">
+
+        <button class="back-arrow" onclick="closeComplaints()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="complaints-title">Complain</h1>
+
+        <button class="previous-btn" onclick="showPreviousComplaints()">
+
+            Previous
+
+        </button>
+
+    </div>
+
+    
+
+    <div class="complaints-content">
+
+        <div class="complaints-instruction">
+
+            Kindly lay your complain, the HR will attend to it as soon as possible and give you feed back, kindly attach any video or photo if necessary.
+
+        </div>
+
+        
+
+        <div class="complaint-form">
+
+            <textarea 
+
+                class="complaint-textarea" 
+
+                id="complaintText" 
+
+                placeholder="Type your complaint here..."
+
+                maxlength="1000"
+
+            ></textarea>
+
+            
+
+            <div class="file-preview" id="filePreview"></div>
+
+            
+
+            <div class="complaint-actions">
+
+                <input type="file" id="fileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display: none;">
+
+                <button class="file-upload-btn" onclick="document.getElementById('fileInput').click()">
+
+                    <i class="fas fa-paperclip"></i>
+
+                    Upload File
+
+                </button>
+
+                
+
+                <button class="voice-note-btn" id="voiceBtn" onclick="toggleVoiceRecording()">
+
+                    <i class="fas fa-microphone"></i>
+
+                    <div class="recording-indicator" id="recordingIndicator">●</div>
+
+                </button>
+
+                
+
+                <button class="send-btn" id="sendComplaint" onclick="submitComplaint()">
+
+                    <i class="fas fa-paper-plane"></i>
+
+                    Send
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Previous Complaints Modal -->
+
+<div id="previousComplaintsModal" class="previous-complaints-modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 class="modal-title">Previous Complaints</h2>
+
+            <button class="modal-close" onclick="closePreviousComplaints()">
+
+                <i class="fas fa-times"></i>
+
+            </button>
+
+        </div>
+
+        <div class="modal-body" id="complaintsHistory">
+
+            <!-- Complaint history will be loaded here -->
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ADD THIS HTML TO YOUR BODY (AFTER COMPLAINTS PAGE) -->
+
+<div id="announcementsPage" class="announcements-page">
+
+    <div class="announcements-header">
+
+        <button class="announcements-back-arrow" onclick="closeAnnouncements()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="announcements-title">Announcements</h1>
+
+    </div>
+
+    
+
+    <div class="announcements-content">
+
+        <div class="announcements-filter">
+
+            <label class="filter-label">Filter by date:</label>
+
+            <input type="date" class="date-filter" id="dateFilter" onchange="filterAnnouncements()">
+
+            <button class="clear-filter-btn" onclick="clearDateFilter()">Clear Filter</button>
+
+        </div>
+
+        
+
+        <div class="announcements-list" id="announcementsList">
+
+            <!-- Announcements will be loaded here -->
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Announcement Detail Modal -->
+
+<div id="announcementDetailModal" class="announcement-detail-modal">
+
+    <div class="announcement-detail-content">
+
+        <div class="announcement-detail-header">
+
+            <h2 class="announcement-detail-title" id="detailTitle"></h2>
+
+            <div class="announcement-detail-date" id="detailDate"></div>
+
+            <button class="announcement-detail-close" onclick="closeAnnouncementDetail()">
+
+                <i class="fas fa-times"></i>
+
+            </button>
+
+        </div>
+
+        <div class="announcement-detail-body" id="detailBody"></div>
+
+        <div class="announcement-detail-footer">
+
+            <button class="announcement-detail-like" id="detailLikeBtn" onclick="toggleDetailLike()">
+
+                <i class="fas fa-thumbs-up"></i>
+
+                <span id="detailLikeText">Like to show you received this</span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ADD THIS HTML TO YOUR BODY (AFTER ANNOUNCEMENTS PAGE) -->
+
+<div id="messagesPage" class="messages-page">
+
+    <!-- Messages List View -->
+
+    <div id="messagesListView">
+
+        <div class="messages-header">
+
+            <button class="messages-back-arrow" onclick="closeMessages()">
+
+                <i class="fas fa-arrow-left"></i>
+
+            </button>
+
+            <h1 class="messages-title">Direct Messages</h1>
+
+        </div>
+
+        
+
+        <div class="messages-content">
+
+            <div class="contacts-list" id="contactsList">
+
+                <!-- Contacts will be loaded here -->
+
+            </div>
+
+        </div>
+
+    </div>
+
+    
+
+    <!-- Chat Interface -->
+
+    <div id="chatInterface" class="chat-interface">
+
+        <div class="chat-header">
+
+            <button class="chat-back-btn" onclick="backToMessagesList()">
+
+                <i class="fas fa-arrow-left"></i>
+
+            </button>
+
+            <div class="chat-user-info">
+
+                <div class="chat-avatar" id="chatAvatar" onclick="viewUserProfile()"></div>
+
+                <div class="chat-user-details">
+
+                    <h3 id="chatUserName"></h3>
+
+                    <div class="chat-user-status" id="chatUserStatus"></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="chat-messages" id="chatMessages">
+
+            <!-- Messages will appear here -->
+
+             
+
+        </div>
+
+        <!-- REPLACE YOUR CHAT INPUT AREA WITH THIS UPDATED VERSION -->
+
+<div class="chat-input-area">
+
+    <input type="file" id="chatFileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display: none;">
+
+    <button class="file-upload-icon" onclick="document.getElementById('chatFileInput').click()">
+
+        <i class="fas fa-camera"></i>
+
+    </button>
+
+    
+
+    <textarea class="message-input" id="messageInput" placeholder="Type a message..." 
+
+             onkeypress="handleMessageKeyPress(event)" oninput="updateSendButton()"></textarea>
+
+    
+
+    <button class="voice-note-btn" id="voiceNoteBtn" onclick="toggleVoiceNote()">
+
+        <i class="fas fa-microphone"></i>
+
+        <div class="recording-timer" id="recordingTimer">0:00</div>
+
+    </button>
+
+    
+
+    <button class="send-message-btn" id="sendMessageBtn" onclick="sendMessage()">
+
+        <i class="fas fa-paper-plane"></i>
+
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ADD THIS HTML TO YOUR BODY (AFTER DIRECT MESSAGES PAGE) -->
+
+<div id="profilePage" class="profile-page">
+
+    <div class="profile-header">
+
+        <button class="profile-back-arrow" onclick="closeProfile()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="profile-title">Profile</h1>
+
+    </div>
+
+    
+
+    <div class="profile-content">
+
+        <div class="profile-picture-section">
+
+            <div class="profile-picture-container">
+
+                <div class="profile-picture" id="profilePicture" onclick="showPictureOptions()">
+
+                    OA
+
+                </div>
+
+                <div class="picture-options" id="pictureOptions">
+
+                    <button class="picture-option change" onclick="changeProfilePicture()">
+
+                        <i class="fas fa-camera"></i> Change Picture
+
+                    </button>
+
+                    <button class="picture-option remove" onclick="removeProfilePicture()">
+
+                        <i class="fas fa-trash"></i> Remove Picture
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="profile-info-section">
+
+            <div class="info-item">
+
+                <div class="info-label">Full Name</div>
+
+                <div class="info-value">
+
+                    <i class="fas fa-user info-icon"></i>
+
+                    <span id="profileName">loading...</span>
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="info-item">
+
+                <div class="info-label">Birthday</div>
+
+                <div class="info-value">
+
+                    <i class="fas fa-birthday-cake info-icon"></i>
+
+                    <span id="profileBirthday">loading.. </span>
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="info-item">
+
+                <div class="info-label">Hobby</div>
+
+                <div class="info-value">
+
+                    <i class="fas fa-heart info-icon"></i>
+
+                    <span id="profileHobby">loading...</span>
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="info-item">
+
+                <div class="info-label">Department</div>
+
+                <div class="info-value">
+
+                    <i class="fas fa-building info-icon"></i>
+
+                    <span id="profileDepartment">loading...</span>
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="info-item">
+
+                <div class="info-label">Awards</div>
+
+                <div class="info-value">
+
+                    <i class="fas fa-trophy info-icon"></i>
+
+                    <div id="profileAwards">
+
+                        <span class="no-award">No awards yet</span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            
+
+            <button class="edit-profile-btn" onclick="editProfile()">
+
+                <i class="fas fa-edit"></i>
+
+                Edit Profile
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Profile Picture Upload Modal -->
+
+<div id="profileUploadModal" class="profile-upload-modal">
+
+    <div class="upload-modal-content">
+
+        <h2 class="upload-modal-title">Change Profile Picture</h2>
+
+        
+
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('profilePicInput').click()">
+
+            <i class="fas fa-cloud-upload-alt"></i>
+
+            <div class="upload-text">Click to select a photo</div>
+
+        </div>
+
+        
+
+        <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
+
+        
+
+        <div id="imagePreview"></div>
+
+        
+
+        <div class="upload-buttons">
+
+            <button class="upload-btn" id="uploadConfirmBtn" onclick="confirmProfilePicture()" disabled>
+
+                Upload
+
+            </button>
+
+            <button class="upload-btn cancel-btn" onclick="closeUploadModal()">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="anonymousPage" class="anonymous-page">
+
+    <div class="anonymous-header">
+
+        <button class="anonymous-back-arrow" onclick="closeAnonymous()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="anonymous-title">Anonymous</h1>
+
+    </div>
+
+    
+
+    <div class="anonymous-content">
+
+        <div class="anonymous-welcome">
+
+            <div class="anonymous-welcome-text">
+
+                <h2>Dear <span class="username-placeholder">Ope</span>,</h2>
+
+                <p>Be rest assured that your identity is fully hidden, be  part of the team that frown against theft in beauty fair, you did a great job by letting us know, kindly provide us with the evidence we need to work with. Click on the plus icon to upload evidence. Thank you!</p>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="anonymous-form">
+
+            <div class="evidence-upload-section">
+
+                <div class="evidence-upload-box" id="evidenceUploadBox">
+
+                    <div class="upload-plus-icon">
+
+                        <i class="fas fa-plus"></i>
+
+                    </div>
+
+                    <span class="upload-text">Upload Evidence</span>
+
+                </div>
+
+                
+
+                <input type="file" id="evidenceFileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display: none;">
+
+                
+
+                <div class="evidence-preview" id="evidencePreview"></div>
+
+            </div>
+
+            
+
+            <div class="anonymous-text-section">
+
+                <textarea 
+
+                    class="anonymous-textarea" 
+
+                    id="anonymousText" 
+
+                    placeholder="Provide detailed information about the incident..."
+
+                    maxlength="2000"
+
+                ></textarea>
+
+                <div class="char-counter">
+
+                    <span id="charCount">0</span>/2000 characters
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="anonymous-actions">
+
+                <button class="submit-evidence-btn" id="submitEvidenceBtn" onclick="submitAnonymousReport()">
+
+                    <i class="fas fa-paper-plane"></i>
+
+                    Submit Evidence
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Success Modal -->
+
+<div id="anonymousSuccessModal" class="anonymous-success-modal">
+
+    <div class="success-modal-content">
+
+        <div class="success-icon">
+
+            <i class="fas fa-check-circle"></i>
+
+        </div>
+
+        <h3 class="success-title">Evidence Submit Successfully</h3>
+
+        <p class="success-message">Your anonymous report has been received and will be investigated promptly. Thank you for helping maintain integrity at Beauty Fair.</p>
+
+        <button class="success-close-btn" onclick="closeSuccessModal()">Close</button>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- STEP 1: ADD THIS HTML TO YOUR BODY (AFTER ANONYMOUS PAGE) -->
+
+
+
+<div id="queriesPage" class="queries-page">
+
+    <div class="queries-header">
+
+        <button class="queries-back-arrow" onclick="closeQueries()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="queries-title">Queries</h1>
+
+    </div>
+
+    
+
+    <div class="queries-content">
+
+        <!-- Query Information Section -->
+
+        <div class="queries-info-card">
+
+            <h3 class="info-card-title">Query Levels Information</h3>
+
+            <p class="info-card-subtitle">When a staff goes against any of the company rules, or deliberately commit an offence, a certain level of query will be given to him. The gravity of the offence determine the level of query to be issued. Below are the levels of queries.</p>
+
+            
+
+            <div class="query-levels-list">
+
+                <div class="query-level-item level-1">
+
+                    <div class="level-badge green">
+
+                        <i class="fas fa-exclamation-circle"></i>
+
+                        Level 1
+
+                    </div>
+
+                    <div class="level-description">
+
+                        <strong> A Serious Warning</strong> 
+
+                    </div>
+
+                </div>
+
+                
+
+                <div class="query-level-item level-2">
+
+                    <div class="level-badge yellow">
+
+                        <i class="fas fa-exclamation-triangle"></i>
+
+                        Level 2
+
+                    </div>
+
+                    <div class="level-description">
+
+                        <strong>N2,000 Deduction</strong> from monthly salary
+
+                    </div>
+
+                </div>
+
+                
+
+                <div class="query-level-item level-3">
+
+                    <div class="level-badge red">
+
+                        <i class="fas fa-ban"></i>
+
+                        Level 3
+
+                    </div>
+
+                    <div class="level-description">
+
+                        <strong>30% of Monthly Salary</strong> deduction
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- User Queries Section -->
+
+        <div class="user-queries-section">
+
+            <div id="queriesDisplay">
+
+                <!-- Queries will be loaded here dynamically -->
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Reply Section (Hidden by default) -->
+
+        <div class="query-reply-section" id="queryReplySection" style="display: none;">
+
+            <h3 class="reply-section-title">Reply to Query</h3>
+
+            
+
+            <div class="reply-form">
+
+                <textarea 
+
+                    class="reply-textarea" 
+
+                    id="queryReplyText" 
+
+                    placeholder="Write your response to this query..."
+
+                    maxlength="1500"
+
+                ></textarea>
+
+                
+
+                <div class="reply-char-counter">
+
+                    <span id="replyCharCount">0</span>/1500 characters
+
+                </div>
+
+                
+
+                <div class="reply-file-preview" id="replyFilePreview"></div>
+
+                
+
+                <div class="reply-actions">
+
+                    <input type="file" id="queryFileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display: none;">
+
+                    
+
+                    <button class="reply-file-btn" onclick="document.getElementById('queryFileInput').click()">
+
+                        <i class="fas fa-paperclip"></i>
+
+                        Attach Files
+
+                    </button>
+
+                    
+
+                    <button class="reply-voice-btn" id="queryVoiceBtn" onclick="toggleQueryVoiceRecording()">
+
+                        <i class="fas fa-microphone"></i>
+
+                        <div class="query-recording-indicator" id="queryRecordingIndicator">●</div>
+
+                    </button>
+
+                    
+
+                    <button class="reply-send-btn" id="querySendBtn" onclick="submitQueryReply()">
+
+                        <i class="fas fa-paper-plane"></i>
+
+                        Send Reply
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- STEP 1: ADD THIS HTML TO YOUR BODY (AFTER QUERIES PAGE) -->
+
+
+
+<div id="requestPage" class="request-page">
+
+    <div class="request-header">
+
+        <button class="request-back-arrow" onclick="closeRequestPage()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="request-title">Request</h1>
+
+    </div>
+
+    
+
+    <div class="request-content">
+
+        <!-- Request Type Selection -->
+
+        <div class="request-type-selection" id="requestTypeSelection">
+
+            <h2 class="request-subtitle">Kindly choose the appropriate request</h2>
+
+            
+
+            <div class="request-buttons">
+
+                <button class="request-type-btn loan-btn" onclick="selectRequestType('loan')">
+
+                    <i class="fas fa-money-bill-wave"></i>
+
+                    <span>LOAN</span>
+
+                </button>
+
+                
+
+                <button class="request-type-btn dayoff-btn" onclick="selectRequestType('dayoff')">
+
+                    <i class="fas fa-calendar-times"></i>
+
+                    <span>DAY OFF</span>
+
+                </button>
+
+            </div>
+
+            
+
+            <!-- Guidelines Section -->
+
+            <div class="guidelines-section">
+
+                <h3 class="guidelines-title">REQUEST GUIDELINES</h3>
+
+                
+
+                <p class="guidelines-intro">
+
+                    When submitting a request for a Loan or a Day Off, please ensure you carefully read and understand the following guidelines:
+
+                </p>
+
+                
+
+                <!-- Loan Application Guidelines -->
+
+                <div class="guideline-category">
+
+                    <h4 class="category-title">Loan Application</h4>
+
+                    <ul class="guidelines-list">
+
+                        <li>Only staff who meet the required eligibility criteria will be considered.</li>
+
+                        <li>A new loan will not be granted until the previous one has been fully repaid.</li>
+
+                        <li>Misconduct, dishonesty, or failure to provide accurate information may result in automatic disqualification.</li>
+
+                        <li>The approved loan amount may differ from the amount you requested.</li>
+
+                        <li>Your guarantor must acknowledge and accept their responsibility before your loan can be processed.</li>
+
+                    </ul>
+
+                </div>
+
+                
+
+                <!-- Day Off Request Guidelines -->
+
+                <div class="guideline-category">
+
+                    <h4 class="category-title">Day-off Request</h4>
+
+                    <ul class="guidelines-list">
+
+                        <li>You are expected to resume work on or before the approved return date.</li>
+
+                        <li>Staying beyond the approved period without notice may result in disciplinary action.</li>
+
+                        <li>If unforeseen circumstances require you to extend your absence, you must inform your Admin or Supervisor immediately.</li>
+
+                    </ul>
+
+                </div>
+
+                
+
+                <!-- General Instructions -->
+
+                <div class="guideline-category">
+
+                    <h4 class="category-title">General Instruction</h4>
+
+                    <ul class="guidelines-list">
+
+                        <li>Be transparent and truthful when filling out any request form.</li>
+
+                        <li>You may use the voice note option if you prefer.</li>
+
+                        <li>Always uphold professionalism, respect workplace ethics, and strictly comply with company rules and policies both within and outside the premises.</li>
+
+                        <li>All requests are subject to review and approval, and management reserves the right to decline any application that does not align with company standards or policies.</li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Day Off Request Form -->
+
+        <div class="dayoff-form-container" id="dayoffFormContainer" style="display: none;">
+
+            <button class="back-to-selection" onclick="backToRequestSelection()">
+
+                <i class="fas fa-arrow-left"></i> Back to Selection
+
+            </button>
+
+            
+
+            <h2 class="form-title">Day(s) Off Request</h2>
+
+            
+
+            <div class="date-selection-section">
+
+                <label class="form-label">Select Start Date</label>
+
+                <input type="date" class="date-input-field" id="dayoffStartDate" onchange="updateDayoffDisplay()">
+
+                
+
+                <div class="selected-date-display" id="selectedDateDisplay"></div>
+
+                
+
+                <div class="warning-message">
+
+                    <i class="fas fa-exclamation-triangle"></i>
+
+                    Remember if you spend beyond the approved date, you will face query for breaking the rules
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="days-count-section">
+
+                <label class="form-label">Select Day(s) Off</label>
+
+                <select class="days-dropdown" id="daysOffCount" onchange="calculateReturnDate()">
+
+                    <option value="">Select day(s) off</option>
+
+                    <option value="1">1 Day</option>
+
+                    <option value="2">2 Days</option>
+
+                    <option value="3">3 Days</option>
+
+                    <option value="4">4 Days</option>
+
+                    <option value="5">5 Days</option>
+
+                    <option value="6">6 Days</option>
+
+                    <option value="7">7 Days (1 Week)</option>
+
+                </select>
+
+                
+
+                <div class="info-text">
+
+                    If you are applying for more than a week, do write a formal letter to the office.
+
+                </div>
+
+                
+
+                <div class="return-date-display" id="returnDateDisplay"></div>
+
+            </div>
+
+            
+
+            <div class="reason-section">
+
+                <label class="form-label">State the reasons why you are applying for day off</label>
+
+                <textarea 
+
+                    class="reason-textarea" 
+
+                    id="dayoffReason" 
+
+                    placeholder="Explain your reason for requesting time off..."
+
+                    maxlength="800"
+
+                ></textarea>
+
+                
+
+                <div class="char-counter">
+
+                    <span id="dayoffCharCount">0</span>/800 characters
+
+                </div>
+
+                
+
+                <div class="voice-note-info">
+
+                    <i class="fas fa-microphone"></i>
+
+                    Kindly use the voice record button if you prefer VN
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="dayoff-attachments">
+
+                <input type="file" id="dayoffFileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display: none;">
+
+                
+
+                <div class="attachment-preview" id="dayoffAttachmentPreview"></div>
+
+                
+
+                <div class="dayoff-action-buttons">
+
+                    <button class="attach-file-btn" onclick="document.getElementById('dayoffFileInput').click()">
+
+                        <i class="fas fa-paperclip"></i>
+
+                        Upload Image
+
+                    </button>
+
+                    
+
+                    <button class="voice-record-btn" id="dayoffVoiceBtn" onclick="toggleDayoffVoice()">
+
+                        <i class="fas fa-microphone"></i>
+
+                        <div class="voice-recording-indicator" id="dayoffVoiceIndicator">●</div>
+
+                    </button>
+
+                    
+
+                    <button class="submit-request-btn" id="dayoffSubmitBtn" onclick="submitDayoffRequest()">
+
+                        <i class="fas fa-paper-plane"></i>
+
+                        Send Request
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Loan Request Form -->
+
+        <div class="loan-form-container" id="loanFormContainer" style="display: none;">
+
+            <button class="back-to-selection" onclick="backToRequestSelection()">
+
+                <i class="fas fa-arrow-left"></i> Back to Selection
+
+            </button>
+
+            
+
+            <h2 class="form-title">Apply for Loan</h2>
+
+            
+
+            <div class="loan-amount-section">
+
+                <label class="form-label">Kindly select amount of loan you wish to apply</label>
+
+                <select class="loan-amount-dropdown" id="loanAmountDropdown" onchange="handleLoanAmountChange()">
+
+                    <option value="">Select amount</option>
+
+                    <option value="10000">₦10,000</option>
+
+                    <option value="20000">₦20,000</option>
+
+                    <option value="30000">₦30,000</option>
+
+                    <option value="40000">₦40,000</option>
+
+                    <option value="50000">₦50,000</option>
+
+                    <option value="60000">₦60,000</option>
+
+                    <option value="70000">₦70,000</option>
+
+                    <option value="80000">₦80,000</option>
+
+                    <option value="90000">₦90,000</option>
+
+                    <option value="100000">₦100,000</option>
+
+                </select>
+
+                
+
+                <div class="custom-amount-section">
+
+                    <label class="form-label">For specific amount, indicate it in the box below</label>
+
+                    <input 
+
+                        type="number" 
+
+                        class="custom-amount-input" 
+
+                        id="customLoanAmount" 
+
+                        placeholder="Specify the amount"
+
+                        min="1000"
+
+                        max="100000"
+
+                    >
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="loan-warning-box">
+
+                <h4>Important Reminder:</h4>
+
+                <p>Please be reminded that all outstanding loans must be fully repaid before you can apply for a new one.</p>
+
+                
+
+                <p><strong>Loan requests may be declined for any of the following reasons:</strong></p>
+
+                <ol>
+
+                    <li>Unsatisfactory job performance</li>
+
+                    <li>Lack of a verifiable guarantor</li>
+
+                    <li>Poor credit history or record</li>
+
+                    <li>Recent employment (probationary or new staff may not qualify)</li>
+
+                </ol>
+
+                
+
+                <p class="warning-footer">
+
+                    Meeting the eligibility requirements does not guarantee approval, but it significantly increases the likelihood of your application being accepted.
+
+                </p>
+
+            </div>
+
+            
+
+            <div class="guarantor-picture-section">
+
+                <label class="form-label">Upload Guarantor Picture</label>
+
+                
+
+                <div class="guarantor-upload-box" id="guarantorUploadBox">
+
+                    <i class="fas fa-plus"></i>
+
+                    <span>Click to upload guarantor picture</span>
+
+                </div>
+
+                
+
+                <input type="file" id="guarantorPictureInput" accept="image/*" style="display: none;">
+
+                
+
+                <div class="guarantor-preview" id="guarantorPreview"></div>
+
+            </div>
+
+            
+
+            <div class="guarantor-form-section">
+
+                <h3 class="guarantor-form-title">Please fill the guarantor form</h3>
+
+                
+
+                <div class="form-group">
+
+                    <input 
+
+                        type="text" 
+
+                        class="form-input" 
+
+                        id="guarantorName" 
+
+                        placeholder="Guarantor Name"
+
+                        required
+
+                    >
+
+                </div>
+
+                
+
+                <div class="form-group">
+
+                    <select class="form-input" id="guarantorDepartment" required>
+
+                        <option value="">Guarantor Department</option>
+
+                        <option value="perfume">Perfume Section</option>
+
+                        <option value="cream">Cream Section</option>
+
+                        <option value="mixing">Mixing Section</option>
+
+                        <option value="driver">Driver</option>
+
+                        <option value="domestic">Domestic Worker</option>
+
+                        <option value="office">Office</option>
+
+                        <option value="security">Security</option>
+
+                        <option value="printing">Printing</option>
+
+                        <option value="store">Store</option>
+
+                        <option value="maintenance">Maintenance</option>
+
+                    </select>
+
+                </div>
+
+                
+
+                <div class="form-group">
+
+                    <input 
+
+                        type="tel" 
+
+                        class="form-input" 
+
+                        id="guarantorPhone" 
+
+                        placeholder="Guarantor Phone Number"
+
+                        required
+
+                    >
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="loan-submit-section">
+
+                <button class="submit-loan-btn" id="loanSubmitBtn" onclick="submitLoanRequest()">
+
+                    <i class="fas fa-check-circle"></i>
+
+                    Submit Application
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Success Modal for Requests -->
+
+<div id="requestSuccessModal" class="request-success-modal">
+
+    <div class="request-success-content">
+
+        <div class="success-animation">
+
+            <i class="fas fa-check-circle"></i>
+
+        </div>
+
+        <h3 class="success-title" id="requestSuccessTitle">Request Submitted Successfully!</h3>
+
+        <p class="success-message" id="requestSuccessMessage">
+
+            Your application has been submitted successfully and is now under review.
+
+        </p>
+
+        <button class="success-ok-btn" onclick="closeRequestSuccessModal()">OK</button>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- ADD THIS HTML TO YOUR BODY (AFTER PROFILE PAGE) -->
+
+<div id="notificationsPage" class="notifications-page">
+
+    <div class="notifications-header">
+
+        <button class="notifications-back-arrow" onclick="closeNotifications()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="notifications-title">Notifications</h1>
+
+    </div>
+
+    
+
+    <div class="notifications-content">
+
+        <div class="notifications-filter">
+
+            <label class="filter-label">Filter by date:</label>
+
+            <input type="date" class="date-filter" id="notificationDateFilter" onchange="filterNotifications()">
+
+            <button class="clear-filter-btn" onclick="clearNotificationFilter()">Clear Filter</button>
+
+            <button class="mark-all-read" onclick="markAllAsRead()">Mark All as Read</button>
+
+        </div>
+
+        
+
+        <div class="notifications-list" id="notificationsList">
+
+            <!-- Notifications will be loaded here -->
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Create Post Modal -->
+
+<div id="createPostModal" class="create-post-modal">
+
+    <div class="create-post-container">
+
+        <div class="create-post-header">
+
+            <button class="create-post-close" onclick="closeCreatePost()">
+
+                <i class="fas fa-times"></i>
+
+            </button>
+
+            <h2 class="create-post-title">Create Post</h2>
+
+        </div>
+
+        
+
+        <div class="post-type-selector">
+
+            <button class="post-type-btn active" data-type="text" onclick="selectPostType('text')">
+
+                <i class="fas fa-font"></i>
+
+                <span>Text</span>
+
+            </button>
+
+            <button class="post-type-btn" data-type="photo" onclick="selectPostType('photo')">
+
+                <i class="fas fa-image"></i>
+
+                <span>Photo</span>
+
+            </button>
+
+            <button class="post-type-btn" data-type="video" onclick="selectPostType('video')">
+
+                <i class="fas fa-video"></i>
+
+                <span>Video</span>
+
+            </button>
+
+        </div>
+
+        
+
+        <!-- Text Post Section -->
+
+        <div id="textPostSection" class="post-section active">
+
+            <div class="post-warning">
+
+                <h3>What do you wish to share with your fellow staff?</h3>
+
+                <p class="warning-text">Do not post explicit text or you will be fined! Keep the community safe for everyone.</p>
+
+            </div>
+
+            
+
+            <textarea 
+
+                class="post-textarea" 
+
+                id="textPostContent" 
+
+                placeholder="Share your thoughts with the team..."
+
+                maxlength="5000"
+
+            ></textarea>
+
+            
+
+            <div class="post-char-counter">
+
+                <span id="textCharCount">0</span>/5000 characters
+
+            </div>
+
+            
+
+            <button class="publish-post-btn" id="publishTextBtn" onclick="publishTextPost()">
+
+                <i class="fas fa-paper-plane"></i>
+
+                Publish Post
+
+            </button>
+
+        </div>
+
+        
+
+        <!-- Photo Post Section -->
+
+        <div id="photoPostSection" class="post-section">
+
+            <div class="post-warning">
+
+                <h3>Keep the community safe</h3>
+
+                <p class="warning-text">Do not post explicit content</p>
+
+            </div>
+
+            
+
+            <div class="media-upload-area" id="photoUploadArea">
+
+                <i class="fas fa-camera"></i>
+
+                <p>Tap to select photo</p>
+
+            </div>
+
+            
+
+            <input type="file" id="photoInput" accept="image/*" style="display: none;">
+
+            
+
+            <div class="media-preview" id="photoPreview"></div>
+
+            
+
+            <div class="media-caption-section" id="photoCaptionSection" style="display: none;">
+
+                <label class="caption-label">Say something about this photo</label>
+
+                <textarea 
+
+                    class="media-caption-input" 
+
+                    id="photoCaption" 
+
+                    placeholder="Add a caption..."
+
+                    maxlength="2000"
+
+                ></textarea>
+
+                
+
+                <div class="post-actions-row">
+
+                    <button class="cancel-media-btn" onclick="cancelPhotoUpload()">
+
+                        <i class="fas fa-times"></i>
+
+                        Cancel
+
+                    </button>
+
+                    <button class="publish-media-btn" onclick="publishPhotoPost()">
+
+                        <i class="fas fa-paper-plane"></i>
+
+                        Post Photo
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Video Post Section -->
+
+        <div id="videoPostSection" class="post-section">
+
+            <div class="post-warning">
+
+                <h3>Keep the community safe</h3>
+
+                <p class="warning-text">Do not post explicit content</p>
+
+            </div>
+
+            
+
+            <div class="media-upload-area" id="videoUploadArea">
+
+                <i class="fas fa-video"></i>
+
+                <p>Tap to select video</p>
+
+            </div>
+
+            
+
+            <input type="file" id="videoInput" accept="video/*" style="display: none;">
+
+            
+
+            <div class="media-preview" id="videoPreview"></div>
+
+            
+
+            <div class="media-caption-section" id="videoCaptionSection" style="display: none;">
+
+                <label class="caption-label">Say something about this video</label>
+
+                <textarea 
+
+                    class="media-caption-input" 
+
+                    id="videoCaption" 
+
+                    placeholder="Add a caption..."
+
+                    maxlength="2000"
+
+                ></textarea>
+
+                
+
+                <div class="post-actions-row">
+
+                    <button class="cancel-media-btn" onclick="cancelVideoUpload()">
+
+                        <i class="fas fa-times"></i>
+
+                        Cancel
+
+                    </button>
+
+                    <button class="publish-media-btn" onclick="publishVideoPost()">
+
+                        <i class="fas fa-paper-plane"></i>
+
+                        Post Video
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Edit Post Modal -->
+
+<div id="editPostModal" class="edit-post-modal">
+
+    <div class="edit-post-container">
+
+        <div class="edit-post-header">
+
+            <button class="edit-post-close" onclick="closeEditPost()">
+
+                <i class="fas fa-times"></i>
+
+            </button>
+
+            <h2 class="edit-post-title">Edit Post</h2>
+
+        </div>
+
+        
+
+        <div class="edit-post-content">
+
+            <textarea 
+
+                class="edit-post-textarea" 
+
+                id="editPostContent"
+
+                maxlength="5000"
+
+            ></textarea>
+
+            
+
+            <div class="edit-char-counter">
+
+                <span id="editCharCount">0</span>/5000 characters
+
+            </div>
+
+            
+
+            <div class="edit-post-actions">
+
+                <button class="cancel-edit-btn" onclick="closeEditPost()">
+
+                    Cancel
+
+                </button>
+
+                <button class="save-edit-btn" onclick="saveEditedPost()">
+
+                    <i class="fas fa-check"></i>
+
+                    Save Changes
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Post Options Menu -->
+
+<div id="postOptionsMenu" class="post-options-menu">
+
+    <div class="post-options-container">
+
+        <button class="post-option-btn" onclick="copyPostText()">
+
+            <i class="fas fa-copy"></i>
+
+            <span>Copy Text</span>
+
+        </button>
+
+        <button class="post-option-btn" onclick="editPostFromMenu()">
+
+            <i class="fas fa-edit"></i>
+
+            <span>Edit Post</span>
+
+        </button>
+
+        <button class="post-option-btn delete-option" onclick="deletePostFromMenu()">
+
+            <i class="fas fa-trash"></i>
+
+            <span>Delete Post</span>
+
+        </button>
+
+        <button class="post-option-btn cancel-option" onclick="closePostOptions()">
+
+            <i class="fas fa-times"></i>
+
+            <span>Cancel</span>
+
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+
+
+ <!-- Comments Modal -->
+
+<div id="commentsModal" class="comments-modal">
+
+    <div class="comments-container">
+
+        <div class="comments-header">
+
+            <button class="comments-close" onclick="closeComments()">
+
+                <i class="fas fa-arrow-left"></i>
+
+            </button>
+
+            <h2 class="comments-title">Comments</h2>
+
+        </div>
+
+        
+
+        <!-- Original Post Preview -->
+
+        <div class="original-post-preview" id="originalPostPreview">
+
+            <div class="preview-user">
+
+                <div class="preview-avatar" id="previewAvatar"></div>
+
+                <div class="preview-user-info">
+
+                    <h4 id="previewUserName"></h4>
+
+                    <span class="preview-time" id="previewTime"></span>
+
+                </div>
+
+            </div>
+
+            <div class="preview-content" id="previewContent"></div>
+
+        </div>
+
+        
+
+        <!-- Comments List -->
+
+        <div class="comments-list" id="commentsList">
+
+            <div class="no-comments" id="noComments">
+
+                <i class="fas fa-comment-slash"></i>
+
+                <p>No comments yet. Be the first to comment!</p>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Add Comment Input -->
+
+        <div class="add-comment-section">
+
+            <div class="comment-input-container">
+
+                <div class="commenter-avatar">${currentUser ? currentUser.initials : 'ME'}</div>
+
+                <textarea 
+
+                    class="comment-input" 
+
+                    id="commentInput" 
+
+                    placeholder="Write a comment..."
+
+                    maxlength="1000"
+
+                    rows="1"
+
+                ></textarea>
+
+                <button class="send-comment-btn" id="sendCommentBtn" onclick="addComment()" disabled>
+
+                    <i class="fas fa-paper-plane"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Reply Modal -->
+
+<div id="replyModal" class="reply-modal">
+
+    <div class="reply-container">
+
+        <div class="reply-header">
+
+            <button class="reply-close" onclick="closeReply()">
+
+                <i class="fas fa-arrow-left"></i>
+
+            </button>
+
+            <h2 class="reply-title">Reply to Comment</h2>
+
+        </div>
+
+        
+
+        <!-- Original Comment Preview -->
+
+        <div class="original-comment-preview" id="originalCommentPreview"></div>
+
+        
+
+        <!-- Reply Input -->
+
+        <div class="reply-input-section">
+
+            <textarea 
+
+                class="reply-input" 
+
+                id="replyInput" 
+
+                placeholder="Write your reply..."
+
+                maxlength="1000"
+
+            ></textarea>
+
+            
+
+            <div class="reply-actions">
+
+                <button class="cancel-reply-btn" onclick="closeReply()">Cancel</button>
+
+                <button class="send-reply-btn" onclick="submitReply()">
+
+                    <i class="fas fa-paper-plane"></i>
+
+                    Reply
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ADD THIS HTML TO YOUR BODY (AFTER COMMENTS MODAL) -->
+
+
+
+<!-- Settings Page -->
+
+<div id="settingsPage" class="settings-page">
+
+    <div class="settings-header">
+
+        <button class="settings-back-arrow" onclick="closeSettings()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="settings-title">Settings</h1>
+
+    </div>
+
+    
+
+    <div class="settings-content">
+
+        <!-- Account Section -->
+
+        <div class="settings-section">
+
+            <h3 class="section-title">Account</h3>
+
+            
+
+            <div class="setting-item" onclick="editProfile()">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-user"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Edit Profile</div>
+
+                    <div class="setting-description">Update your name, department, and personal info</div>
+
+                </div>
+
+                <i class="fas fa-chevron-right setting-arrow"></i>
+
+            </div>
+
+            
+
+            <div class="setting-item" onclick="changePassword()">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-lock"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Change Password</div>
+
+                    <div class="setting-description">Update your login password</div>
+
+                </div>
+
+                <i class="fas fa-chevron-right setting-arrow"></i>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Notifications Section -->
+
+        <div class="settings-section">
+
+            <h3 class="section-title">Notifications</h3>
+
+            
+
+            <div class="setting-item">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-bell"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Push Notifications</div>
+
+                    <div class="setting-description">Receive notifications about posts and messages</div>
+
+                </div>
+
+                <label class="toggle-switch">
+
+                    <input type="checkbox" id="pushNotifications" checked onchange="toggleSetting('pushNotifications')">
+
+                    <span class="toggle-slider"></span>
+
+                </label>
+
+            </div>
+
+            
+
+            <div class="setting-item">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-envelope"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Email Notifications</div>
+
+                    <div class="setting-description">Get email alerts for important updates</div>
+
+                </div>
+
+                <label class="toggle-switch">
+
+                    <input type="checkbox" id="emailNotifications" checked onchange="toggleSetting('emailNotifications')">
+
+                    <span class="toggle-slider"></span>
+
+                </label>
+
+            </div>
+
+            
+
+            <div class="setting-item">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-comment"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Comment Notifications</div>
+
+                    <div class="setting-description">Notify when someone comments on your posts</div>
+
+                </div>
+
+                <label class="toggle-switch">
+
+                    <input type="checkbox" id="commentNotifications" checked onchange="toggleSetting('commentNotifications')">
+
+                    <span class="toggle-slider"></span>
+
+                </label>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Privacy Section -->
+
+        <div class="settings-section">
+
+            <h3 class="section-title">Privacy</h3>
+
+            
+
+            <div class="setting-item">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-eye"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Profile Visibility</div>
+
+                    <div class="setting-description">Allow others to view your profile</div>
+
+                </div>
+
+                <label class="toggle-switch">
+
+                    <input type="checkbox" id="profileVisibility" checked onchange="toggleSetting('profileVisibility')">
+
+                    <span class="toggle-slider"></span>
+
+                </label>
+
+            </div>
+
+            
+
+            <div class="setting-item">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-users"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Show Online Status</div>
+
+                    <div class="setting-description">Let others see when you're online</div>
+
+                </div>
+
+                <label class="toggle-switch">
+
+                    <input type="checkbox" id="onlineStatus" checked onchange="toggleSetting('onlineStatus')">
+
+                    <span class="toggle-slider"></span>
+
+                </label>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Appearance Section -->
+
+        <div class="settings-section">
+
+            <h3 class="section-title">Appearance</h3>
+
+            
+
+            <div class="setting-item">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-moon"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Dark Mode</div>
+
+                    <div class="setting-description">Switch to dark theme</div>
+
+                </div>
+
+                <label class="toggle-switch">
+
+                    <input type="checkbox" id="darkMode" onchange="toggleDarkMode()">
+
+                    <span class="toggle-slider"></span>
+
+                </label>
+
+            </div>
+
+            
+
+            <div class="setting-item" onclick="selectLanguage()">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-language"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Language</div>
+
+                    <div class="setting-description">English</div>
+
+                </div>
+
+                <i class="fas fa-chevron-right setting-arrow"></i>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- App Info Section -->
+
+        <div class="settings-section">
+
+            <h3 class="section-title">About</h3>
+
+            
+
+            <div class="setting-item" onclick="showAboutApp()">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-info-circle"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">About Beauty Fair</div>
+
+                    <div class="setting-description">Version 1.0.0</div>
+
+                </div>
+
+                <i class="fas fa-chevron-right setting-arrow"></i>
+
+            </div>
+
+            
+
+            <div class="setting-item" onclick="showPrivacyPolicy()">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-shield-alt"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Privacy Policy</div>
+
+                    <div class="setting-description">Read our privacy policy</div>
+
+                </div>
+
+                <i class="fas fa-chevron-right setting-arrow"></i>
+
+            </div>
+
+            
+
+            <div class="setting-item" onclick="showTerms()">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-file-contract"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Terms of Service</div>
+
+                    <div class="setting-description">Read terms and conditions</div>
+
+                </div>
+
+                <i class="fas fa-chevron-right setting-arrow"></i>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Data Section -->
+
+        <div class="settings-section">
+
+            <h3 class="section-title">Data & Storage</h3>
+
+            
+
+            <div class="setting-item" onclick="clearCache()">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-trash-alt"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Clear Cache</div>
+
+                    <div class="setting-description">Free up storage space</div>
+
+                </div>
+
+                <i class="fas fa-chevron-right setting-arrow"></i>
+
+            </div>
+
+            
+
+            <div class="setting-item" onclick="downloadData()">
+
+                <div class="setting-icon">
+
+                    <i class="fas fa-download"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Download My Data</div>
+
+                    <div class="setting-description">Export your account data</div>
+
+                </div>
+
+                <i class="fas fa-chevron-right setting-arrow"></i>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- Danger Zone -->
+
+        <div class="settings-section danger-section">
+
+            <h3 class="section-title danger-title">Danger Zone</h3>
+
+            
+
+            <div class="setting-item danger-item" onclick="deleteAccount()">
+
+                <div class="setting-icon danger-icon">
+
+                    <i class="fas fa-exclamation-triangle"></i>
+
+                </div>
+
+                <div class="setting-info">
+
+                    <div class="setting-label">Delete Account</div>
+
+                    <div class="setting-description">Permanently delete your account</div>
+
+                </div>
+
+                <i class="fas fa-chevron-right setting-arrow"></i>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Change Password Modal -->
+
+<div id="changePasswordModal" class="change-password-modal">
+
+    <div class="change-password-container">
+
+        <div class="change-password-header">
+
+            <button class="modal-close-btn" onclick="closeChangePassword()">
+
+                <i class="fas fa-times"></i>
+
+            </button>
+
+            <h2 class="modal-title">Change Password</h2>
+
+        </div>
+
+        
+
+        <div class="change-password-content">
+
+            <div class="input-group">
+
+                <label class="input-label">Current Password</label>
+
+                <input type="password" class="password-input" id="currentPassword" placeholder="Enter current password">
+
+            </div>
+
+            
+
+            <div class="input-group">
+
+                <label class="input-label">New Password</label>
+
+                <input type="password" class="password-input" id="newPassword" placeholder="Enter new password">
+
+            </div>
+
+            
+
+            <div class="input-group">
+
+                <label class="input-label">Confirm New Password</label>
+
+                <input type="password" class="password-input" id="confirmNewPassword" placeholder="Confirm new password">
+
+            </div>
+
+            
+
+            <button class="save-password-btn" onclick="saveNewPassword()">
+
+                <i class="fas fa-check"></i>
+
+                Save Password
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ADD THIS HTML AFTER YOUR PROFILE UPLOAD MODAL -->
+
+<div id="editProfileModal" class="edit-profile-modal">
+
+    <div class="edit-modal-content">
+
+        <div class="edit-modal-header">
+
+            <h2 class="edit-modal-title">Edit Profile</h2>
+
+            <button class="edit-modal-close" onclick="closeEditProfile()">
+
+                <i class="fas fa-times"></i>
+
+            </button>
+
+        </div>
+
+        
+
+        <form id="editProfileForm" onsubmit="return false;">
+
+            <div class="edit-form-group">
+
+                <label class="edit-form-label">Full Name</label>
+
+                <input type="text" class="edit-form-input" id="editName" required>
+
+                <div class="error-message" id="nameError">Please enter a valid name</div>
+
+            </div>
+
+            
+
+            <div class="edit-form-group">
+
+                <label class="edit-form-label">Birthday</label>
+
+                <input type="date" class="edit-form-input" id="editBirthday" required>
+
+                <div class="error-message" id="birthdayError">Please select a valid date</div>
+
+            </div>
+
+            
+
+            <div class="edit-form-group">
+
+                <label class="edit-form-label">Hobby</label>
+
+                <select class="edit-form-select" id="editHobby" required>
+
+                    <option value="">Select Hobby</option>
+
+                    <option value="Cooking">Cooking</option>
+
+                    <option value="Coding">Coding</option>
+
+                    <option value="Driving">Driving</option>
+
+                    <option value="Reading">Reading</option>
+
+                    <option value="Sleeping">Sleeping</option>
+
+                    <option value="Travelling">Travelling</option>
+
+                    <option value="Football">Football</option>
+
+                </select>
+
+                <div class="error-message" id="hobbyError">Please select a hobby</div>
+
+            </div>
+
+            
+
+            <div class="edit-form-group">
+
+                <label class="edit-form-label">Department</label>
+
+                <select class="edit-form-select" id="editDepartment" required>
+
+                    <option value="">Select Department</option>
+
+                    <option value="Perfume Section">Perfume Section</option>
+
+                    <option value="Cream Section">Cream Section</option>
+
+                    <option value="Mixing Section">Mixing Section</option>
+
+                    <option value="Driver">Driver</option>
+
+                    <option value="Domestic Worker">Domestic Worker</option>
+
+                    <option value="Office">Office</option>
+
+                    <option value="Security">Security</option>
+
+                    <option value="Printing">Printing</option>
+
+                    <option value="Store">Store</option>
+
+                    <option value="Maintenance">Maintenance</option>
+
+                </select>
+
+                <div class="form-hint">Department changes require admin approval</div>
+
+                <div class="error-message" id="departmentError">Please select a department</div>
+
+            </div>
+
+            
+
+            <div class="edit-form-buttons">
+
+                <button type="button" class="save-profile-btn" onclick="saveProfileChanges()">
+
+                    Save Changes
+
+                </button>
+
+                <button type="button" class="cancel-edit-btn" onclick="closeEditProfile()">
+
+                    Cancel
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- Logout Confirmation Modal -->
+
+<div id="logoutModal" class="logout-modal">
+
+    <div class="logout-container">
+
+        <div class="logout-icon">
+
+            <i class="fas fa-sign-out-alt"></i>
+
+        </div>
+
+        
+
+        <h2 class="logout-title">Log Out?</h2>
+
+        <p class="logout-message">Are you sure you want to log out of your account?</p>
+
+        
+
+        <div class="logout-actions">
+
+            <button class="logout-cancel-btn" onclick="closeLogoutModal()">
+
+                Cancel
+
+            </button>
+
+            <button class="logout-confirm-btn" onclick="confirmLogoutAction()">
+
+                <i class="fas fa-sign-out-alt"></i>
+
+                Log Out
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Clear Cache Confirmation Modal -->
+
+<div id="clearCacheModal" class="confirmation-modal">
+
+    <div class="confirmation-container">
+
+        <div class="confirmation-icon">
+
+            <i class="fas fa-trash-alt"></i>
+
+        </div>
+
+        
+
+        <h2 class="confirmation-title">Clear Cache?</h2>
+
+        <p class="confirmation-message">This will remove temporary files and free up storage space. Your personal data will not be affected.</p>
+
+        
+
+        <div class="confirmation-actions">
+
+            <button class="confirmation-cancel-btn" onclick="closeClearCacheModal()">
+
+                Cancel
+
+            </button>
+
+            <button class="confirmation-confirm-btn" onclick="confirmClearCache()">
+
+                <i class="fas fa-check"></i>
+
+                Clear Cache
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Delete Account Confirmation Modal -->
+
+<div id="deleteAccountModal" class="confirmation-modal danger-modal">
+
+    <div class="confirmation-container">
+
+        <div class="confirmation-icon danger-icon-bg">
+
+            <i class="fas fa-exclamation-triangle"></i>
+
+        </div>
+
+        
+
+        <h2 class="confirmation-title">Delete Account?</h2>
+
+        <p class="confirmation-message danger-message">
+
+            This action is permanent and cannot be undone. All your data, posts, and messages will be permanently deleted.
+
+        </p>
+
+        
+
+        <div class="confirmation-input-section">
+
+            <label class="confirmation-label">Type <strong>DELETE</strong> to confirm:</label>
+
+            <input type="text" class="confirmation-input" id="deleteConfirmInput" placeholder="Type DELETE">
+
+        </div>
+
+        
+
+        <div class="confirmation-actions">
+
+            <button class="confirmation-cancel-btn" onclick="closeDeleteAccountModal()">
+
+                Cancel
+
+            </button>
+
+            <button class="confirmation-confirm-btn danger-btn" onclick="confirmDeleteAccount()">
+
+                <i class="fas fa-trash"></i>
+
+                Delete Account
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- About Beauty Fair Page -->
+
+<div id="aboutPage" class="content-page">
+
+    <div class="content-header">
+
+        <button class="content-back-arrow" onclick="closeAboutPage()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="content-title">About Beauty Fair</h1>
+
+    </div>
+
+    
+
+    <div class="content-body">
+
+        <div class="content-section">
+
+            <div class="app-logo-large company-font">Beauty Fair</div>
+
+            <div class="version-badge">Version 1.0.0</div>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Our Mission</h2>
+
+            <p class="section-text">
+
+                Beauty Fair is dedicated to providing high-quality beauty products and exceptional service to our customers. We believe in empowering our staff with the tools and technology they need to excel in their roles and deliver outstanding customer experiences.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">About This App</h2>
+
+            <p class="section-text">
+
+                The Beauty Fair Staff App is designed to streamline communication, enhance collaboration, and improve efficiency across all departments. This comprehensive platform enables our team members to:
+
+            </p>
+
+            <ul class="feature-list">
+
+                <li><i class="fas fa-check-circle"></i> Stay connected with colleagues through direct messaging</li>
+
+                <li><i class="fas fa-check-circle"></i> Receive important announcements and updates instantly</li>
+
+                <li><i class="fas fa-check-circle"></i> Submit requests for loans and time off</li>
+
+                <li><i class="fas fa-check-circle"></i> Report issues and complaints confidentially</li>
+
+                <li><i class="fas fa-check-circle"></i> Share updates and celebrate achievements</li>
+
+                <li><i class="fas fa-check-circle"></i> Access HR resources and company policies</li>
+
+            </ul>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Our Values</h2>
+
+            <div class="values-grid">
+
+                <div class="value-card">
+
+                    <div class="value-icon">
+
+                        <i class="fas fa-heart"></i>
+
+                    </div>
+
+                    <h3 class="value-title">Excellence</h3>
+
+                    <p class="value-text">We strive for excellence in everything we do, from product quality to customer service.</p>
+
+                </div>
+
+                
+
+                <div class="value-card">
+
+                    <div class="value-icon">
+
+                        <i class="fas fa-users"></i>
+
+                    </div>
+
+                    <h3 class="value-title">Teamwork</h3>
+
+                    <p class="value-text">We believe in the power of collaboration and supporting one another.</p>
+
+                </div>
+
+                
+
+                <div class="value-card">
+
+                    <div class="value-icon">
+
+                        <i class="fas fa-shield-alt"></i>
+
+                    </div>
+
+                    <h3 class="value-title">Integrity</h3>
+
+                    <p class="value-text">We maintain the highest standards of honesty and ethical conduct.</p>
+
+                </div>
+
+                
+
+                <div class="value-card">
+
+                    <div class="value-icon">
+
+                        <i class="fas fa-rocket"></i>
+
+                    </div>
+
+                    <h3 class="value-title">Innovation</h3>
+
+                    <p class="value-text">We embrace change and continuously seek ways to improve.</p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Contact Support</h2>
+
+            <p class="section-text">
+
+                If you need assistance or have questions about the app, please contact:
+
+            </p>
+
+            <div class="contact-info">
+
+                <div class="contact-item">
+
+                    <i class="fas fa-envelope"></i>
+
+                    <span>support@beautyfair.com</span>
+
+                </div>
+
+                <div class="contact-item">
+
+                    <i class="fas fa-phone"></i>
+
+                    <span>+234 (0) 800 BEAUTY FAIR</span>
+
+                </div>
+
+                <div class="contact-item">
+
+                    <i class="fas fa-map-marker-alt"></i>
+
+                    <span>Lagos, Nigeria</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <p class="copyright-text">
+
+                © 2025 Beauty Fair. All rights reserved.<br>
+
+                Developed with ❤️ for our amazing staff team.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Privacy Policy Page -->
+
+<div id="privacyPolicyPage" class="content-page">
+
+    <div class="content-header">
+
+        <button class="content-back-arrow" onclick="closePrivacyPolicy()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="content-title">Privacy Policy</h1>
+
+    </div>
+
+    
+
+    <div class="content-body">
+
+        <div class="content-section">
+
+            <p class="last-updated">Last Updated: October 2025</p>
+
+            <p class="section-text">
+
+                At Beauty Fair, we are committed to protecting your privacy and personal information. This Privacy Policy explains how we collect, use, and safeguard your data when you use the Beauty Fair Staff App.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Information We Collect</h2>
+
+            <h3 class="subsection-heading">Personal Information</h3>
+
+            <p class="section-text">We collect the following information when you use the app:</p>
+
+            <ul class="policy-list">
+
+                <li>Name and employee ID</li>
+
+                <li>Email address and phone number</li>
+
+                <li>Department and job role</li>
+
+                <li>Profile picture (optional)</li>
+
+                <li>Birthday and hobby (for profile)</li>
+
+            </ul>
+
+            
+
+            <h3 class="subsection-heading">Usage Information</h3>
+
+            <p class="section-text">We automatically collect:</p>
+
+            <ul class="policy-list">
+
+                <li>Login and activity timestamps</li>
+
+                <li>Device information and IP address</li>
+
+                <li>App usage patterns and preferences</li>
+
+                <li>Messages and posts you create</li>
+
+            </ul>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">How We Use Your Information</h2>
+
+            <p class="section-text">Your information is used to:</p>
+
+            <ul class="policy-list">
+
+                <li>Provide and maintain app functionality</li>
+
+                <li>Facilitate communication between staff members</li>
+
+                <li>Process requests for loans and time off</li>
+
+                <li>Send important announcements and notifications</li>
+
+                <li>Monitor app performance and improve user experience</li>
+
+                <li>Ensure security and prevent unauthorized access</li>
+
+                <li>Comply with legal and regulatory requirements</li>
+
+            </ul>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Data Security</h2>
+
+            <p class="section-text">
+
+                We implement robust security measures to protect your personal information:
+
+            </p>
+
+            <ul class="policy-list">
+
+                <li>Encrypted data transmission using SSL/TLS protocols</li>
+
+                <li>Secure password storage with industry-standard encryption</li>
+
+                <li>Regular security audits and updates</li>
+
+                <li>Limited access to personal data by authorized personnel only</li>
+
+                <li>Automatic session timeout after periods of inactivity</li>
+
+            </ul>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Data Sharing</h2>
+
+            <p class="section-text">
+
+                We do not sell or rent your personal information to third parties. Your data may be shared only in the following circumstances:
+
+            </p>
+
+            <ul class="policy-list">
+
+                <li>With HR and management for employment-related purposes</li>
+
+                <li>With other staff members as part of normal app functionality</li>
+
+                <li>When required by law or legal process</li>
+
+                <li>To protect the rights and safety of Beauty Fair and its employees</li>
+
+            </ul>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Your Rights</h2>
+
+            <p class="section-text">You have the right to:</p>
+
+            <ul class="policy-list">
+
+                <li>Access your personal information</li>
+
+                <li>Request correction of inaccurate data</li>
+
+                <li>Request deletion of your account and data</li>
+
+                <li>Opt-out of non-essential communications</li>
+
+                <li>Download a copy of your data</li>
+
+            </ul>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Data Retention</h2>
+
+            <p class="section-text">
+
+                We retain your personal information for as long as you remain an employee of Beauty Fair and for a reasonable period thereafter as required by law or for legitimate business purposes.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Changes to This Policy</h2>
+
+            <p class="section-text">
+
+                We may update this Privacy Policy from time to time. We will notify you of any significant changes through the app or via email.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Contact Us</h2>
+
+            <p class="section-text">
+
+                If you have questions about this Privacy Policy or how we handle your data, please contact our Privacy Officer at privacy@beautyfair.com.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Terms of Service Page -->
+
+<div id="termsPage" class="content-page">
+
+    <div class="content-header">
+
+        <button class="content-back-arrow" onclick="closeTermsPage()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="content-title">Terms of Service</h1>
+
+    </div>
+
+    
+
+    <div class="content-body">
+
+        <div class="content-section">
+
+            <p class="last-updated">Last Updated: January 2025</p>
+
+            <p class="section-text">
+
+                Welcome to the Beauty Fair Staff App. By accessing and using this app, you agree to comply with and be bound by the following terms and conditions. Please read these terms carefully.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">1. Acceptance of Terms</h2>
+
+            <p class="section-text">
+
+                By creating an account and using the Beauty Fair Staff App, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree to these terms, you may not use the app.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">2. Eligibility</h2>
+
+            <p class="section-text">
+
+                This app is exclusively for Beauty Fair employees. You must be a current employee with valid credentials to create and maintain an account. Unauthorized access or use is strictly prohibited.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">3. Account Responsibilities</h2>
+
+            <p class="section-text">You are responsible for:</p>
+
+            <ul class="policy-list">
+
+                <li>Maintaining the confidentiality of your login credentials</li>
+
+                <li>All activities that occur under your account</li>
+
+                <li>Notifying HR immediately of any unauthorized access</li>
+
+                <li>Ensuring your account information is accurate and up-to-date</li>
+
+                <li>Logging out after each session, especially on shared devices</li>
+
+            </ul>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">4. Acceptable Use</h2>
+
+            <p class="section-text">You agree to use the app only for legitimate business purposes. Prohibited activities include:</p>
+
+            <ul class="policy-list">
+
+                <li>Posting offensive, abusive, or inappropriate content</li>
+
+                <li>Sharing confidential company information externally</li>
+
+                <li>Harassing, threatening, or bullying other users</li>
+
+                <li>Attempting to access unauthorized areas or data</li>
+
+                <li>Distributing malware or engaging in malicious activities</li>
+
+                <li>Using the app for personal commercial purposes</li>
+
+                <li>Impersonating other users or providing false information</li>
+
+            </ul>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">5. Content Guidelines</h2>
+
+            <p class="section-text">
+
+                When posting content (messages, comments, posts), you must:
+
+            </p>
+
+            <ul class="policy-list">
+
+                <li>Maintain professional and respectful communication</li>
+
+                <li>Avoid explicit, offensive, or discriminatory content</li>
+
+                <li>Respect intellectual property rights</li>
+
+                <li>Not share confidential or sensitive business information</li>
+
+                <li>Comply with all company policies and regulations</li>
+
+            </ul>
+
+            <p class="section-text">
+
+                Beauty Fair reserves the right to remove any content that violates these guidelines without prior notice.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">6. Disciplinary Actions</h2>
+
+            <p class="section-text">
+
+                Violation of these terms may result in:
+
+            </p>
+
+            <ul class="policy-list">
+
+                <li>Temporary suspension of app access</li>
+
+                <li>Permanent account termination</li>
+
+                <li>Formal disciplinary action per company policy</li>
+
+                <li>Termination of employment in severe cases</li>
+
+                <li>Legal action if applicable</li>
+
+            </ul>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">7. Intellectual Property</h2>
+
+            <p class="section-text">
+
+                All content, features, and functionality of the Beauty Fair Staff App, including but not limited to text, graphics, logos, and software, are the exclusive property of Beauty Fair and are protected by copyright, trademark, and other intellectual property laws.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">8. Disclaimer of Warranties</h2>
+
+            <p class="section-text">
+
+                The app is provided "as is" without warranties of any kind. Beauty Fair does not guarantee uninterrupted or error-free operation. We reserve the right to modify, suspend, or discontinue any aspect of the app at any time.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">9. Limitation of Liability</h2>
+
+            <p class="section-text">
+
+                Beauty Fair shall not be liable for any indirect, incidental, or consequential damages arising from your use of the app, including but not limited to loss of data, business interruption, or unauthorized access.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">10. Modifications to Terms</h2>
+
+            <p class="section-text">
+
+                Beauty Fair reserves the right to modify these Terms of Service at any time. Changes will be effective immediately upon posting in the app. Continued use of the app after changes constitutes acceptance of the modified terms.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">11. Termination</h2>
+
+            <p class="section-text">
+
+                Your access to the app will be automatically terminated upon the end of your employment with Beauty Fair. We reserve the right to terminate or suspend access at any time for violations of these terms.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">12. Governing Law</h2>
+
+            <p class="section-text">
+
+                These terms shall be governed by and construed in accordance with the laws of the Federal Republic of Nigeria, without regard to its conflict of law provisions.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <h2 class="section-heading">Contact Information</h2>
+
+            <p class="section-text">
+
+                For questions about these Terms of Service, please contact legal@beautyfair.com or speak with your HR representative.
+
+            </p>
+
+        </div>
+
+        
+
+        <div class="content-section">
+
+            <p class="copyright-text">
+
+                By using the Beauty Fair Staff App, you acknowledge that you have read and understood these Terms of Service and agree to be bound by them.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ADD THESE HTML PAGES TO YOUR BODY -->
+
+
+
+<!-- Employee Guide Page -->
+
+<div id="employeeGuidePage" class="employee-guide-page">
+
+    <div class="guide-header">
+
+        <button class="guide-back-arrow" onclick="closeEmployeeGuide()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="guide-title">Employee Guide</h1>
+
+    </div>
+
+    
+
+    <div class="guide-content">
+
+        <div class="guide-welcome">
+
+            <div class="guide-subtitle">Welcome to Beauty Fair</div>
+
+            <div class="guide-greeting" id="guideGreeting">Dear Ope,</div>
+
+        </div>
+
+        
+
+        <div class="guide-section">
+
+            <div class="section-content">
+
+                <p>We are pleased to have you join our team and we look forward to a successful working relationship with you. At Beauty Fair, we are committed to building a culture of integrity, teamwork, and excellence. This guide is designed to help you understand the policies, expectations, and opportunities that define your role within our organization.</p>
+
+                <p>Please take time to read through this guide carefully. It contains essential information about how Beauty Fair operates, the standards we uphold, and what is expected of every employee. Compliance with these guidelines is mandatory for all staff members.</p>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="guide-section">
+
+            <div class="section-title">
+
+                <i class="fas fa-heart section-icon"></i>
+
+                1. Core Values
+
+            </div>
+
+            <div class="section-content">
+
+                <p>At Beauty Fair, we operate on the foundation of:</p>
+
+                <ul>
+
+                    <li><strong>Integrity</strong> – conducting all activities honestly and ethically.</li>
+
+                    <li><strong>Respect</strong> – valuing colleagues, supervisors, and the organization as a whole.</li>
+
+                    <li><strong>Teamwork</strong> – working collectively towards shared goals.</li>
+
+                    <li><strong>Productivity</strong> – ensuring efficiency and high-quality performance.</li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="guide-section">
+
+            <div class="section-title">
+
+                <i class="fas fa-clock section-icon"></i>
+
+                2. Work Hours & Attendance
+
+            </div>
+
+            <div class="section-content">
+
+                <ul>
+
+                    <li>Official resumption time is <strong>8:00 AM daily</strong>. Employees are expected to be at their duty posts promptly.</li>
+
+                    <li>Break period is <strong>1:00 PM – 1:50 PM (50 minutes)</strong>.</li>
+
+                    <li>Timeliness and consistent attendance are critical to maintaining efficiency.</li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="guide-section">
+
+            <div class="section-title">
+
+                <i class="fas fa-user-tie section-icon"></i>
+
+                3. Workplace Conduct
+
+            </div>
+
+            <div class="section-content">
+
+                <p>Employees are expected to:</p>
+
+                <ul>
+
+                    <li>Adhere strictly to all company policies and procedures.</li>
+
+                    <li>Maintain professionalism at all times.</li>
+
+                    <li>Avoid unnecessary movement during work hours, except during break.</li>
+
+                    <li>Channel complaints or concerns through the <strong>Supervisor first</strong> before escalating to the <strong>Human Resources (HR) Department</strong>.</li>
+
+                    <li>Always respect the authority of your <strong>Head of Department (HOD)</strong> and Supervisor.</li>
+
+                </ul>
+
+                <div class="important-note">
+
+                    <strong>Movement Policy:</strong> For security and order, all staff are required to use the <strong>back entrance</strong> when entering or exiting. The reception is not to be used by employees.
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="guide-section">
+
+            <div class="section-title">
+
+                <i class="fas fa-exclamation-triangle section-icon"></i>
+
+                4. Discipline & Queries
+
+            </div>
+
+            <div class="section-content">
+
+                <p>Failure to comply with company policies may result in disciplinary action. This may include written queries depending on the severity of the misconduct.</p>
+
+                <p>Details on levels of queries and possible outcomes can be found on the <strong>Query Page</strong> within this application.</p>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="guide-section">
+
+            <div class="section-title">
+
+                <i class="fas fa-shield-alt section-icon"></i>
+
+                5. Security & Anti-Theft Policy
+
+            </div>
+
+            <div class="section-content">
+
+                <div class="important-note">
+
+                    <ul>
+
+                        <li><strong>Theft in any form is strictly prohibited.</strong></li>
+
+                        <li>Any employee caught stealing will face immediate disciplinary measures, including termination and prosecution under the laws of the Federal Republic of Nigeria.</li>
+
+                        <li>Employees who witness theft and fail to report it, either openly or through the anonymous reporting feature, will be considered accomplices and subject to the same consequences.</li>
+
+                        <li>Security personnel are trained to monitor behavior closely and act decisively against misconduct.</li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="guide-section">
+
+            <div class="section-title">
+
+                <i class="fas fa-trophy section-icon"></i>
+
+                6. Recognition & Rewards
+
+            </div>
+
+            <div class="section-content">
+
+                <p>Beauty Fair acknowledges and celebrates outstanding performance:</p>
+
+                <ul>
+
+                    <li>Each week, Supervisors nominate two staff members who have demonstrated exceptional commitment and performance.</li>
+
+                    <li>Staff members vote to select the <strong>Staff of the Week</strong>.</li>
+
+                    <li>An employee who wins <strong>Staff of the Week for four consecutive weeks</strong> becomes the <strong>Staff of the Month</strong>, which includes an additional salary benefit for that month.</li>
+
+                </ul>
+
+                <div class="success-note">
+
+                    This program reinforces our commitment to hard work, integrity, and excellence.
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="guide-section">
+
+            <div class="section-title">
+
+                <i class="fas fa-gift section-icon"></i>
+
+                7. Employee Benefits
+
+            </div>
+
+            <div class="section-content">
+
+                <p>Beauty Fair provides opportunities for employee support through loans. Eligibility is based on:</p>
+
+                <ul>
+
+                    <li>Length of service with the company.</li>
+
+                    <li>Demonstrated integrity and reliability.</li>
+
+                    <li>Consistent performance levels.</li>
+
+                    <li>Positive reports and recommendations from the employee's HOD.</li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="guide-section">
+
+            <div class="section-title">
+
+                <i class="fas fa-check-circle section-icon"></i>
+
+                8. Compliance Requirement
+
+            </div>
+
+            <div class="section-content">
+
+                <p>So long as you are within the company premises, you are required to abide by all policies and guidelines outlined in this Employee Guide. Non-compliance may result in disciplinary action, up to and including dismissal.</p>
+
+            </div>
+
+        </div>
+
+        
+
+        <div class="guide-footer">
+
+            <h3 style="margin-bottom: 15px;">Closing Note</h3>
+
+            <p>We believe that every employee plays an important role in the growth of Beauty Fair. By upholding our values and following the standards in this guide, you contribute directly to the success of our mission.</p>
+
+            <p>Once again, welcome to <strong>Beauty Fair</strong>. We are glad to have you on our team.</p>
+
+            <p style="margin-top: 20px;"><strong>– Human Resources Department</strong></p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Staff Award Page -->
+
+<div id="staffAwardPage" class="staff-award-page">
+
+    <div class="award-header">
+
+        <button class="award-back-arrow" onclick="closeStaffAward()">
+
+            <i class="fas fa-arrow-left"></i>
+
+        </button>
+
+        <h1 class="award-title">Award</h1>
+
+    </div>
+
+    
+
+    <div class="award-content">
+
+        <div class="award-intro">
+
+            <h2>Everything You Need to Know About the Award Program</h2>
+
+            <p><h4><em>Kindly Read All Through</h4></em></p>
+
+        </div>
+
+        
+
+        <div class="award-explanation">
+
+            <p>At Beauty Fair, we believe that hard work, commitment, and teamwork should never go unnoticed. Every member of our staff is a valuable part of the family, and the award program is our way of showing appreciation for the extra effort you put in each day.</p>
+
+            
+
+            <p>Each week, the supervisor carefully observes everyone's performance and attitude at work. On Fridays, two outstanding staff members will be nominated based on their dedication, consistency, and positive impact. From there, the rest of the team will vote for who truly deserves to be named Staff of the Week.</p>
+
+            
+
+            <h3>Staff of the Week</h3>
+
+            <p>Winning Staff of the Week is more than just a title — it is recognition of your effort, discipline, and contribution to the team. If a staff member earns this honor for four weeks in a row, they will automatically become the Staff of the Month. This achievement comes with a special company reward, which will be added to their salary as a token of appreciation.</p>
+
+            
+
+            <h3>Fair Voting System</h3>
+
+            <p>At Beauty Fair, we value fairness, sincerity, and honesty. There is no room for bias in this process. When casting your votes, we encourage you to vote with truthfulness and recognize those who genuinely stand out.</p>
+
+            
+
+            <p>This culture of recognition is not only about rewards, but also about building a supportive workplace where everyone is inspired to do their best. Every effort matters, and every small act of dedication brings us closer to shared success. Together, we grow, achieve, and celebrate as one team.</p>
+
+            
+
+            <p style="text-align: center; font-weight: 600; font-size: 1.1rem; margin-top: 30px; color: #003049;">THIS IS BEAUTY FAIR</p>
+
+        </div>
+
+        
+
+        <div class="my-awards-section">
+
+            <div class="my-awards-title">
+
+                <i class="fas fa-award"></i>
+
+                My Awards
+
+            </div>
+
+            <div class="award-list" id="myAwardsList">
+
+                <!-- Awards will be loaded here -->
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Poll Detail Page for Staff (UPDATED) -->
+<div id="staffPollDetailPage" class="feature-page">
+    <div class="feature-content">
+        <div class="staff-poll-container" id="staffPollContainer">
+            <!-- Poll will be displayed here -->
+        </div>
+    </div>
+</div> 
+
+<script src="script.js"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registered'))
+            .catch(err => console.log('Service Worker failed:', err));
+    }
+</script>
+<!-- Your Firebase Config -->
+<script src="Firebase-Config.js"></script>
+<script src="script.js"></script>
+    </body>
+
+</html>
+

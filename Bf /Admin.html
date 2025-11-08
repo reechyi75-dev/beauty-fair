@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beauty Fair - Admin App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="3app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#669bbc">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Beauty Fair">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+</head>
+<body>
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title company-font">Beauty Fair</h1>
+            
+            <div class="nav-icons">
+                <button class= "nav-icon active" id="homeIcon" onclick="setActiveNav(this, 'showDashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </button>
+                
+                <button class="nav-icon" id="requestIcon" onclick="setActiveNav(this, 'showRequests')">
+                    <i class="fas fa-inbox"></i>
+                    <span>Requests</span>
+                </button>
+                
+                <button class="nav-icon" id="complaintIcon" onclick="setActiveNav(this, 'showComplaints')">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Complaints</span>
+                </button>
+                
+                
+                
+                <button class="nav-icon" id="notificationIcon" onclick="setActiveNav(this, 'showNotifications')">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                    <div class="notification-badge">5</div>
+                </button>
+                
+                <button class="nav-icon" id="menuIcon" onclick="openHamburgerMenu()">
+                    <i class="fas fa-bars"></i>
+                    <span>Menu</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="welcome-card">
+                <div class="user-profile">
+                    <div class="profile-pic">HR</div>
+                    <div>
+                        <div class="greeting-text" id="greetingText">Good morning, HR!</div>
+                        <div class="live-datetime" id="liveDateTime"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feed-container">
+                <div class="feed-header">
+                    <h2 class="feed-title">Staff Feed</h2>
+                </div>
+
+                <div class="feed-posts" id="feedPosts">
+                    <!-- Staff posts will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hamburger Menu -->
+    <div id="hamburgerMenu" class="hamburger-menu">
+        <button class="hamburger-close" onclick="closeHamburgerMenu()">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="hamburger-header">
+            <h2 class="hamburger-title company-font">Menu</h2>
+        </div>
+        
+        <div class="hamburger-grid">
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showCreateAnnouncement();">
+                <i class="fas fa-bullhorn"></i>
+                <span>Create Announcement</span>
+            </div>
+            
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showComplaints();">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Complaints</span>
+            </div>
+            
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showQueries();">
+                <i class="fas fa-file-alt"></i>
+                <span>Queries</span>
+            </div>
+            
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showAssignRole();">
+                <i class="fas fa-user-plus"></i>
+                <span>Assign Role</span>
+            </div>
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showRequests();">
+        <i class="fas fa-inbox"></i>
+        <span>Requests</span>
+    </div>
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showProfile();">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </div>
+             <div class="hamburger-item" onclick="closeHamburgerMenu(); showNotifications();">
+        <i class="fas fa-bell"></i>
+        <span>Notifications</span>
+    </div>
+             <div class="hamburger-item" onclick="closeHamburgerMenu(); showSettings();">
+        <i class="fas fa-cog"></i>
+        <span>Settings</span>
+    </div>
+            
+            <div class="hamburger-item logout" onclick="confirmLogout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification"></div>
+
+
+<!-- Queries Page -->
+<div id="queriesPage" class="queries-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeQueriesPage()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">QUERIES</h1>
+    </div>
+
+    <div class="queries-content">
+        <p class="queries-subtitle">
+            Kindly note that query varies based on the gravity of the staff offence.
+        </p>
+
+        <div class="query-info-section">
+            <h3 class="query-info-title">Here is the interpretation of each query level:</h3>
+            
+            <div class="query-level-info level-1">
+                <strong>Level 1-Query:</strong> A serious warning!
+            </div>
+            
+            <div class="query-level-info level-2">
+                <strong>Level 2-Query:</strong> Fine of ₦2,000 deduction from the offender salary
+            </div>
+            
+            <div class="query-level-info level-3">
+                <strong>Level 3-Query:</strong> 30% deduction from the offender salary
+            </div>
+        </div>
+
+        <p class="query-instruction">Kindly click on the appropriate query</p>
+
+        <div class="query-levels-container">
+            <button class="query-level-btn level-1" onclick="openQueryForm(1)">
+                <span class="query-level-text">Level 1 Query</span>
+                <i class="fas fa-exclamation-triangle query-level-icon"></i>
+            </button>
+
+            <button class="query-level-btn level-2" onclick="openQueryForm(2)">
+                <span class="query-level-text">Level 2 Query</span>
+                <i class="fas fa-exclamation-triangle query-level-icon"></i>
+            </button>
+
+            <button class="query-level-btn level-3" onclick="openQueryForm(3)">
+                <span class="query-level-text">Level 3 Query</span>
+                <i class="fas fa-exclamation-triangle query-level-icon"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Query Form Modal -->
+<div id="queryFormModal" class="query-form-modal">
+    <div class="query-form-content">
+        <div class="query-form-header">
+            <h2 class="query-form-title" id="queryFormTitle">Issue Query</h2>
+            <p class="query-form-subtitle" id="queryFormSubtitle"></p>
+        </div>
+
+        <form id="queryForm" onsubmit="submitQuery(event)">
+            <div class="form-group">
+                <label class="form-label">Select Staff Member *</label>
+                <div class="staff-search-container">
+                    <input 
+                        type="text" 
+                        class="form-input" 
+                        id="staffSearch" 
+                        placeholder="Search for staff member..."
+                        autocomplete="off"
+                        oninput="searchStaff(this.value)"
+                        required
+                    >
+                    <div class="staff-search-results" id="staffSearchResults"></div>
+                </div>
+                <input type="hidden" id="selectedStaffId" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Explain why you issue this query *</label>
+                <textarea 
+                    class="form-textarea" 
+                    id="queryReason" 
+                    placeholder="Kindly explain why you issue the query"
+                    required
+                ></textarea>
+            </div>
+
+            <div class="form-buttons">
+                <button type="button" class="form-btn cancel-btn" onclick="closeQueryForm()">
+                    Cancel
+                </button>
+                <button type="submit" class="form-btn submit-btn">
+                    Submit Query
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Complaints Page -->
+<div id="complaintsPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeComplaintsPage()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2 class="feature-title">Complaints</h2>
+    </div>
+
+    <div class="complaints-container">
+        <div id="complaintsList" class="complaints-list">
+            <!-- Complaint boxes will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Complaint Review Page -->
+<div id="complaintReviewPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeComplaintReview()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2 class="feature-title">Review Complaint</h2>
+    </div>
+
+    <div class="complaint-review-container">
+        <div class="complaint-user-info">
+            <div class="complaint-avatar" id="reviewAvatar">AM</div>
+            <div class="complaint-user-details">
+                <h3 id="reviewUsername">Loading...</h3>
+                <p id="reviewTime">Loading...</p>
+            </div>
+        </div>
+
+
+        <div class="complaint-conversation" id="complaintConversation">
+            <!-- Conversation messages will appear here -->
+        </div>
+
+        <div class="complaint-reply-section">
+            <button class="media-upload-btn" onclick="handleComplaintMedia()">
+                <i class="fas fa-paperclip"></i>
+            </button>
+            <input type="file" id="complaintMediaInput" accept="image/*,video/*" style="display: none;">
+            <textarea 
+                id="complaintReplyInput" 
+                class="complaint-reply-input" 
+                placeholder="Type your response..."
+            ></textarea>
+            <!-- Voice Note Recording Button -->
+<button class="voice-note-btn" id="voiceNoteBtn" onclick="toggleVoiceRecording()">
+    <i class="fas fa-microphone" id="voiceIcon"></i>
+</button>
+
+<!-- Voice Note Player (Hidden until recording is done) -->
+<div class="voice-note-player" id="voiceNotePlayer" style="display: none;">
+    <audio id="audioPlayback" controls></audio>
+    <button class="delete-voice-btn" onclick="deleteVoiceNote()">
+        <i class="fas fa-trash"></i>
+    </button>
+</div>
+            </button>
+            <button class="send-reply-btn" onclick="sendComplaintReply()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+<!-- Requests Page -->
+<div id="requestsPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeRequests()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Requests</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="requests-list" id="requestsList">
+            <!-- Requests will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Request Detail Page -->
+<div id="requestDetailPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeRequestDetail()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Incoming Request</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="request-detail-container">
+            <div class="request-subtitle" id="requestSubtitle"></div>
+            
+            <div class="request-application-card" id="requestApplicationCard">
+                <!-- Application details will be loaded here -->
+            </div>
+            
+            <div class="request-actions">
+                <button class="reject-btn" onclick="rejectRequest()">
+                    <i class="fas fa-times"></i>
+                    Reject
+                </button>
+                <button class="approve-btn" onclick="approveRequest()">
+                    <i class="fas fa-check"></i>
+                    Approve
+                </button>
+            </div>
+            
+            <div class="request-response-section">
+                <textarea class="request-response-input" id="requestResponseInput" placeholder="Say something about the application..."></textarea>
+                
+                <div class="request-response-actions">
+                    <button class="voice-note-btn" id="requestVoiceNoteBtn">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="send-response-btn" id="sendResponseBtn" onclick="sendResponse()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Create Announcement Page -->
+<div id="createAnnouncementPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeCreateAnnouncement()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Create Announcement</h1>
+        <button class="previous-btn" onclick="showPreviousAnnouncements()">
+            Previous
+        </button>
+    </div>
+    
+    <div class="feature-content">
+        <div class="instruction-text">
+            Kindly create new announcement, the whole staff will be notified.
+        </div>
+        
+        <div class="announcement-form">
+            <textarea class="announcement-textarea" id="announcementText" placeholder="Create announcement..." maxlength="2000"></textarea>
+            
+            <div class="media-preview" id="announcementMediaPreview"></div>
+            
+            <div class="announcement-actions">
+                <input type="file" id="announcementFile" accept="image/*,video/*" style="display: none;">
+                
+                <button class="media-upload-btn" onclick="document.getElementById('announcementFile').click()">
+                    <i class="fas fa-camera"></i>
+                </button>
+                
+                <button class="voice-note-announcement-btn" id="voiceNoteAnnouncementBtn" onclick="toggleAnnouncementVoiceNote()">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                
+                <button class="post-btn" id="postAnnouncementBtn" onclick="postAnnouncement()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Previous Announcements Page -->
+<div id="previousAnnouncementsPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closePreviousAnnouncements()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Previous Announcements</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="announcements-filter">
+            <label class="filter-label">Filter by date:</label>
+            <input type="date" class="date-filter" id="announcementDateFilter" onchange="filterAnnouncements()">
+            <button class="clear-filter-btn" onclick="clearAnnouncementFilter()">Clear</button>
+        </div>
+        
+        <div class="announcements-list" id="previousAnnouncementsList">
+            <!-- Previous announcements will load here -->
+        </div>
+    </div>
+</div>
+
+<!-- Announcement Detail Page -->
+<div id="announcementDetailPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeAnnouncementDetail()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Previous Announcement</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="announcement-detail-card">
+            <div class="announcement-detail-header">
+                <h3 id="detailAnnouncementTitle"></h3>
+                <span id="detailAnnouncementDate"></span>
+            </div>
+            <div class="announcement-detail-body" id="detailAnnouncementBody"></div>
+            <div id="detailAnnouncementMedia"></div>
+        </div>
+    </div>
+</div>
+<!-- Assign Role Page -->
+<div id="assignRolePage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeAssignRole()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Create Account</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="instruction-text">
+            Create account to assign role
+        </div>
+        
+        <div class="assign-role-form">
+            <div class="form-group">
+                <label class="form-label">Email or Phone Number</label>
+                <input type="text" class="form-input" id="emailOrPhone" placeholder="Enter email or phone number">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" id="fullName" placeholder="Enter full name">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="password" placeholder="Enter password">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Confirm Password</label>
+                <input type="password" class="form-input" id="confirmPassword" placeholder="Confirm password">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Select Role</label>
+                <select class="form-select" id="roleSelect">
+                    <option value="">Select role...</option>
+                    <option value="supervisor">Supervisor</option>
+                    <option value="security">Security</option>
+                    <option value="chairman-office">Chairman Office</option>
+                </select>
+            </div>
+            
+            <button class="signup-btn" id="signupBtn" onclick="createAccount()">
+                <i class="fas fa-user-plus"></i>
+                Sign Up
+            </button>
+        </div>
+    </div>
+</div>
+<!-- Profile Page -->
+<div id="profilePage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeProfilePage()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2 class="feature-title">Profile</h2>
+    </div>
+
+    <div class="profile-container">
+        <!-- Profile Header Card -->
+        <div class="profile-header-card">
+            <div class="profile-pic-container">
+                <div class="profile-pic-large" id="profilePicLarge">HR</div>
+                <button class="change-photo-btn" onclick="changeProfilePhoto()">
+                    <i class="fas fa-camera"></i>
+                </button>
+                <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
+            </div>
+            <h2 class="profile-name" id="profileName">Human Resources</h2>
+            <p class="profile-role" id="profileRole">HR Manager</p>
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <span>45 Staff</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>2 Years</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-star"></i>
+                    <span>Excellent</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Information -->
+        <div class="profile-section">
+            <h3 class="section-title">
+                <i class="fas fa-user"></i> Personal Information
+            </h3>
+            <div class="info-item">
+                <label>Full Name</label>
+                <div class="info-value" id="displayName">Human Resources</div>
+            </div>
+            <div class="info-item">
+                <label>Email Address</label>
+                <div class="info-value" id="displayEmail">hr@beautyfair.com</div>
+            </div>
+            <div class="info-item">
+                <label>Phone Number</label>
+                <div class="info-value" id="displayPhone">+234 800 123 4567</div>
+            </div>
+            <div class="info-item">
+                <label>Role</label>
+                <div class="info-value" id="displayRoleInfo">HR Manager</div>
+            </div>
+            <button class="action-btn primary" onclick="openEditProfile()">
+                <i class="fas fa-edit"></i> Edit Profile
+            </button>
+        </div>
+
+
+
+        <!-- App Statistics -->
+        <div class="profile-section">
+            <h3 class="section-title">
+                <i class="fas fa-chart-line"></i> Your Activity
+            </h3>
+            <div class="activity-grid">
+                <div class="activity-card">
+                    <i class="fas fa-bullhorn"></i>
+                    <h4>12</h4>
+                    <p>Announcements</p>
+                </div>
+                <div class="activity-card">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h4>8</h4>
+                    <p>Complaints Resolved</p>
+                </div>
+                <div class="activity-card">
+                    <i class="fas fa-file-alt"></i>
+                    <h4>5</h4>
+                    <p>Queries Issued</p>
+                </div>
+                <div class="activity-card">
+                    <i class="fas fa-user-plus"></i>
+                    <h4>15</h4>
+                    <p>Accounts Created</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="editProfileModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Profile</h3>
+            <button class="modal-close" onclick="closeEditProfile()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="editName" class="form-input" placeholder="Enter full name">
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="editEmail" class="form-input" placeholder="Enter email">
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="editPhone" class="form-input" placeholder="Enter phone number">
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <input type="text" id="editRole" class="form-input" placeholder="Enter role">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn cancel" onclick="closeEditProfile()">Cancel</button>
+            <button class="modal-btn save" onclick="saveProfileChanges()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Settings Page -->
+<div id="settingsPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeSettings()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Settings</h1>
+    </div>
+    
+            
+
+            
+<div class="settings-item" onclick="closeSettings(); showPrivacy();">
+                <i class="fas fa-shield-alt"></i>
+                <span>Privacy</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            
+
+            
+            <div class="settings-item logout-item" onclick="confirmLogout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Notifications Page -->
+<div id="notificationsPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeNotificationsPage()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Notifications</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="notifications-filter">
+            <label class="filter-label">Filter by date:</label>
+            <input type="date" class="date-filter" id="notificationDateFilter" onchange="filterNotifications()">
+            <button class="clear-filter-btn" onclick="clearNotificationFilter()">Clear</button>
+            <button class="mark-all-read" onclick="markAllAsRead()">Mark All as Read</button>
+        </div>
+        
+        <div class="notifications-list" id="notificationsList">
+            <!-- Notifications will be loaded here -->
+        </div>
+    </div>
+</div>
+<!-- Logout Confirmation Page -->
+<div id="logoutPage" class="feature-page">
+    <div class="logout-content">
+        <div class="logout-icon">
+            <i class="fas fa-sign-out-alt"></i>
+        </div>
+        <h2 class="logout-title">Are you sure you want to log out?</h2>
+        <p class="logout-message">You will need to log in again to access your account</p>
+        
+        <div class="logout-actions">
+            <button class="logout-cancel-btn" onclick="cancelLogout()">
+                Cancel
+            </button>
+            <button class="logout-confirm-btn" onclick="performLogout()">
+                Log Out
+            </button>
+        </div>
+    </div>
+</div>
+<!-- Comments Modal -->
+<div id="commentsModal" class="comments-modal">
+    <div class="comments-container">
+        <div class="comments-header">
+            <h3 class="comments-title">Comments</h3>
+            <button class="comments-close" onclick="closeComments()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="comments-list" id="commentsList">
+            <!-- Comments will be loaded here -->
+        </div>
+        
+        <div class="comment-input-area">
+            <textarea class="comment-input" id="commentInput" placeholder="Write a comment..." rows="2"></textarea>
+            <button class="send-comment-btn" id="sendCommentBtn" onclick="sendComment()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Privacy Page -->
+<div id="privacyPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closePrivacy()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2 class="feature-title">Privacy</h2>
+    </div>
+    
+    <div class="feature-content">
+        <div class="privacy-container">
+            <div class="privacy-section">
+                <h3 class="privacy-section-title">Profile Visibility</h3>
+                <div class="privacy-item">
+                    <div class="privacy-item-info">
+                        <span class="privacy-item-title">Profile Photo</span>
+                        <span class="privacy-item-desc">Who can see your profile photo</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="profilePhotoToggle" checked onchange="togglePrivacy('profilePhoto', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="privacy-item">
+                    <div class="privacy-item-info">
+                        <span class="privacy-item-title">Online Status</span>
+                        <span class="privacy-item-desc">Show when you're online</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="onlineStatusToggle" checked onchange="togglePrivacy('onlineStatus', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="privacy-section">
+                <h3 class="privacy-section-title">Notifications</h3>
+                <div class="privacy-item">
+                    <div class="privacy-item-info">
+                        <span class="privacy-item-title">Push Notifications</span>
+                        <span class="privacy-item-desc">Receive push notifications</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="pushNotifToggle" checked onchange="togglePrivacy('pushNotif', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="privacy-item">
+                    <div class="privacy-item-info">
+                        <span class="privacy-item-title">Email Notifications</span>
+                        <span class="privacy-item-desc">Receive email notifications</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="emailNotifToggle" onchange="togglePrivacy('emailNotif', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="privacy-section">
+                <h3 class="privacy-section-title">Data & Storage</h3>
+                <div class="privacy-item clickable" onclick="clearAppCache()">
+    <div class="privacy-item-info">
+        <span class="privacy-item-title">Clear Cache</span>
+        <span class="privacy-item-desc">Free up storage space</span>
+    </div>
+    <i class="fas fa-chevron-right"></i>
+</div>
+        </div>
+    </div>
+</div>
+
+    <script src="3app.js"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registered'))
+            .catch(err => console.log('Service Worker failed:', err));
+    }
+</script>
+<!-- Your Firebase Config -->
+<script src="Firebase-Config.js"></script>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beauty Fair - Supervisor App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="2app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#669bbc">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Beauty Fair">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title company-font">Beauty Fair</h1>
+            
+            <div class="nav-icons">
+                <button class="nav-icon active" id="homeIcon" onclick="setActiveNav(this, 'showDashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </button>
+                
+                <button class="nav-icon" id="messageIcon" onclick="setActiveNav(this, 'showMessages')">
+                    <i class="fas fa-envelope"></i>
+                    <span>Messages</span>
+                </button>
+                
+               
+                
+                <button class="nav-icon" id="pollIcon" onclick="setActiveNav(this, 'showCreatePoll')">
+                    <i class="fas fa-poll"></i>
+                    <span>Create Poll</span>
+                </button>
+                
+                <button class="nav-icon" id="notificationIcon" onclick="setActiveNav(this, 'showNotifications')">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                    <div class="notification-badge">3</div>
+                </button>
+                
+                <button class="nav-icon" id="menuIcon" onclick="openHamburgerMenu()">
+                    <i class="fas fa-bars"></i>
+                    <span>Menu</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="welcome-card">
+                <div class="user-profile">
+                    <div class="profile-pic">SV</div>
+                    <div>
+                        <div class="greeting-text" id="greetingText">Good morning, Supervisor!</div>
+                        <div class="live-datetime" id="liveDateTime"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feed-container">
+                <div class="feed-header">
+                    <h2 class="feed-title">Staff Feed</h2>
+                </div>
+
+                <div class="feed-posts" id="feedPosts">
+                    <!-- Sample posts will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hamburger Menu -->
+    <div id="hamburgerMenu" class="hamburger-menu">
+        <button class="hamburger-close" onclick="closeHamburgerMenu()">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="hamburger-header">
+            <h2 class="hamburger-title company-font">Menu</h2>
+        </div>
+        
+        <div class="hamburger-grid">
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showCreateAnnouncement();">
+                <i class="fas fa-bullhorn"></i>
+                <span>Create Announcement</span>
+            </div>
+            
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showMessages();">
+                <i class="fas fa-envelope"></i>
+                <span>Direct Message</span>
+            </div>
+            
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showCreatePoll();">
+                <i class="fas fa-poll"></i>
+                <span>Create Poll</span>
+            </div>
+            
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showNotifications();">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </div>
+            
+            <div class="hamburger-item" onclick="closeHamburgerMenu(); showProfile();">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </div>
+            
+            <div class="hamburger-item logout" onclick="confirmLogout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification"></div>
+<!-- Create Announcement Page -->
+<div id="createAnnouncementPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeCreateAnnouncement()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">New Announcement</h1>
+        <button class="previous-btn" onclick="showPreviousAnnouncements()">
+            Previous
+        </button>
+    </div>
+    
+    <div class="feature-content">
+        <div class="instruction-text">
+            Kindly create new announcement, the whole staff will be notified.
+        </div>
+        
+        <div class="announcement-form">
+            <textarea class="announcement-textarea" id="announcementText" placeholder="Write your announcement here..." maxlength="2000"></textarea>
+            
+            <div class="media-preview" id="announcementMediaPreview"></div>
+            
+            <div class="announcement-actions">
+                <input type="file" id="announcementFile" accept="image/*,video/*" style="display: none;">
+                <button class="media-upload-btn" onclick="document.getElementById('announcementFile').click()">
+                    <i class="fas fa-camera"></i>
+                    Upload Media
+                </button>
+                
+                <button class="post-btn" id="postAnnouncementBtn" onclick="postAnnouncement()">
+                    <i class="fas fa-paper-plane"></i>
+                    Post
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Previous Announcements Page -->
+<div id="previousAnnouncementsPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closePreviousAnnouncements()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Previous Announcements</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="announcements-list" id="previousAnnouncementsList">
+            <!-- Previous announcements will load here -->
+        </div>
+    </div>
+</div>
+
+<!-- Announcement Detail Page -->
+<div id="announcementDetailPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeAnnouncementDetail()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Previous Announcement</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="detail-instruction">
+            Here you can access the previous announcement
+        </div>
+        
+        <div class="announcement-detail-card">
+            <div class="announcement-detail-header">
+                <h3 id="detailAnnouncementTitle"></h3>
+                <span id="detailAnnouncementDate"></span>
+            </div>
+            <div class="announcement-detail-body" id="detailAnnouncementBody"></div>
+            <div id="detailAnnouncementMedia"></div>
+        </div>
+    </div>
+</div>
+<!-- Direct Messages List Page -->
+<div id="directMessagesPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeDirectMessages()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Direct Messages</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="contacts-list" id="supervisorContactsList"></div>
+    </div>
+</div>
+
+<!-- Chat Interface -->
+<div id="supervisorChatPage" class="feature-page">
+    <div class="chat-header-sv">
+        <button class="back-arrow" onclick="backToMessagesList()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="chat-user-info-sv">
+            <div class="chat-avatar-sv" id="chatAvatarSv" onclick="viewStaffProfile()"></div>
+            <div class="chat-user-details-sv">
+                <h3 id="chatUserNameSv"></h3>
+                <span id="chatUserStatusSv"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-messages-sv" id="chatMessagesSv"></div>
+<div class="chat-input-area-sv">
+    <input type="file" id="chatFileInputSv" multiple accept="image/*,video/*" style="display: none;">
+    
+    <button class="file-upload-icon-sv" onclick="document.getElementById('chatFileInputSv').click()">
+        <i class="fas fa-camera"></i>
+    </button>
+    
+    <button class="voice-note-btn-sv" id="voiceNoteBtnSv" onclick="toggleVoiceNote()">
+        <i class="fas fa-microphone"></i>
+    </button>
+    
+    <textarea class="message-input-sv" id="messageInputSv" placeholder="Type a message..." 
+             onkeypress="handleMessageKeyPressSv(event)" oninput="updateSendButtonSv()"></textarea>
+    
+    <button class="send-message-btn-sv" id="sendMessageBtnSv" onclick="sendMessageSv()" disabled>
+        <i class="fas fa-paper-plane"></i>
+    </button>
+</div>
+</div>
+<!-- Create Poll Page -->
+<div id="createPollPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeCreatePoll()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Create Poll</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="poll-instruction">
+            Create a poll to vote for "Staff of the Week"
+        </div>
+        
+        <div class="poll-form">
+            <div class="poll-title-section">
+                <label class="poll-label">Poll Title</label>
+                <input 
+                    type="text" 
+                    class="poll-title-input" 
+                    id="pollTitle" 
+                    value="Who is the Staff of the Week?" 
+                    readonly
+                >
+            </div>
+            
+            <div class="nominees-section">
+                <label class="poll-label">Add Nominees</label>
+                
+                <div class="nominee-inputs" id="nomineeInputs">
+                    <div class="nominee-input-group">
+                        <input 
+                            type="text" 
+                            class="nominee-input" 
+                            placeholder="Name of Nominee 1"
+                            data-nominee="1"
+                        >
+                        <button class="remove-nominee-btn" onclick="removeNominee(1)" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="nominee-input-group">
+                        <input 
+                            type="text" 
+                            class="nominee-input" 
+                            placeholder="Name of Nominee 2"
+                            data-nominee="2"
+                        >
+                        <button class="remove-nominee-btn" onclick="removeNominee(2)" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="add-nominee-btn" id="addNomineeBtn" onclick="addNomineeField()">
+                    <i class="fas fa-plus"></i>
+                    Add Another Nominee
+                </button>
+            </div>
+            
+            <div class="poll-actions">
+                <button class="publish-poll-btn" id="publishPollBtn" onclick="publishPoll()">
+                    <i class="fas fa-check-circle"></i>
+                    Publish Poll
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Polls Page -->
+<div id="activePollsPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeActivePoll()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Active Poll</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="active-poll-container" id="activePollContainer">
+            <!-- Active poll will be displayed here -->
+        </div>
+    </div>
+</div>
+
+<!-- Notifications Page -->
+<div id="notificationsPage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeNotificationsPage()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Notifications</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="notifications-filter">
+            <label class="filter-label">Filter by date:</label>
+            <input type="date" class="date-filter" id="notificationDateFilter" onchange="filterNotifications()">
+            <button class="clear-filter-btn" onclick="clearNotificationFilter()">Clear</button>
+            <button class="mark-all-read" onclick="markAllAsRead()">Mark All as Read</button>
+        </div>
+        
+        <div class="notifications-list" id="notificationsList">
+            <!-- Notifications will be loaded here -->
+        </div>
+    </div>
+</div>
+    <!-- Profile Page -->
+<div id="profilePage" class="feature-page">
+    <div class="feature-header">
+        <button class="back-arrow" onclick="closeProfile()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="feature-title">Profile</h1>
+    </div>
+    
+    <div class="feature-content">
+        <div class="profile-container">
+            <div class="profile-picture-section">
+                <div class="profile-picture-wrapper" onclick="showProfilePictureOptions()">
+                    <div class="profile-picture" id="profilePicture">SV</div>
+                    <div class="profile-camera-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+            
+            <div class="profile-info-section">
+                <div class="profile-info-item">
+                    <label class="profile-label">Name</label>
+                    <div class="profile-value">Supervisor</div>
+                </div>
+                
+                <div class="profile-info-item">
+                    <label class="profile-label">Birthday</label>
+                    <div class="profile-value" id="profileBirthday">January 15, 1985</div>
+                </div>
+                
+                <div class="profile-info-item">
+                    <label class="profile-label">Position</label>
+                    <div class="profile-value">Supervisor</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Logout Confirmation Page -->
+<div id="logoutPage" class="feature-page">
+    <div class="logout-content">
+        <div class="logout-icon">
+            <i class="fas fa-sign-out-alt"></i>
+        </div>
+        <h2 class="logout-title">Are you sure you want to log out?</h2>
+        <p class="logout-message">You will need to log in again to access your account</p>
+        
+        <div class="logout-actions">
+            <button class="logout-cancel-btn" onclick="cancelLogout()">
+                Cancel
+            </button>
+            <button class="logout-confirm-btn" onclick="performLogout()">
+                Log Out
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<script src="2script.js"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registered'))
+            .catch(err => console.log('Service Worker failed:', err));
+    }
+    
+</script>
+<!-- Your Firebase Config -->
+<script src="Firebase-Config.js"></script>
+</body>
+</html>
