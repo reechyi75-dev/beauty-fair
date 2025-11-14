@@ -11,16 +11,18 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Make Firebase services available FIRST
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+// Make Firebase services globally accessible on the window object
+window.auth = firebase.auth();
+window.db = firebase.firestore();
+window.storage = firebase.storage();
 
-// THEN enable persistent login
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+// Enable persistent login
+window.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
     .then(() => {
-        console.log("Firebase persistence enabled");
+        console.log("Firebase initialized and persistence enabled");
     })
     .catch((error) => {
         console.error("Persistence error:", error);
     });
+
+console.log("Firebase Config loaded successfully");

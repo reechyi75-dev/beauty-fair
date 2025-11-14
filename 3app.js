@@ -80,51 +80,51 @@ function openHamburgerMenu() {
 function closeHamburgerMenu() {
     document.getElementById('hamburgerMenu').style.display = 'none';
 }
-
-// Load Staff Feed
+// Load Staff Feed from Firebase
 function loadStaffFeed() {
     const feedContainer = document.getElementById('feedPosts');
     
-    const posts = [
-        {
-            id: 1,
-            author: 'Adeyemi Michael',
-            initials: 'AM',
-            time: '2 hours ago',
-            text: 'Great team meeting today! Looking forward to implementing the new customer service strategies we discussed. 💪',
-            type: 'text',
-            likes: 24,
-            comments: 5,
-            liked: false
-        },
-        {
-            id: 2,
-            author: 'Folake Kehinde',
-            initials: 'FK',
-            time: '4 hours ago',
-            text: 'Just finished organizing the new perfume display! The customers are going to love the new arrangement. ✨',
-            type: 'photo',
-            mediaUrl: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&h=300&fit=crop',
-            likes: 18,
-            comments: 3,
-            liked: false
-        },
-        {
-            id: 3,
-            author: 'Tunde Bakare',
-            initials: 'TB',
-            time: '6 hours ago',
-            text: 'Safety first! Remember to always wear your protective gear when working with chemicals in the mixing section. @everyone',
-            type: 'text',
-            likes: 32,
-            comments: 8,
-            liked: false
-        }
-    ];
+    // Show loading state
+    feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><p>Loading posts...</p></div>';
     
-    renderPosts(posts, feedContainer);
+    // Get all posts from Firebase, ordered by newest first
+    db.collection('posts')
+        .orderBy('createdAt', 'desc')
+        .get()
+        .then((snapshot) => {
+            const posts = [];
+            
+            snapshot.forEach((doc) => {
+                const post = doc.data();
+                posts.push({
+                    id: doc.id,
+                    author: post.authorName,
+                    initials: getInitials(post.authorName),
+                    time: formatTime(post.createdAt),
+                    text: post.text || '',
+                    type: post.type || 'text',
+                    mediaUrl: post.mediaUrl || null,
+                    likes: post.likes || 0,
+                    likedBy: post.likedBy || [],
+                    comments: post.commentCount || 0,
+                    authorCode: post.authorCode
+                });
+            });
+            
+            if (posts.length === 0) {
+                feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px;"></i><p>No posts yet</p></div>';
+            } else {
+                renderPosts(posts, feedContainer);
+            }
+        })
+        .catch((error) => {
+            console.error("Error loading posts:", error);
+            feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #ff4757;"><i class="fas fa-exclamation-circle" style="font-size: 2rem;"></i><p>Error loading posts</p></div>';
+        });
 }
 
+
+// Render posts in feed
 function renderPosts(posts, container) {
     container.innerHTML = '';
     
@@ -132,6 +132,10 @@ function renderPosts(posts, container) {
         const postElement = document.createElement('div');
         postElement.className = 'post';
         postElement.dataset.postId = post.id;
+        
+        // Check if current admin liked this post
+        const adminCode = localStorage.getItem('accessCode') || 'admin';
+        const isLiked = post.likedBy.includes(adminCode);
         
         postElement.innerHTML = `
             <div class="post-header">
@@ -142,7 +146,7 @@ function renderPosts(posts, container) {
                         <span class="post-time">${post.time}</span>
                     </div>
                 </div>
-                <i class="fas fa-ellipsis-v post-menu"></i>
+                <i class="fas fa-ellipsis-v post-menu" onclick="showAdminPostMenu('${post.id}', '${post.author}')"></i>
             </div>
             
             <div class="post-content">
@@ -157,45 +161,31 @@ function renderPosts(posts, container) {
                         <video src="${post.mediaUrl}" class="post-video" controls preload="metadata"></video>
                     </div>
                 ` : ''}
+                ${post.type === 'audio' && post.mediaUrl ? `
+                    <div class="post-media">
+                        <audio src="${post.mediaUrl}" controls style="width: 100%;"></audio>
+                    </div>
+                ` : ''}
             </div>
             
             <div class="post-actions">
-                <button class="post-action like-action ${post.liked ? 'liked' : ''}" onclick="toggleLike(${post.id})">
+                <button class="post-action like-action ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
                     <i class="fas fa-heart"></i>
                     <span>${post.likes} Likes</span>
                 </button>
-                <button class="post-action comment-action" onclick="showComments(${post.id})">
+                <button class="post-action comment-action" onclick="showComments('${post.id}')">
                     <i class="fas fa-comment"></i>
                     <span>${post.comments} Comments</span>
                 </button>
             </div>
         `;
         
-        // Long press functionality for HR delete
-        let pressTimer;
-        postElement.addEventListener('mousedown', function(e) {
-            if (e.target.closest('.post-menu')) return;
-            pressTimer = setTimeout(() => showAdminPostMenu(post.id, post.author), 800);
-        });
-        
-        postElement.addEventListener('mouseup', function() {
-            clearTimeout(pressTimer);
-        });
-        
-        postElement.addEventListener('touchstart', function(e) {
-            if (e.target.closest('.post-menu')) return;
-            pressTimer = setTimeout(() => showAdminPostMenu(post.id, post.author), 800);
-        });
-        
-        postElement.addEventListener('touchend', function() {
-            clearTimeout(pressTimer);
-        });
-        
         container.appendChild(postElement);
     });
 }
 
-// Post Menu for Admin Delete
+
+// Show Admin Post Menu
 function showAdminPostMenu(postId, author) {
     let modal = document.getElementById('deletePostModal');
     
@@ -210,9 +200,9 @@ function showAdminPostMenu(postId, author) {
         <div class="profile-options-content">
             <h3 class="profile-options-title">Delete post by ${author}?</h3>
             <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                ${author} will be notified that their post was removed for violating community guidelines.
+                This action cannot be undone.
             </p>
-            <button class="profile-option-btn remove" onclick="confirmDeletePost(${postId}, '${author}')">
+            <button class="profile-option-btn remove" onclick="confirmDeletePost('${postId}', '${author}')">
                 <i class="fas fa-trash"></i>
                 Delete Post
             </button>
@@ -231,42 +221,78 @@ function closeDeletePostModal() {
     if (modal) {
         modal.classList.remove('show');
     }
-}
+} 
+// Auto-enable/disable send button
+document.addEventListener('DOMContentLoaded', function() {
+    const commentInput = document.getElementById('commentInput');
+    const sendBtn = document.getElementById('sendCommentBtn');
+    
+    if (commentInput && sendBtn) {
+        commentInput.addEventListener('input', function() {
+            sendBtn.disabled = !this.value.trim();
+        });
+    }
+    
+    // Load feed when page loads
+    if (document.getElementById('feedPosts')) {
+        loadStaffFeed();
+    }
+});
 
+// Delete Post
 function confirmDeletePost(postId, author) {
     closeDeletePostModal();
-    deleteStaffPost(postId, author);
-}
-
-function deleteStaffPost(postId, author) {
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    if (postElement) {
-        postElement.style.opacity = '0';
-        postElement.style.transform = 'scale(0.8)';
-        
-        setTimeout(() => {
-            postElement.remove();
-            showNotification(`Post by ${author} deleted. User has been notified.`, 'success');
-        }, 300);
-    }
-}
-
-// Like and Comment Functions
-function toggleLike(postId) {
-    const likeBtn = document.querySelector(`[data-post-id="${postId}"] .like-action`);
-    const likesSpan = likeBtn.querySelector('span');
-    const currentLikes = parseInt(likesSpan.textContent);
     
-    if (likeBtn.classList.contains('liked')) {
-        likeBtn.classList.remove('liked');
-        likesSpan.textContent = `${currentLikes - 1} Likes`;
-    } else {
-        likeBtn.classList.add('liked');
-        likesSpan.textContent = `${currentLikes + 1} Likes`;
-    }
+    db.collection('posts').doc(postId).delete()
+        .then(() => {
+            const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+            if (postElement) {
+                postElement.style.opacity = '0';
+                postElement.style.transform = 'scale(0.8)';
+                
+                setTimeout(() => {
+                    postElement.remove();
+                    showNotification(`Post by ${author} deleted successfully.`, 'success');
+                }, 300);
+            }
+        })
+        .catch((error) => {
+            console.error("Error deleting post:", error);
+            showNotification('Failed to delete post', 'error');
+        });
 }
-
-
+ 
+// Toggle Like on Post
+function toggleLike(postId) {
+    const adminCode = localStorage.getItem('accessCode') || 'admin';
+    const postRef = db.collection('posts').doc(postId);
+    
+    postRef.get().then((doc) => {
+        if (doc.exists) {
+            const data = doc.data();
+            const likedBy = data.likedBy || [];
+            const likes = data.likes || 0;
+            
+            if (likedBy.includes(adminCode)) {
+                // Unlike
+                postRef.update({
+                    likes: likes - 1,
+                    likedBy: firebase.firestore.FieldValue.arrayRemove(adminCode)
+                }).then(() => {
+                    loadStaffFeed(); // Reload to update UI
+                });
+            } else {
+                // Like
+                postRef.update({
+                    likes: likes + 1,
+                    likedBy: firebase.firestore.FieldValue.arrayUnion(adminCode)
+                }).then(() => {
+                    loadStaffFeed(); // Reload to update UI
+                });
+            }
+        }
+    });
+} 
 // Notification System
 function showNotification(message, type) {
     const existingToast = document.querySelector('.toast-notification');
@@ -1901,6 +1927,7 @@ function updateUnreadCount() {
 let currentPostId = null;
 let postComments = {};
 
+
 function showComments(postId) {
     currentPostId = postId;
     document.getElementById('commentsModal').classList.add('show');
@@ -1912,38 +1939,38 @@ function closeComments() {
     currentPostId = null;
     document.getElementById('commentInput').value = '';
 }
-
+ 
+// Load Comments from Firebase
 function loadComments(postId) {
-    // Initialize comments if not exist
-    if (!postComments[postId]) {
-        postComments[postId] = [
-            {
-                id: 1,
-                author: 'Sarah Johnson',
-                initials: 'SJ',
-                text: 'Great work! Keep it up! 👍',
-                time: '5 minutes ago',
-                likes: 3,
-                liked: false
-            },
-            {
-                id: 2,
-                author: 'David Williams',
-                initials: 'DW',
-                text: 'This is exactly what we needed. Thanks for sharing!',
-                time: '10 minutes ago',
-                likes: 5,
-                liked: false
-            }
-        ];
-    }
-    
-    renderComments(postId);
+    db.collection('posts').doc(postId).collection('comments')
+        .orderBy('createdAt', 'asc')
+        .get()
+        .then((snapshot) => {
+            const comments = [];
+            
+            snapshot.forEach((doc) => {
+                const comment = doc.data();
+                comments.push({
+                    id: doc.id,
+                    author: comment.authorName,
+                    initials: getInitials(comment.authorName),
+                    text: comment.text,
+                    time: formatTime(comment.createdAt),
+                    likes: comment.likes || 0,
+                    likedBy: comment.likedBy || []
+                });
+            });
+            
+            renderComments(comments);
+        })
+        .catch((error) => {
+            console.error("Error loading comments:", error);
+        });
 }
-
-function renderComments(postId) {
+ 
+function renderComments(comments) {
     const container = document.getElementById('commentsList');
-    const comments = postComments[postId] || [];
+    const adminCode = localStorage.getItem('accessCode') || 'admin';
     
     if (comments.length === 0) {
         container.innerHTML = `
@@ -1958,6 +1985,8 @@ function renderComments(postId) {
     container.innerHTML = '';
     
     comments.forEach(comment => {
+        const isLiked = comment.likedBy.includes(adminCode);
+        
         const commentEl = document.createElement('div');
         commentEl.className = 'comment-item';
         
@@ -1970,13 +1999,9 @@ function renderComments(postId) {
                 </div>
                 <div class="comment-text">${comment.text}</div>
                 <div class="comment-actions">
-                    <button class="comment-action-btn ${comment.liked ? 'liked' : ''}" onclick="toggleCommentLike(${postId}, ${comment.id})">
+                    <button class="comment-action-btn ${isLiked ? 'liked' : ''}" onclick="toggleCommentLike('${currentPostId}', '${comment.id}')">
                         <i class="fas fa-heart"></i>
                         <span>${comment.likes}</span>
-                    </button>
-                    <button class="comment-action-btn" onclick="replyToComment(${comment.id})">
-                        <i class="fas fa-reply"></i>
-                        Reply
                     </button>
                 </div>
             </div>
@@ -1985,54 +2010,72 @@ function renderComments(postId) {
         container.appendChild(commentEl);
     });
 }
-
+ 
+// Send Comment
 function sendComment() {
     const input = document.getElementById('commentInput');
     const text = input.value.trim();
     
     if (!text || !currentPostId) return;
     
-    const newComment = {
-        id: Date.now(),
-        author: 'HR Admin',
-        initials: 'HR',
+    const adminCode = localStorage.getItem('accessCode') || 'admin';
+    const adminName = localStorage.getItem('userName') || 'Admin';
+    
+    // Add comment to Firebase
+    db.collection('posts').doc(currentPostId).collection('comments').add({
         text: text,
-        time: 'Just now',
+        authorName: adminName,
+        authorCode: adminCode,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         likes: 0,
-        liked: false
-    };
+        likedBy: []
+    }).then(() => {
+        // Update comment count on post
+        db.collection('posts').doc(currentPostId).update({
+            commentCount: firebase.firestore.FieldValue.increment(1)
+        });
+        
+        input.value = '';
+        loadComments(currentPostId);
+        showNotification('Comment posted!', 'success');
+    }).catch((error) => {
+        console.error("Error posting comment:", error);
+        showNotification('Failed to post comment', 'error');
+    });
+}
+// Toggle Comment Like
+function toggleCommentLike(postId, commentId) {
+    const adminCode = localStorage.getItem('accessCode') || 'admin';
+    const commentRef = db.collection('posts').doc(postId).collection('comments').doc(commentId);
     
-    if (!postComments[currentPostId]) {
-        postComments[currentPostId] = [];
-    }
-    
-    postComments[currentPostId].push(newComment);
-    
-    // Update comment count on post
-    const commentBtn = document.querySelector(`[data-post-id="${currentPostId}"] .comment-action span`);
-    if (commentBtn) {
-        const currentCount = parseInt(commentBtn.textContent);
-        commentBtn.textContent = `${currentCount + 1} Comments`;
-    }
-    
-    input.value = '';
-    renderComments(currentPostId);
-    showNotification('Comment posted!', 'success');
+    commentRef.get().then((doc) => {
+        if (doc.exists) {
+            const data = doc.data();
+            const likedBy = data.likedBy || [];
+            const likes = data.likes || 0;
+            
+            if (likedBy.includes(adminCode)) {
+                // Unlike
+                commentRef.update({
+                    likes: likes - 1,
+                    likedBy: firebase.firestore.FieldValue.arrayRemove(adminCode)
+                }).then(() => {
+                    loadComments(postId);
+                });
+            } else {
+                // Like
+                commentRef.update({
+                    likes: likes + 1,
+                    likedBy: firebase.firestore.FieldValue.arrayUnion(adminCode)
+                }).then(() => {
+                    loadComments(postId);
+                });
+            }
+        }
+    });
 }
 
-function toggleCommentLike(postId, commentId) {
-    const comment = postComments[postId].find(c => c.id === commentId);
-    if (comment) {
-        if (comment.liked) {
-            comment.likes--;
-            comment.liked = false;
-        } else {
-            comment.likes++;
-            comment.liked = true;
-        }
-        renderComments(postId);
-    }
-}
+
 
 function replyToComment(commentId) {
     const input = document.getElementById('commentInput');
@@ -2288,4 +2331,53 @@ function confirmClearCache() {
     setTimeout(() => {
         location.reload();
     }, 2000);
+}
+
+// Helper Functions
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name[0].toUpperCase();
+}
+
+function formatTime(timestamp) {
+    if (!timestamp) return 'Just now';
+    
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+    
+    return date.toLocaleDateString();
+}
+
+function loadStaffFeed() {
+    const feedContainer = document.getElementById('feedPosts');
+    
+    feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><p>Loading posts...</p></div>';
+    
+    db.collection('posts')
+        .orderBy('createdAt', 'desc')
+        .get()
+        .then((snapshot) => {
+            console.log("Total posts found:", snapshot.size);
+            
+            snapshot.forEach((doc) => {
+                console.log("Post ID:", doc.id);
+                console.log("Post data:", doc.data());
+            });
+            
+            // Rest of the code...
+        });
 }

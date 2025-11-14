@@ -1,603 +1,280 @@
 
-// FIREBASE AUTHENTICATION FUNCTIONS
+// FIREBASE AUTHENTICATION WITH ACCESS CODE SYSTEM
 // ============================================
 
-// Signup Function
-function signupWithFirebase(email, password) {
-    auth.createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            console.log("User created:", user.uid);
-            
-            // Save user data to Firestore
-            return db.collection('users').doc(user.uid).set({
-                email: email,
-                createdAt: new Date(),
-                role: 'staff' // Default role, we'll update this later
-            });
-        })
-        .then(() => {
-            // Show OTP page (your existing code handles this)
-            showNotification('Account created successfully!', 'success');
-        })
-        .catch((error) => {
-            console.error("Signup error:", error);
-            showNotification(error.message, 'error');
-        });
-}
-
-// Login Function
-function loginWithFirebase(email, password) {
-    auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            
-            // Get user role from Firestore
-            return db.collection('users').doc(user.uid).get();
-        })
-        .then((doc) => {
-            if (doc.exists) {
-                const userData = doc.data();
-                const role = userData.role || 'staff'; // Default to staff if no role
-                
-                // Redirect based on role
-                if (role === 'supervisor') {
-                    window.location.href = 'Supervisor.html';
-                } else if (role === 'admin') {
-                    window.location.href = 'Admin.html';
-                } else if (role === 'security') {
-                    window.location.href = 'Security.html'; // If you have this
-                } else if (role === 'chairman-office') {
-                    window.location.href = 'Chairman.html'; // If you have this
-                } else {
-                    // Default to staff for regular users
-                    window.location.href = 'Index.html';
-                }
-            } else {
-                showNotification('User data not found', 'error');
-            }
-        })
-        .catch((error) => {
-            console.error("Login error:", error);
-            
-            let errorMessage = 'Login failed';
-            if (error.code === 'auth/user-not-found') {
-                errorMessage = 'No account found with this email';
-            } else if (error.code === 'auth/wrong-password') {
-                errorMessage = 'Incorrect password';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Invalid email address';
-            } else if (error.code === 'auth/too-many-requests') {
-                errorMessage = 'Too many failed attempts. Try again later';
-            } else {
-                errorMessage = error.message;
-            }
-            
-            showNotification(errorMessage, 'error');
-        });
-} 
 let isRecording = false;
 let mediaRecorder = null;
-
 let audioChunks = [];
-
 let selectedFiles = [];
-
 let currentPage = 'initial';
+let selectedDepartment = null;
+let sessionTimeout;
+let isRemembered = false;
+let profilePicFile = null;
+let currentUser = { 
+    accessCode: '',
+    name: '', 
+    initials: '',
+    role: '',
+    department: ''
+};
 
-        let selectedDepartment = null;
+// Initialize app
+document.addEventListener('DOMContentLoaded', function() {
+    setupEventListeners();
+    checkAutoLogin();
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+});
 
-        let sessionTimeout;
+function setupEventListeners() {
+    // Form submission
+    document.getElementById('authForm').addEventListener('submit', handleLogin);
+    
+    // Activity tracking for session timeout
+    document.addEventListener('mousemove', resetSessionTimeout);
+    document.addEventListener('keypress', resetSessionTimeout);
+    document.addEventListener('click', resetSessionTimeout);
+    document.addEventListener('scroll', resetSessionTimeout);
+    
+    // Department selection
+    setupDepartmentSelection();
+    
+    // Profile picture upload
+    document.getElementById('profilePicUpload').addEventListener('click', function() {
+        document.getElementById('profilePicInput').click();
+    });
+    
+    document.getElementById('profilePicInput').addEventListener('change', handleProfilePicSelect);
+    
+    // Dashboard navigation setup
+    setupNavigation();
+}
 
-        let isRemembered = false;
-
-        let profilePicFile = null;
-
-        let currentUser = { name: '', initials: '' };
-        
-
-
-
-
-
- // Initialize app
-
-        document.addEventListener('DOMContentLoaded', function() {
-
-            setupEventListeners();
-
-           //startSessionTimeout();
-
-            checkBiometricSupport();
-
-            updateDateTime();
-
-            setInterval(updateDateTime, 1000); // Update every second
-
-        
-
-        });    
-
-        function setupEventListeners() {
-
-            // Form submissions
-
-            document.getElementById('authForm').addEventListener('submit', handleLogin);
-
-            document.getElementById('signupForm').addEventListener('submit', handleSignup);
-
-        
-
-            // Password strength checking
-
-            document.getElementById('password').addEventListener('input', checkPasswordStrength);
-
-            document.getElementById('signupPassword').addEventListener('input', function() {
-
-                checkPasswordStrength('signup');
-
-            });
-
-            
-
-            // Password toggle
-
-            document.getElementById('passwordToggle').addEventListener('click', function() {
-
-                togglePassword('password');
-
-            });
-
-            
-
-            // Biometric login
-
-            document.getElementById('biometricBtn').addEventListener('click', handleBiometricLogin);
-
-            
-
-            // Sign up button
-
-            document.getElementById('signupBtn').addEventListener('click', showSignupPage);
-
-            
-
-            // OTP input handling
-
-            setupOTPInput();
-
-            
-
-            // Department selection
-
-            setupDepartmentSelection();
-
-            
-
-            // Profile picture upload
-
-            document.getElementById('profilePicUpload').addEventListener('click', function() {
-
-                document.getElementById('profilePicInput').click();
-
-            });
-
-            
-
-            document.getElementById('profilePicInput').addEventListener('change', handleProfilePicSelect);
-
-            
-
-            // Activity tracking for session timeout
-
-            document.addEventListener('mousemove', resetSessionTimeout);
-
-            document.addEventListener('keypress', resetSessionTimeout);
-
-            document.addEventListener('click', resetSessionTimeout);
-
-            document.addEventListener('scroll', resetSessionTimeout);
-
-            
-
-            // Dashboard navigation setup
-
-            setupNavigation();
-
-        }
-
+// Handle Login with Access Code
 function handleLogin(e) {
     e.preventDefault();
     
-    const emailPhone = document.getElementById('emailPhone').value.trim();
-    const password = document.getElementById('password').value;
+    const accessCode = document.getElementById('accessCode').value.trim().toUpperCase();
     
-    // Validation
-    if (!emailPhone) {
-        showNotification('Please enter email or phone number', 'error');
+    if (!accessCode) {
+        showNotification('Please enter your access code', 'error');
         return;
     }
     
-    if (!password) {
-        showNotification('Please enter password', 'error');
-        return;
-    }
+    showNotification('Verifying access code...', 'info');
     
-    // Show loading
-    showNotification('Logging in...', 'info');
-    
-    // Login with Firebase
-    auth.signInWithEmailAndPassword(emailPhone, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
+    // Check access code in Firestore
+    db.collection('access-codes').doc(accessCode).get()
+        .then((doc) => {
+            if (!doc.exists) {
+                showNotification('Invalid access code', 'error');
+                return Promise.reject('Invalid code');
+            }
             
-            // 🔍 STEP 2: Fetch user's role from Firestore
-            return db.collection('users').doc(user.uid).get()
-                .then((doc) => {
-                    // Check if user document exists
-                    if (!doc.exists) {
-                        throw new Error('User data not found in database. Please contact admin.');
-                    }
-                    
-                    const userData = doc.data();
-                    const userRole = userData.role;
-                    
-                    // If "Remember me" is checked, enable biometric for next time
-                    if (isRemembered && window.PasswordCredential) {
-                        const cred = new PasswordCredential({
-                            id: emailPhone,
-                            password: password,
-                            name: 'Beauty Fair Account'
-                        });
-                        
-                        navigator.credentials.store(cred).then(() => {
-                            console.log('Credentials stored for biometric login');
-                        }).catch(err => {
-                            console.log('Could not store credentials:', err);
-                        });
-                    }
-                    
-                    showNotification('Login successful!', 'success');
-                    
-                    // 🚦 STEP 3: Redirect based on role
-                    setTimeout(() => {
-                        if (userRole === 'admin') {
-                            window.location.href = 'admin.html';
-                        } else if (userRole === 'supervisor') {
-                            window.location.href = 'supervisor.html';
+            const codeData = doc.data();
+            const userRole = codeData.role;
+            
+            // Check if code has been used
+            if (codeData.used) {
+                // Code already used, check if profile exists
+                return db.collection('staff-profiles').doc(accessCode).get()
+                    .then((profileDoc) => {
+                        if (profileDoc.exists && profileDoc.data().profileComplete) {
+                            // Profile complete, create temp Firebase account and login
+                            return createTempFirebaseAccount(accessCode, profileDoc.data())
+                                .then(() => {
+                                    // Save to localStorage
+                                    localStorage.setItem('userRole', userRole);
+                                    localStorage.setItem('accessCode', accessCode);
+                                    
+                                    if (isRemembered) {
+                                        localStorage.setItem('rememberMe', 'true');
+                                    }
+                                    
+                                    showNotification('Login successful!', 'success');
+                                    
+                                    // Redirect based on role
+                                    setTimeout(() => {
+                                        if (userRole === 'admin') {
+                                            window.location.href = 'admin.html';
+                                        } else if (userRole === 'supervisor') {
+                                            window.location.href = 'supervisor.html';
+                                        } else {
+                                            showDashboard();
+                                        }
+                                    }, 1000);
+                                });
                         } else {
-                            // Default to staff interface
-                            showWelcomePage();
+                            showNotification('Please complete your profile setup', 'error');
+                            return Promise.reject('Incomplete profile');
                         }
-                    }, 1000); // Small delay to show success message
-                });
-        })
-        .catch((error) => {
-            console.error("Login error:", error);
-            
-            // Better error messages
-            let errorMessage = 'Wrong credentials. Try again.';
-            
-            if (error.code === 'auth/user-not-found') {
-                errorMessage = 'No account found with this email.';
-            } else if (error.code === 'auth/wrong-password') {
-                errorMessage = 'Incorrect password.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Invalid email format.';
-            } else if (error.code === 'auth/too-many-requests') {
-                errorMessage = 'Too many failed attempts. Try again later.';
-            } else if (error.message.includes('User data not found')) {
-                errorMessage = error.message;
+                    });
             }
             
-            showNotification(errorMessage, 'error');
-        });
-}
-
-
-
-function handleSignup(e) {
-    e.preventDefault();
-    
-    const emailPhone = document.getElementById('signupEmailPhone').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    
-    if (password !== confirmPassword) {
-        showNotification('Passwords do not match!', 'error');
-        return;
-    }
-    
-    if (password.length < 6) {
-        showNotification('Password must be at least 6 characters!', 'error');
-        return;
-    }
-    
-    // Create user with Firebase
-    auth.createUserWithEmailAndPassword(emailPhone, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            
-            // Send verification email
-            return user.sendEmailVerification().then(() => {
-                // Save user to Firestore
-                return db.collection('users').doc(user.uid).set({
-                    email: emailPhone,
-                    createdAt: new Date(),
-                    role: 'staff',
-                    emailVerified: false
+            // New access code, create Firebase account
+            return createTempFirebaseAccount(accessCode, { role: userRole })
+                .then(() => {
+                    // Save to localStorage
+                    localStorage.setItem('userRole', userRole);
+                    localStorage.setItem('accessCode', accessCode);
+                    
+                    if (isRemembered) {
+                        localStorage.setItem('rememberMe', 'true');
+                    }
+                    
+                    showNotification('Access code verified!', 'success');
+                    
+                    // Staff goes through profile setup
+                    if (userRole === 'staff') {
+                        setTimeout(() => {
+                            checkStaffProfile(accessCode);
+                        }, 1000);
+                    } else {
+                        // Admin/Supervisor go straight to dashboard
+                        setTimeout(() => {
+                            if (userRole === 'admin') {
+                                window.location.href = 'admin.html';
+                            } else if (userRole === 'supervisor') {
+                                window.location.href = 'supervisor.html';
+                            }
+                        }, 1000);
+                    }
                 });
-            }).then(() => {
-                // Show message about verification email
-                const otpMessage = `A verification link has been sent to ${emailPhone}. Please check your email and click the link to verify your account.`;
-                document.getElementById('otpMessage').textContent = otpMessage;
-                
-                showNotification('Verification email sent! Check your inbox.', 'success');
-                showOTPPage();
-            });
         })
         .catch((error) => {
-            console.error("Signup error:", error);
-            showNotification(error.message, 'error');
+            if (error !== 'Invalid code' && error !== 'Incomplete profile') {
+                console.error("Login error:", error);
+                showNotification('Login failed. Please try again.', 'error');
+            }
         });
 }
 
-        async function handleBiometricLogin() {
-    // Check if user is already logged in (Firebase persistence)
-    const currentUser = auth.currentUser;
+// Create temporary Firebase Auth account for access code users
+// Create temporary Firebase Auth account for access code users
+function createTempFirebaseAccount(accessCode, userData) {
+    const tempEmail = `${accessCode.toLowerCase()}@beautyfair.app`;
+    const tempPassword = `BF_${accessCode}_Secure2024!@#`;
     
-    if (currentUser) {
-        // User already logged in, just verify with biometric
-        showNotification('Verifying biometric...', 'success');
+    // Try to sign in first (account might already exist)
+    return auth.signInWithEmailAndPassword(tempEmail, tempPassword)
+        .catch((error) => {
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                // Account doesn't exist, create it
+                return auth.createUserWithEmailAndPassword(tempEmail, tempPassword)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        
+                        // Save to users collection for compatibility
+                        return db.collection('users').doc(user.uid).set({
+                            accessCode: accessCode,
+                            email: tempEmail,
+                            role: userData.role,
+                            fullName: userData.fullName || null,
+                            department: userData.department || null,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+            }
+            throw error;
+        });
+} 
+// Check if staff has completed profile
+function checkStaffProfile(accessCode) {
+    db.collection('staff-profiles').doc(accessCode).get()
+        .then((doc) => {
+            if (doc.exists && doc.data().profileComplete) {
+                showDashboard();
+            } else {
+                showDepartmentPage();
+            }
+        })
+        .catch((error) => {
+            console.error("Profile check error:", error);
+            showDepartmentPage();
+        });
+}
+
+// Check auto login on page load
+// Check auto login on page load
+function checkAutoLogin() {
+    const savedRole = localStorage.getItem('userRole');
+    const savedCode = localStorage.getItem('accessCode');
+    const rememberMe = localStorage.getItem('rememberMe');
+    
+    if (savedRole && savedCode && rememberMe === 'true') {
+        // Verify code is still valid
+        db.collection('access-codes').doc(savedCode).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    // Re-authenticate with Firebase
+                    const tempEmail = `${savedCode.toLowerCase()}@beautyfair.app`;
+                    const tempPassword = `BF_${savedCode}_Secure2024!@#`;
+                    
+                    return auth.signInWithEmailAndPassword(tempEmail, tempPassword)
+                        .then(() => {
+                            // Check role and redirect appropriately
+                            if (savedRole === 'admin') {
+                                window.location.href = 'admin.html';
+                            } else if (savedRole === 'supervisor') {
+                                window.location.href = 'supervisor.html';
+                            } else {
+                                // For staff, check if profile is complete
+                                return db.collection('staff-profiles').doc(savedCode).get()
+                                    .then((profileDoc) => {
+                                        if (profileDoc.exists && profileDoc.data().profileComplete) {
+                                            // Profile complete, go to dashboard
+                                            showDashboard();
+                                        } else {
+                                            // Profile incomplete, start setup
+                                            showDepartmentPage();
+                                        }
+                                    });
+                            }
+                        });
+                }
+            })
+            .catch((error) => {
+                console.error("Auto-login error:", error);
+            });
+    }
+} 
+// Logout function
+function logout() {
+    auth.signOut().then(() => {
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('accessCode');
+        localStorage.removeItem('rememberMe');
         
-        // Simulate biometric check (in real device, this triggers fingerprint)
+        showNotification('Logged out successfully', 'success');
+        
         setTimeout(() => {
-            showNotification('Biometric verified!', 'success');
-            showWelcomePage();
-        }, 1500);
-        return;
-    }
-    
-    // Check if Credential Management API is supported
-    if (!window.PasswordCredential) {
-        showNotification('Biometric login not supported on this browser', 'error');
-        return;
-    }
-    
-    showNotification('Requesting biometric authentication...', 'success');
-    
-    try {
-        // Request stored credentials (triggers biometric on supported devices)
-        const credential = await navigator.credentials.get({
-            password: true,
-            mediation: 'required' // Forces user interaction (biometric)
-        });
-        
-        if (credential) {
-            // Credentials retrieved, now login to Firebase
-            const email = credential.id;
-            const password = credential.password;
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    showNotification('Biometric authentication successful!', 'success');
-                    showWelcomePage();
-                })
-                .catch((error) => {
-                    console.error("Biometric login error:", error);
-                    showNotification('Login failed. Please use email login.', 'error');
-                });
-        } else {
-            showNotification('No saved credentials. Please login with email first.', 'error');
-        }
-    } catch (error) {
-        console.error("Credential retrieval error:", error);
-        showNotification('Biometric authentication cancelled', 'error');
-    }
-} 
-
-
-
-        function checkBiometricSupport() {
-    const biometricBtn = document.getElementById('biometricBtn');
-    
-    if (!biometricBtn) return;
-    
-    // Check if already logged in
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            // User is logged in, biometric can be used
-            biometricBtn.style.display = 'block';
-        } else if (!window.PasswordCredential) {
-            // No credential API support
-            biometricBtn.style.display = 'none';
-        }
+            window.location.href = 'index.html';
+        }, 1000);
     });
 }
 
-// Call this when page loads
-document.addEventListener('DOMContentLoaded', checkBiometricSupport);
-
-
-
-        function toggleCheckbox() {
-
-            const checkbox = document.getElementById('rememberCheckbox');
-
-            isRemembered = !isRemembered;
-
-            
-
-            if (isRemembered) {
-
-                checkbox.classList.add('checked');
-
-            } else {
-
-                checkbox.classList.remove('checked');
-
-            }
-
-        }
-
-
-
-        function togglePassword(inputId) {
-
-            const input = document.getElementById(inputId);
-
-            const icon = input.nextElementSibling;
-
-            
-
-            if (input.type === 'password') {
-
-                input.type = 'text';
-
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
-
-            } else {
-
-                input.type = 'password';
-
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
-
-            }
-
-        }
-
-
-
-        function checkPasswordStrength(type = 'login') {
-
-            const input = type === 'signup' ? document.getElementById('signupPassword') : document.getElementById('password');
-
-            const bar = type === 'signup' ? document.getElementById('signupPasswordBar') : document.getElementById('passwordBar');
-
-            const text = type === 'signup' ? document.getElementById('signupPasswordText') : document.getElementById('passwordText');
-
-            
-
-            const password = input.value;
-
-            let strength = 0;
-
-            let strengthText = '';
-
-            let strengthClass = '';
-
-            
-
-            if (password.length >= 8) strength += 25;
-
-            if (/[A-Z]/.test(password)) strength += 25;
-
-            if (/[0-9]/.test(password)) strength += 25;
-
-            if (/[^A-Za-z0-9]/.test(password)) strength += 25;
-
-            
-
-            if (strength <= 25) {
-
-                strengthText = 'Weak';
-
-                strengthClass = 'strength-weak';
-
-            } else if (strength <= 50) {
-
-                strengthText = 'Fair';
-
-                strengthClass = 'strength-fair';
-
-            } else if (strength <= 75) {
-
-                strengthText = 'Good';
-
-                strengthClass = 'strength-good';
-
-            } else {
-
-                strengthText = 'Strong';
-
-                strengthClass = 'strength-strong';
-
-            }
-
-            
-
-            bar.className = `password-strength-bar ${strengthClass}`;
-
-            text.textContent = password.length > 0 ? `Password strength: ${strengthText}` : '';
-
-        }
-
-
-
-        function setupOTPInput() {
-
-            const inputs = document.querySelectorAll('.otp-digit');
-
-            
-
-            inputs.forEach((input, index) => {
-
-                input.addEventListener('input', function() {
-
-                    if (this.value && index < inputs.length - 1) {
-
-                        inputs[index + 1].focus();
-
-                    }
-
-                });
-
-                
-
-                input.addEventListener('keydown', function(e) {
-
-                    if (e.key === 'Backspace' && !this.value && index > 0) {
-
-                        inputs[index - 1].focus();
-
-                    }
-
-                });
-
-            });
-
-        }
-
-function verifyOTP() {
-    // Check if user has verified their email
-    const user = auth.currentUser;
+// Toggle remember me checkbox
+function toggleCheckbox() {
+    const checkbox = document.getElementById('rememberCheckbox');
+    isRemembered = !isRemembered;
     
-    if (!user) {
-        showNotification('No user logged in!', 'error');
-        return;
+    if (isRemembered) {
+        checkbox.classList.add('checked');
+    } else {
+        checkbox.classList.remove('checked');
     }
-    
-    // Reload user to get latest email verification status
-    user.reload().then(() => {
-        if (user.emailVerified) {
-            // Email is verified!
-            db.collection('users').doc(user.uid).update({
-                emailVerified: true
-            }).then(() => {
-                showNotification('✓ Email verified successfully!', 'success');
-                setTimeout(() => {
-                    showDepartmentPage(); // Go to department page
-                }, 1500);
-            });
-        } else {
-            // Email not verified yet
-            showNotification('Email not verified yet. Please check your inbox and click the verification link.', 'error');
-        }
-    }).catch((error) => {
-        console.error("Verification check error:", error);
-        showNotification('Error checking verification status.', 'error');
-    });
-} 
+}
+
+// Session timeout
+function resetSessionTimeout() {
+    clearTimeout(sessionTimeout);
+    sessionTimeout = setTimeout(() => {
+        logout();
+        showNotification('Session expired. Please login again.', 'error');
+    }, 30 * 60 * 1000); // 30 minutes
+}
 
 
         // Handle department selection
@@ -9364,67 +9041,59 @@ document.getElementById('profilePicInput').addEventListener('change', function(e
         document.getElementById('uploadBtn').classList.remove('hidden');
     }
 });
-
 function uploadProfilePic() {
     if (!profilePicFile) {
-        showNotification('Please select a photo first', 'error');
+        showNotification('Please select a profile picture first', 'error');
         return;
     }
     
-    const user = auth.currentUser;
-    if (!user) {
-        showNotification('No user logged in!', 'error');
+    const accessCode = localStorage.getItem('accessCode');
+    
+    if (!accessCode) {
+        showNotification('No access code found!', 'error');
         return;
     }
     
-    showNotification('Uploading photo...', 'success');
+    showNotification('Uploading profile picture...', 'info');
     
+    // Convert image to base64
     const reader = new FileReader();
     reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const MAX_SIZE = 300;
-            
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > height) {
-                if (width > MAX_SIZE) {
-                    height *= MAX_SIZE / width;
-                    width = MAX_SIZE;
-                }
-            } else {
-                if (height > MAX_SIZE) {
-                    width *= MAX_SIZE / height;
-                    height = MAX_SIZE;
-                }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
-            
-            db.collection('users').doc(user.uid).update({
-                    profilePicture: compressedImage,
-                    onboardingStep: 'complete'
-                })
-                .then(() => {
-                    showNotification('Profile uploaded!', 'success');
-                    completeOnboarding();
-                })
-                .catch((error) => {
-                    console.error("Upload error:", error);
-                    showNotification('Upload failed: ' + error.message, 'error');
-                });
-        };
-        img.src = e.target.result;
+        const base64Image = e.target.result;
+        
+        // Save to Firebase with profile complete flag
+        db.collection('staff-profiles').doc(accessCode).set({
+            profilePicture: base64Image,
+            profileComplete: true,
+            onboardingStep: 'complete',
+            completedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true })
+        .then(() => {
+            // Mark access code as used - THIS IS CRITICAL
+            return db.collection('access-codes').doc(accessCode).update({
+                used: true,
+                usedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                usedBy: localStorage.getItem('userName') || 'Unknown'
+            });
+        })
+        .then(() => {
+            showNotification('Profile complete! Welcome aboard!', 'success');
+            setTimeout(() => {
+                showDashboard();
+            }, 1500);
+        })
+        .catch((error) => {
+            console.error("Profile picture upload error:", error);
+            showNotification('Failed to upload: ' + error.message, 'error');
+        });
     };
+    
+    reader.onerror = function() {
+        showNotification('Failed to read image file', 'error');
+    };
+    
     reader.readAsDataURL(profilePicFile);
-}
+} 
 
 // Skip profile picture
 function skipProfilePic() {

@@ -25,563 +25,116 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="Firebase-Config.js"></script>  
     </head>
 
 <body>
+<div class="container">
 
-    <div class="container">
-
-        <!-- Login/Signup Initial Page -->
-
+        <!-- Login Page with Access Code -->
         <div id="initialPage">
-
             <div class="logo company-font">Beauty Fair</div>
-
             
-
             <div class="auth-card" id="authCard">
-
                 <div class="auth-header">
-
                     <h2 class="auth-title">Welcome Back</h2>
-
-                    <p class="auth-subtitle">Kindly login to access your account</p>
-
+                    <p class="auth-subtitle">Enter your access code to login</p>
                 </div>
-
-
 
                 <form id="authForm">
-
                     <div class="input-group">
-
-                        <input type="text" class="input-field" id="emailPhone" placeholder="Email or Phone Number" required>
-
+                        <input type="text" class="input-field" id="accessCode" placeholder="Access Code (e.g., BF-1234 or Admin-101)" required>
                     </div>
-
-
-
-                    <div class="input-group">
-
-                        <div class="password-container">
-
-                            <input type="password" class="input-field" id="password" placeholder="Password" required>
-
-                            <i class="fas fa-eye password-toggle" id="passwordToggle"></i>
-
-                        </div>
-
-                        <div class="password-strength" id="passwordStrength">
-
-                            <div class="password-strength-bar" id="passwordBar"></div>
-
-                        </div>
-
-                        <div class="password-text" id="passwordText"></div>
-
-                    </div>
-
-
 
                     <div class="remember-me">
-
                         <div class="checkbox-container" onclick="toggleCheckbox()">
-
                             <div class="checkbox" id="rememberCheckbox"></div>
-
                             <label class="checkbox-label">Remember me</label>
-
                         </div>
-
                     </div>
-
-
 
                     <div class="auth-buttons">
-
                         <button type="submit" class="auth-btn primary-btn" id="loginBtn">
-
                             <span>Login</span>
-
                         </button>
-
-                        
-
-                        <button type="button" class="auth-btn biometric-btn" id="biometricBtn">
-
-                            <i class="fas fa-fingerprint"></i>
-
-                            <span>Use Fingerprint</span>
-
-                        </button>
-
-                        
-
-                        <button type="button" class="auth-btn secondary-btn" id="signupBtn">Sign Up</button>
-
                     </div>
-
-
-
-                    <div class="forgot-password">
-
-                        <a href="#" class="forgot-link" id="forgotPasswordLink">Forgot Password?</a>
-
-                    </div>
-
                 </form>
-
             </div>
-
         </div>
-
-         <!-- Forgot Password Page -->
-
-<div id="forgotPasswordPage" class="forgot-password-page">
-
-    <div class="logo company-font">Beauty Fair</div>
-
-    
-
-    <div class="auth-card">
-
-        <div class="auth-header">
-
-            <h2 class="auth-title">Forgot Password?</h2>
-
-            <p class="auth-subtitle">Enter your email or phone number to reset your password</p>
-
-        </div>
-
-
-
-        <form id="forgotPasswordForm">
-
-            <div class="input-group">
-
-                <input type="text" class="input-field" id="forgotEmailPhone" placeholder="Email or Phone Number" required>
-
-            </div>
-
-
-
-            <div class="auth-buttons">
-
-                <button type="submit" class="auth-btn primary-btn">
-
-                    <span>Send Reset Code</span>
-
-                </button>
-
-                
-
-                <button type="button" class="auth-btn secondary-btn" onclick="backToLogin()">
-
-                    Back to Login
-
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-</div>
-
-
-
-<!-- Reset Password OTP Page -->
-
-<div id="resetOtpPage" class="otp-page">
-
-    <h1 class="page-title">Verify Reset Code</h1>
-
-    <p class="page-subtitle" id="resetOtpMessage">Please enter the 4-digit code sent to your email</p>
-
-    
-
-    <div class="otp-input">
-
-        <input type="text" class="otp-digit" maxlength="1" id="resetOtp1">
-
-        <input type="text" class="otp-digit" maxlength="1" id="resetOtp2">
-
-        <input type="text" class="otp-digit" maxlength="1" id="resetOtp3">
-
-        <input type="text" class="otp-digit" maxlength="1" id="resetOtp4">
-
-    </div>
-
-
-
-    <button class="auth-btn primary-btn" onclick="verifyResetOTP()" style="max-width: 300px; margin: 0 auto;">
-
-        Verify Code
-
-    </button>
-
-    
-
-    <div class="resend-code">
-
-        <span>Didn't receive code? </span>
-
-        <a href="#" class="resend-link" onclick="resendResetCode(); return false;">Resend Code</a>
-
-    </div>
-
-</div>
-
-
-
-<!-- New Password Page -->
-
-<div id="newPasswordPage" class="welcome-page">
-
-    <div class="auth-card">
-
-        <div class="auth-header">
-
-            <h2 class="auth-title">Set New Password</h2>
-
-            <p class="auth-subtitle">Create a strong password for your account</p>
-
-        </div>
-
-
-
-        <form id="newPasswordForm">
-
-            <div class="input-group">
-
-                <div class="password-container">
-
-                    <input type="password" class="input-field" id="resetNewPassword" placeholder="New Password" required>
-
-                    <i class="fas fa-eye password-toggle" onclick="togglePassword('resetNewPassword')"></i>
-
-                </div>
-
-                <div class="password-strength">
-
-                    <div class="password-strength-bar" id="resetPasswordBar"></div>
-
-                </div>
-
-                <div class="password-text" id="resetPasswordText"></div>
-
-            </div>
-
-
-
-            <div class="input-group">
-
-                <div class="password-container">
-
-                    <input type="password" class="input-field" id="resetConfirmPassword" placeholder="Confirm Password" required>
-
-                    <i class="fas fa-eye password-toggle" onclick="togglePassword('resetConfirmPassword')"></i>
-
-                </div>
-
-            </div>
-
-
-
-            <div class="auth-buttons">
-
-                <button type="submit" class="auth-btn primary-btn">
-
-                    <span>Reset Password</span>
-
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-</div>
-
-
-
-<!-- Password Reset Success Page -->
-
-<div id="resetSuccessPage" class="welcome-page">
-
-    <div class="success-icon-large">
-
-        <i class="fas fa-check-circle"></i>
-
-    </div>
-
-    <h1 class="page-title">Password Reset Successful!</h1>
-
-    <p class="page-subtitle">You can now login with your new password</p>
-
-    <div class="loading"></div>
-
-</div>
-
-
 
         <!-- Welcome Page -->
-
         <div id="welcomePage" class="welcome-page">
-
             <h1 class="page-title">Welcome!</h1>
-
             <p class="page-subtitle">Successfully logged in</p>
-
             <div class="loading"></div>
-
         </div>
-
-
-
-        <!-- Signup Page -->
-
-        <div id="signupPage" class="welcome-page">
-
-            <div class="auth-card">
-
-                <div class="auth-header">
-
-                    <h2 class="auth-title">Hey There!</h2>
-
-                    <p class="auth-subtitle">New here? Create an account</p>
-
-                </div>
-
-
-
-                <form id="signupForm">
-
-                    <div class="input-group">
-
-                        <input type="text" class="input-field" id="signupEmailPhone" placeholder="Email or Phone Number" required>
-
-                    </div>
-
-
-
-                    <div class="input-group">
-
-                        <div class="password-container">
-
-                            <input type="password" class="input-field" id="signupPassword" placeholder="Password" required>
-
-                            <i class="fas fa-eye password-toggle" onclick="togglePassword('signupPassword')"></i>
-
-                        </div>
-
-                        <div class="password-strength">
-
-                            <div class="password-strength-bar" id="signupPasswordBar"></div>
-
-                        </div>
-
-                        <div class="password-text" id="signupPasswordText"></div>
-
-                    </div>
-
-
-
-                    <div class="input-group">
-
-                        <div class="password-container">
-
-                            <input type="password" class="input-field" id="confirmPassword" placeholder="Confirm Password" required>
-
-                            <i class="fas fa-eye password-toggle" onclick="togglePassword('confirmPassword')"></i>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="auth-buttons">
-
-                        <button type="submit" class="auth-btn primary-btn">
-
-                            <span>Create Account</span>
-
-                        </button>
-
-                        
-
-                        <button type="button" class="auth-btn secondary-btn" onclick="showInitialPage()">
-
-                            Back to Login
-
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </div>
-
-
-<!-- OTP Verification Page -->
-<div id="otpPage" class="otp-page">
-    <h1 class="page-title">Verify Your Email</h1>
-    <p class="page-subtitle" id="otpMessage">Please check your email for the verification link</p>
-    
-    <div style="text-align: center; margin: 30px 0;">
-        <p style="font-size: 14px; color: #666;">
-            Click the link in your email, then come back and click the button below:
-        </p>
-    </div>
-
-    <button class="auth-btn primary-btn" onclick="verifyOTP()" style="max-width: 300px; margin: 0 auto;">
-        I've Verified My Email
-    </button>
-    
-    <div class="resend-code" style="margin-top: 20px;">
-        <span>Didn't receive email? </span>
-        <a href="#" class="resend-link" onclick="resendVerificationEmail(); return false;">Resend Email</a>
-    </div>
-</div>
-
-
 
         <!-- Department Selection Page -->
-
         <div id="departmentPage" class="department-page">
-
             <h1 class="page-title">Choose Department</h1>
-
             
-
             <div class="department-grid">
-
                 <button class="department-btn" data-dept="perfume">Perfume Section</button>
-
                 <button class="department-btn" data-dept="cream">Cream Section</button>
-
                 <button class="department-btn" data-dept="mixing">Mixing Section</button>
-
                 <button class="department-btn" data-dept="driver">Logistics</button>
-
                 <button class="department-btn" data-dept="domestic">Domestic </button>
-
                 <button class="department-btn" data-dept="office">Office-Admin </button>
-
                 <button class="department-btn" data-dept="security">Security</button>
-
                 <button class="department-btn" data-dept="printing">Printing</button>
-
                 <button class="department-btn" data-dept="store">Store</button>
-
                 <button class="department-btn" data-dept="maintenance">Maintenance</button>
-
             </div>
-
-
 
             <button class="auth-btn primary-btn hidden" id="submitDeptBtn" onclick="submitDepartment()" style="max-width: 300px; margin: 0 auto;">
-
                 Submit
-
             </button>
-
         </div>
-
-
 
         <!-- Personal Information Page -->
-
         <div id="personalInfoPage" class="personal-info-page">
-
             <h1 class="page-title">Personal Information</h1>
-
             
-
             <div class="personal-info-form">
-
                 <input type="text" class="date-input" id="fullName" placeholder="Full Name" required style="margin-bottom: 20px;">
-<input type="text" class="date-input" id="birthday" placeholder="Select your birthday" onfocus="(this.type='date')" required>
-
+                <input type="text" class="date-input" id="birthday" placeholder="Select your birthday" onfocus="(this.type='date')" required>
                 <select class="hobby-select" id="hobby" required>
-
                     <option value="">Select Hobby</option>
-
                     <option value="cooking">Cooking</option>
-
                     <option value="coding">Coding</option>
-
                     <option value="driving">Driving</option>
-
                     <option value="reading">Reading</option>
-
                     <option value="sleeping">Sleeping</option>
-
                     <option value="travelling">Travelling</option>
-
                     <option value="football">Football</option>
-
                 </select>
 
-
-
                 <button class="auth-btn primary-btn" onclick="submitPersonalInfo()">
-
                     Continue
-
                 </button>
-
             </div>
-
         </div>
-
-
 
         <!-- Profile Picture Page -->
-
         <div id="profilePicPage" class="profile-pic-page">
-
             <h1 class="page-title">Set Profile Picture</h1>
-
             
-
             <div class="profile-pic-upload" id="profilePicUpload">
-
                 <i class="fas fa-camera"></i>
-
                 <span>Tap to select photo</span>
-
             </div>
-
             
-
             <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
-
             
-
             <button class="auth-btn primary-btn hidden" id="uploadBtn" onclick="uploadProfilePic()">
-
                 Upload Picture
-
             </button>
-
             
-
             <button class="auth-btn secondary-btn" onclick="skipProfilePic()">
-
                 Skip for Now
-
             </button>
-
         </div>
-
     </div>
-
 
 
     <!-- Dashboard -->
@@ -4820,4 +4373,3 @@
     </body>
 
 </html>
-

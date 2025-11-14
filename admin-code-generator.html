@@ -1,0 +1,361 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Generator - Beauty Fair</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #003049, #669bbc);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .generator-container {
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            color: #003049;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            color: #003049;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #669bbc, #478978);
+            color: white;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102,155,188,0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .generate-btn i {
+            margin-right: 10px;
+        }
+
+        .back-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #f1f1f1;
+            color: #003049;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 3px solid #669bbc;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            display: none;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .success-icon {
+            color: #2ed573;
+            font-size: 4rem;
+            margin-bottom: 15px;
+            animation: bounce 0.6s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .generated-code {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #003049;
+            letter-spacing: 3px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .copy-btn {
+            background: #669bbc;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #478978;
+            transform: scale(1.05);
+        }
+
+        .copy-btn i {
+            margin-right: 8px;
+        }
+
+        .instruction {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #2ed573, #1e90ff);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #ff4757, #ff3742);
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #ffa502, #ff6348);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="generator-container">
+        <div class="header">
+            <div class="logo">Beauty Fair</div>
+            <h2 class="title">Kindly Generate Access Code for a Staff Member</h2>
+            <p class="subtitle">Click the button below to create a new access code</p>
+        </div>
+
+        <button class="generate-btn" id="generateBtn" onclick="generateCode()">
+            <i class="fas fa-key"></i> Generate Code
+        </button>
+
+        <div class="result-box" id="resultBox">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <p class="result-label">Access Code Generated Successfully!</p>
+            <div class="generated-code" id="generatedCode">BF-0000</div>
+            <button class="copy-btn" onclick="copyCode()">
+                <i class="fas fa-copy"></i> Copy Code
+            </button>
+            <p class="instruction">
+                Give this code to the staff member. They will use it to login and complete their profile.
+            </p>
+        </div>
+
+        <button class="back-btn" onclick="window.location.href='admin.html'">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBLLTJ84ITh4-k_XHoKDhcLB6x5KwxPmdE",
+        authDomain: "bf-staff-project.firebaseapp.com",
+        projectId: "bf-staff-project",
+        storageBucket: "bf-staff-project.firebasestorage.app",
+        messagingSenderId: "683762342463",
+        appId: "1:683762342463:web:b463e74c6157066642f68a"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    console.log("Firebase initialized successfully");
+
+    function generateCode() {
+        const generateBtn = document.getElementById('generateBtn');
+        
+        // Disable button and show loading state
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+
+        // Generate BF code
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        const accessCode = `BF-${randomNum}`;
+
+        // Get current user (admin)
+        const currentUser = auth.currentUser;
+        const createdBy = currentUser ? currentUser.email : 'admin';
+
+        // Save to Firebase
+        db.collection('access-codes').doc(accessCode).set({
+            role: 'staff',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: createdBy,
+            used: false,
+            usedBy: null,
+            usedAt: null
+        })
+        .then(() => {
+            // Show the generated code
+            document.getElementById('generatedCode').textContent = accessCode;
+            document.getElementById('resultBox').classList.add('show');
+            showNotification('Code generated and saved successfully!', 'success');
+            
+            // Re-enable button
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-key"></i> Generate Code';
+            
+            console.log('Access code created:', accessCode);
+        })
+        .catch((error) => {
+            console.error("Error creating access code:", error);
+            showNotification('Error: ' + error.message, 'error');
+            
+            // Re-enable button
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-key"></i> Generate Code';
+        });
+    }
+
+    function copyCode() {
+        const code = document.getElementById('generatedCode').textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            showNotification('Code copied to clipboard!', 'success');
+        }).catch((error) => {
+            console.error('Copy failed:', error);
+            showNotification('Failed to copy code', 'error');
+        });
+    }
+
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => notification.classList.add('show'), 100);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    </script>
+</body>
+</html>
