@@ -485,18 +485,41 @@ async function postAnnouncement() {
         }
         
         // Create announcement in Firebase
-        await db.collection('announcements').add({
+        const announcementDoc = await db.collection('announcements').add({
             title: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
             text: text,
             mediaUrl: mediaUrl,
             mediaType: mediaType,
             authorId: currentUser.uid,
-            authorName: userData.fullName || 'Admin',
+            authorName: userData.fullName || 'Supervisor',
             authorRole: userData.role,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             likes: [],
             type: 'general'
         });
+        
+        // Get all staff users to notify them
+        const staffSnapshot = await db.collection('users')
+            .where('role', '==', 'staff')
+            .get();
+        
+        // Create notifications for all staff
+        const notificationPromises = [];
+        staffSnapshot.forEach(doc => {
+            notificationPromises.push(
+                db.collection('notifications').add({
+                    userId: doc.id,
+                    type: 'announcement',
+                    title: 'New Announcement from Supervisor',
+                    message: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+                    announcementId: announcementDoc.id,
+                    read: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                })
+            );
+        });
+        
+        await Promise.all(notificationPromises);
         
         showNotification('Announcement posted! All staff members have been notified.', 'success');
         
@@ -512,7 +535,7 @@ async function postAnnouncement() {
         console.error('Post announcement error:', error);
         showNotification('Failed to post announcement', 'error');
     }
-}
+} 
 
 
 // Previous Announcements Functions

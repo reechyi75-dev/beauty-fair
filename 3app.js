@@ -1,11 +1,19 @@
 // Admin Interface - JavaScript
 
 // Initialize on page load
+
+
 document.addEventListener('DOMContentLoaded', function() {
     updateGreeting();
     updateDateTime();
     setInterval(updateDateTime, 1000);
+    postsRef = window.db.collection('posts');
+    postsRef = window.db.collection('posts');
+requestsRef = window.db.collection('requests');
+complaintsRef = window.db.collection('complaints');
+
     loadStaffFeed();
+    
 });
 
 
@@ -24,6 +32,7 @@ function updateGreeting() {
     
     document.getElementById('greetingText').textContent = greeting;
 }
+
 
 function updateDateTime() {
     const now = new Date();
@@ -83,47 +92,70 @@ function closeHamburgerMenu() {
 // Load Staff Feed from Firebase
 function loadStaffFeed() {
     const feedContainer = document.getElementById('feedPosts');
+    if (!feedContainer) {
+        console.error('Feed container not found');
+        return;
+    }
     
     // Show loading state
-    feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><p>Loading posts...</p></div>';
+    feedContainer.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading posts...</div>';
     
-    // Get all posts from Firebase, ordered by newest first
-    db.collection('posts')
-        .orderBy('createdAt', 'desc')
-        .get()
-        .then((snapshot) => {
-            const posts = [];
+    // Real-time listener for posts
+    postsRef.orderBy('createdAt', 'desc').limit(50).onSnapshot((snapshot) => {
+        if (snapshot.empty) {
+            feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No posts yet</div>';
+            return;
+        }
+        
+        const posts = [];
+        snapshot.forEach((doc) => {
+            const postData = { id: doc.id, ...doc.data() };
             
-            snapshot.forEach((doc) => {
-                const post = doc.data();
-                posts.push({
-                    id: doc.id,
-                    author: post.authorName,
-                    initials: getInitials(post.authorName),
-                    time: formatTime(post.createdAt),
-                    text: post.text || '',
-                    type: post.type || 'text',
-                    mediaUrl: post.mediaUrl || null,
-                    likes: post.likes || 0,
-                    likedBy: post.likedBy || [],
-                    comments: post.commentCount || 0,
-                    authorCode: post.authorCode
-                });
-            });
-            
-            if (posts.length === 0) {
-                feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px;"></i><p>No posts yet</p></div>';
-            } else {
-                renderPosts(posts, feedContainer);
+            // Map fields to match what renderPosts expects
+            if (postData.createdAt) {
+                postData.time = getTimeAgo(postData.createdAt.toDate());
             }
-        })
-        .catch((error) => {
-            console.error("Error loading posts:", error);
-            feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #ff4757;"><i class="fas fa-exclamation-circle" style="font-size: 2rem;"></i><p>Error loading posts</p></div>';
+            postData.author = postData.userName || postData.author;
+            postData.initials = postData.userInitials || postData.initials || 'U';
+            postData.likes = postData.likes ? postData.likes.length : 0;
+            postData.comments = postData.comments ? postData.comments.length : 0;
+            postData.text = postData.content || postData.text || '';
+            postData.type = postData.type || 'text';
+            
+            posts.push(postData);
         });
+        
+        renderPosts(posts, feedContainer);
+    }, (error) => {
+        console.error("Error loading posts:", error);
+        feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #f44336;">Error loading posts</div>';
+    });
 }
 
-
+// Helper function for time ago
+function getTimeAgo(date) {
+    if (!date) return 'Just now';
+    
+    const now = new Date();
+    const postDate = date instanceof Date ? date : new Date(date);
+    const seconds = Math.floor((now - postDate) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+    
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    
+    return postDate.toLocaleDateString();
+} 
 // Render posts in feed
 function renderPosts(posts, container) {
     container.innerHTML = '';
@@ -133,20 +165,16 @@ function renderPosts(posts, container) {
         postElement.className = 'post';
         postElement.dataset.postId = post.id;
         
-        // Check if current admin liked this post
-        const adminCode = localStorage.getItem('accessCode') || 'admin';
-        const isLiked = post.likedBy.includes(adminCode);
-        
         postElement.innerHTML = `
             <div class="post-header">
                 <div class="post-user">
-                    <div class="post-avatar">${post.initials}</div>
+                    <div class="post-avatar">${post.initials || 'U'}</div>
                     <div class="post-user-info">
                         <h4>${post.author}</h4>
                         <span class="post-time">${post.time}</span>
                     </div>
                 </div>
-                <i class="fas fa-ellipsis-v post-menu" onclick="showAdminPostMenu('${post.id}', '${post.author}')"></i>
+                <i class="fas fa-ellipsis-v post-menu"></i>
             </div>
             
             <div class="post-content">
@@ -161,30 +189,43 @@ function renderPosts(posts, container) {
                         <video src="${post.mediaUrl}" class="post-video" controls preload="metadata"></video>
                     </div>
                 ` : ''}
-                ${post.type === 'audio' && post.mediaUrl ? `
-                    <div class="post-media">
-                        <audio src="${post.mediaUrl}" controls style="width: 100%;"></audio>
-                    </div>
-                ` : ''}
             </div>
             
             <div class="post-actions">
-                <button class="post-action like-action ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
+                <button class="post-action like-action ${isLikedByCurrentUser(post) ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
                     <i class="fas fa-heart"></i>
-                    <span>${post.likes} Likes</span>
+                    <span>${post.likes || 0} Likes</span>
                 </button>
                 <button class="post-action comment-action" onclick="showComments('${post.id}')">
                     <i class="fas fa-comment"></i>
-                    <span>${post.comments} Comments</span>
+                    <span>${post.commentsCount || 0} Comments</span>
                 </button>
             </div>
         `;
         
+        // Long press functionality for HR delete
+        let pressTimer;
+        postElement.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.post-menu')) return;
+            pressTimer = setTimeout(() => showAdminPostMenu(post.id, post.author), 800);
+        });
+        
+        postElement.addEventListener('mouseup', function() {
+            clearTimeout(pressTimer);
+        });
+        
+        postElement.addEventListener('touchstart', function(e) {
+            if (e.target.closest('.post-menu')) return;
+            pressTimer = setTimeout(() => showAdminPostMenu(post.id, post.author), 800);
+        });
+        
+        postElement.addEventListener('touchend', function() {
+            clearTimeout(pressTimer);
+        });
+        
         container.appendChild(postElement);
     });
 }
-
-
 // Show Admin Post Menu
 function showAdminPostMenu(postId, author) {
     let modal = document.getElementById('deletePostModal');
@@ -200,7 +241,7 @@ function showAdminPostMenu(postId, author) {
         <div class="profile-options-content">
             <h3 class="profile-options-title">Delete post by ${author}?</h3>
             <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                This action cannot be undone.
+                ${author} will be notified that their post was removed for violating community guidelines.
             </p>
             <button class="profile-option-btn remove" onclick="confirmDeletePost('${postId}', '${author}')">
                 <i class="fas fa-trash"></i>
@@ -214,14 +255,13 @@ function showAdminPostMenu(postId, author) {
     `;
     
     modal.classList.add('show');
-}
-
+} 
 function closeDeletePostModal() {
     const modal = document.getElementById('deletePostModal');
     if (modal) {
         modal.classList.remove('show');
     }
-} 
+}
 // Auto-enable/disable send button
 document.addEventListener('DOMContentLoaded', function() {
     const commentInput = document.getElementById('commentInput');
@@ -232,6 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sendBtn.disabled = !this.value.trim();
         });
     }
+
     
     // Load feed when page loads
     if (document.getElementById('feedPosts')) {
@@ -263,35 +304,38 @@ function confirmDeletePost(postId, author) {
 }
  
 // Toggle Like on Post
-function toggleLike(postId) {
-    const adminCode = localStorage.getItem('accessCode') || 'admin';
-    const postRef = db.collection('posts').doc(postId);
+async function toggleLike(postId) {
+    const user = auth.currentUser;
+    if (!user) {
+        showNotification('Please login to like posts', 'error');
+        return;
+    }
     
-    postRef.get().then((doc) => {
-        if (doc.exists) {
-            const data = doc.data();
-            const likedBy = data.likedBy || [];
-            const likes = data.likes || 0;
-            
-            if (likedBy.includes(adminCode)) {
-                // Unlike
-                postRef.update({
-                    likes: likes - 1,
-                    likedBy: firebase.firestore.FieldValue.arrayRemove(adminCode)
-                }).then(() => {
-                    loadStaffFeed(); // Reload to update UI
-                });
-            } else {
-                // Like
-                postRef.update({
-                    likes: likes + 1,
-                    likedBy: firebase.firestore.FieldValue.arrayUnion(adminCode)
-                }).then(() => {
-                    loadStaffFeed(); // Reload to update UI
-                });
-            }
+    const postRef = postsRef.doc(postId);
+    const likeBtn = document.querySelector(`[data-post-id="${postId}"] .like-action`);
+    
+    try {
+        const postDoc = await postRef.get();
+        const postData = postDoc.data();
+        const likedBy = postData.likedBy || [];
+        
+        if (likedBy.includes(user.uid)) {
+            // Unlike
+            await postRef.update({
+                likes: firebase.firestore.FieldValue.increment(-1),
+                likedBy: firebase.firestore.FieldValue.arrayRemove(user.uid)
+            });
+        } else {
+            // Like
+            await postRef.update({
+                likes: firebase.firestore.FieldValue.increment(1),
+                likedBy: firebase.firestore.FieldValue.arrayUnion(user.uid)
+            });
         }
-    });
+    } catch (error) {
+        console.error("Error toggling like:", error);
+        showNotification('Error updating like', 'error');
+    }
 } 
 // Notification System
 function showNotification(message, type) {
@@ -505,72 +549,145 @@ function searchStaff(query) {
         return;
     }
     
-    const filtered = staffMembers.filter(staff => 
-        staff.name.toLowerCase().includes(query.toLowerCase()) ||
-        staff.role.toLowerCase().includes(query.toLowerCase())
-    );
+    const searchLower = query.toLowerCase();
     
-    if (filtered.length === 0) {
-        resultsContainer.innerHTML = '<div style="padding: 15px; text-align: center; color: #666;">No staff found</div>';
-        resultsContainer.classList.add('show');
-        return;
-    }
-    
-    resultsContainer.innerHTML = filtered.map(staff => `
-        <div class="staff-result-item" onclick="selectStaff(${staff.id}, '${staff.name}', '${staff.initials}')">
-            <div class="staff-result-avatar">${staff.initials}</div>
-            <div class="staff-result-info">
-                <div class="staff-result-name">${staff.name}</div>
-                <div class="staff-result-role">${staff.role}</div>
-            </div>
-        </div>
-    `).join('');
-    
-    resultsContainer.classList.add('show');
+    // Search Firebase for staff users
+    db.collection('users')
+        .where('role', '==', 'staff')
+        .get()
+        .then((snapshot) => {
+            const filtered = [];
+            
+            snapshot.forEach((doc) => {
+                const staff = { uid: doc.id, ...doc.data() };
+                const name = staff.fullName || '';
+                const department = staff.department || '';
+                
+                if (name.toLowerCase().includes(searchLower) ||
+                    department.toLowerCase().includes(searchLower)) {
+                    filtered.push({
+                        uid: staff.uid,
+                        name: staff.fullName,
+                        initials: getInitials(staff.fullName),
+                        department: staff.department || 'Staff'
+                    });
+                }
+            });
+            
+            if (filtered.length === 0) {
+                resultsContainer.innerHTML = '<div style="padding: 15px; text-align: center; color: #666;">No staff found</div>';
+                resultsContainer.classList.add('show');
+                return;
+            }
+            
+            resultsContainer.innerHTML = filtered.map(staff => `
+                <div class="staff-result-item" onclick="selectStaff('${staff.uid}', '${staff.name}', '${staff.initials}')">
+                    <div class="staff-result-avatar">${staff.initials}</div>
+                    <div class="staff-result-info">
+                        <div class="staff-result-name">${staff.name}</div>
+                        <div class="staff-result-role">${staff.department}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            resultsContainer.classList.add('show');
+        })
+        .catch((error) => {
+            console.error('Search error:', error);
+            resultsContainer.innerHTML = '<div style="padding: 15px; text-align: center; color: #e74c3c;">Search failed</div>';
+            resultsContainer.classList.add('show');
+        });
 }
 
-function selectStaff(id, name, initials) {
+function selectStaff(uid, name, initials) {
     document.getElementById('staffSearch').value = name;
-    document.getElementById('selectedStaffId').value = id;
+    document.getElementById('selectedStaffId').value = uid;
     document.getElementById('staffSearchResults').classList.remove('show');
 }
 
-function submitQuery(event) {
+async function submitQuery(event) {
     event.preventDefault();
     
     const staffId = document.getElementById('selectedStaffId').value;
     const staffName = document.getElementById('staffSearch').value;
-    const reason = document.getElementById('queryReason').value;
+    const reason = document.getElementById('queryReason').value.trim();
     
     if (!staffId) {
         showNotification('Please select a staff member', 'error');
         return;
     }
     
-    // Process query submission
-    closeQueryForm();
-    showNotification(`Level ${currentQueryLevel} query issued to ${staffName}. Staff has been notified.`, 'success');
-    
-    console.log('Query submitted:', {
-        level: currentQueryLevel,
-        staffId: staffId,
-        staffName: staffName,
-        reason: reason,
-        timestamp: new Date().toISOString()
-    });
-}
-
-// Close search results when clicking outside
-document.addEventListener('click', function(event) {
-    const searchContainer = document.querySelector('.staff-search-container');
-    const resultsContainer = document.getElementById('staffSearchResults');
-    
-    if (searchContainer && resultsContainer && !searchContainer.contains(event.target)) {
-        resultsContainer.classList.remove('show');
+    if (!reason) {
+        showNotification('Please provide a reason for the query', 'error');
+        return;
     }
-});
+    
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        showNotification('Please login first', 'error');
+        return;
+    }
+    
+    try {
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        const userData = userDoc.data();
+        
+        // Check if user is admin
+        if (userData.role !== 'admin') {
+            showNotification('Only admins can issue queries', 'error');
+            return;
+        }
+        
+        // Determine penalty based on level
+        let penalty = '';
+        if (currentQueryLevel === 1) {
+            penalty = 'Serious Warning';
+        } else if (currentQueryLevel === 2) {
+            penalty = '₦2,000 salary deduction';
+        } else if (currentQueryLevel === 3) {
+            penalty = '30% salary deduction';
+        }
+        
+        // Save query to Firebase
+        await db.collection('queries').add({
+            staffId: staffId,
+            staffName: staffName,
+            level: currentQueryLevel,
+            reason: reason,
+            penalty: penalty,
+            issuedBy: currentUser.uid,
+            issuedByName: userData.fullName,
+            issuedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'active'
+        });
+        
+        // Send notification to staff
+        await db.collection('notifications').add({
+            userId: staffId,
+            type: 'query',
+            title: `Level ${currentQueryLevel} Query Issued`,
+            message: `You have been issued a Level ${currentQueryLevel} query: ${penalty}. Reason: ${reason}`,
+            queryLevel: currentQueryLevel,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            read: false
+        });
+        
+        closeQueryForm();
+        showNotification(`Level ${currentQueryLevel} query issued to ${staffName}. Staff has been notified.`, 'success');
+        
+    } catch (error) {
+        console.error('Submit query error:', error);
+        showNotification('Failed to issue query: ' + error.messageror.message, 'error');
+    }
+} 
 
 console.log('Queries feature loaded successfully!');
+function getInitials(name) {
+    if (!name) return '??';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
 // ============================================
 // COMPLAINTS FEATURE JAVASCRIPT
 // ============================================
@@ -636,7 +753,7 @@ let complaintsData = [
 ];
 
 let currentComplaintId = null;
-
+let complaintsRef;
 // Main Complaints Functions
 function showComplaints() {
     openComplaintsPage();
@@ -667,7 +784,28 @@ function loadComplaintsList() {
         return;
     }
     
-    complaintsListContainer.innerHTML = '';
+    complaintsListContainer.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading complaints...</div>';
+    
+    // Real-time listener for complaints
+    complaintsRef.orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+        complaintsData = [];
+        
+        snapshot.forEach((doc) => {
+            complaintsData.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        renderComplaintsList();
+    }, (error) => {
+        console.error("Error loading complaints:", error);
+        complaintsListContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #f44336;">Error loading complaints</div>';
+    });
+}
+
+function renderComplaintsList() {
+    const complaintsListContainer = document.getElementById('complaintsList');
     
     if (complaintsData.length === 0) {
         complaintsListContainer.innerHTML = `
@@ -679,21 +817,27 @@ function loadComplaintsList() {
         return;
     }
     
+    complaintsListContainer.innerHTML = '';
+    
     complaintsData.forEach(complaint => {
         const complaintBox = document.createElement('div');
         complaintBox.className = 'complaint-box';
         complaintBox.onclick = () => openComplaintReview(complaint.id);
         
+        const timeAgo = complaint.createdAt ? getTimeAgo(complaint.createdAt.toDate()) : 'Just now';
+        const initials = getInitials(complaint.userName || complaint.author || 'User');
+        const complaintText = complaint.complaint || complaint.message || 'No message';
+        
         complaintBox.innerHTML = `
             <div class="complaint-box-header">
-                <div class="complaint-box-avatar">${complaint.initials}</div>
+                <div class="complaint-box-avatar">${initials}</div>
                 <div class="complaint-box-info">
-                    <h3>${complaint.author}</h3>
-                    <p>${complaint.time}</p>
+                    <h3>${complaint.userName || complaint.author || 'Anonymous'}</h3>
+                    <p>${timeAgo}</p>
                 </div>
             </div>
             <div class="complaint-box-preview">
-                ${complaint.complaint}
+                ${complaintText.substring(0, 100)}${complaintText.length > 100 ? '...' : ''}
             </div>
         `;
         
@@ -711,18 +855,21 @@ function openComplaintReview(complaintId) {
     const reviewUsername = document.getElementById('reviewUsername');
     const reviewTime = document.getElementById('reviewTime');
     
-    if (reviewAvatar) reviewAvatar.textContent = complaint.initials;
-    if (reviewUsername) reviewUsername.textContent = complaint.author;
-    if (reviewTime) reviewTime.textContent = complaint.time;
+    const initials = getInitials(complaint.userName || complaint.author || 'User');
+    const timeAgo = complaint.createdAt ? getTimeAgo(complaint.createdAt.toDate()) : 'Just now';
     
-    loadConversation(complaint.conversation);
+    if (reviewAvatar) reviewAvatar.textContent = initials;
+    if (reviewUsername) reviewUsername.textContent = complaint.userName || complaint.author || 'Anonymous';
+    if (reviewTime) reviewTime.textContent = timeAgo;
+    
+    // Load conversation from Firebase
+    loadConversation(complaint);
     
     const complaintReviewPage = document.getElementById('complaintReviewPage');
     if (complaintReviewPage) {
         complaintReviewPage.style.display = 'block';
     }
 }
-
 function closeComplaintReview() {
     const complaintReviewPage = document.getElementById('complaintReviewPage');
     if (complaintReviewPage) {
@@ -734,20 +881,44 @@ function closeComplaintReview() {
         replyInput.value = '';
     }
 }
-
-function loadConversation(conversation) {
+ 
+function loadConversation(complaint) {
     const conversationContainer = document.getElementById('complaintConversation');
     if (!conversationContainer) return;
     
     conversationContainer.innerHTML = '';
     
-    conversation.forEach(msg => {
+    // Add original complaint
+    const originalMsg = document.createElement('div');
+    originalMsg.className = 'message-item staff';
+    originalMsg.innerHTML = `
+        <div class="message-bubble">${complaint.complaint || complaint.message}</div>
+        <div class="message-time">${complaint.createdAt ? getTimeAgo(complaint.createdAt.toDate()) : 'Just now'}</div>
+    `;
+    conversationContainer.appendChild(originalMsg);
+    
+    // Add replies if they exist
+    const replies = complaint.replies || [];
+    replies.forEach(reply => {
         const messageItem = document.createElement('div');
-        messageItem.className = `message-item ${msg.sender}`;
+        messageItem.className = `message-item ${reply.sender}`;
+        
+        let messageContent = reply.message;
+        
+        // If there's media
+        if (reply.mediaUrl) {
+            if (reply.mediaType && reply.mediaType.startsWith('image/')) {
+                messageContent += `<br><img src="${reply.mediaUrl}" alt="Image" style="max-width: 100%; border-radius: 10px; margin-top: 8px;">`;
+            } else if (reply.mediaType && reply.mediaType.startsWith('video/')) {
+                messageContent += `<br><video src="${reply.mediaUrl}" controls style="max-width: 100%; border-radius: 10px; margin-top: 8px;"></video>`;
+            }
+        }
+        
+        const replyTime = reply.timestamp ? getTimeAgo(reply.timestamp.toDate()) : 'Just now';
         
         messageItem.innerHTML = `
-            <div class="message-bubble">${msg.message}</div>
-            <div class="message-time">${msg.time}</div>
+            <div class="message-bubble">${messageContent}</div>
+            <div class="message-time">${replyTime}</div>
         `;
         
         conversationContainer.appendChild(messageItem);
@@ -756,7 +927,7 @@ function loadConversation(conversation) {
     conversationContainer.scrollTop = conversationContainer.scrollHeight;
 }
 
-function sendComplaintReply() {
+async function sendComplaintReply() {
     const replyInput = document.getElementById('complaintReplyInput');
     if (!replyInput) return;
     
@@ -772,22 +943,43 @@ function sendComplaintReply() {
     const complaint = complaintsData.find(c => c.id === currentComplaintId);
     if (!complaint) return;
     
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    
-    const newMessage = {
-        sender: 'admin',
-        message: replyText,
-        time: timeString
-    };
-    
-    complaint.conversation.push(newMessage);
-    
-    loadConversation(complaint.conversation);
-    
-    replyInput.value = '';
-    
-    showNotification('Reply sent successfully', 'success');
+    try {
+        const newReply = {
+    sender: 'admin',
+    message: replyText,
+    timestamp: new Date() // ✅ Use regular Date
+};
+        
+        // Add reply to complaint
+        await complaintsRef.doc(currentComplaintId).update({
+            replies: firebase.firestore.FieldValue.arrayUnion(newReply),
+            lastReplyAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Send notification to staff
+        await db.collection('notifications').add({
+            userId: complaint.userId,
+            type: 'complaint_reply',
+            title: 'Admin Replied to Your Complaint',
+            message: replyText,
+            complaintId: currentComplaintId,
+            read: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        replyInput.value = '';
+        showNotification('Reply sent successfully', 'success');
+        
+        // Reload conversation
+        const updatedComplaint = complaintsData.find(c => c.id === currentComplaintId);
+        if (updatedComplaint) {
+            loadConversation(updatedComplaint);
+        }
+        
+    } catch (error) {
+        console.error('Error sending reply:', error);
+        showNotification('Failed to send reply', 'error');
+    }
 }
 
 function handleComplaintMedia() {
@@ -796,6 +988,90 @@ function handleComplaintMedia() {
         mediaInput.click();
     }
 }
+
+// Media upload event listener
+document.addEventListener('DOMContentLoaded', function() {
+    const mediaInput = document.getElementById('complaintMediaInput');
+    if (mediaInput) {
+        mediaInput.addEventListener('change', async function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const fileType = file.type;
+                const fileName = file.name;
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                
+                // Check file type
+                if (!fileType.startsWith('image/') && !fileType.startsWith('video/')) {
+                    showNotification('Please upload only images or videos', 'error');
+                    return;
+                }
+                
+                // Check file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showNotification('File too large. Maximum size is 10MB', 'error');
+                    return;
+                }
+                
+                if (!currentComplaintId) return;
+                
+                const complaint = complaintsData.find(c => c.id === currentComplaintId);
+                if (!complaint) return;
+                
+                try {
+                    showNotification('Uploading media...', 'info');
+                    
+                    // Convert to base64
+                    const reader = new FileReader();
+                    reader.onload = async function(event) {
+                        const mediaBase64 = event.target.result;
+                        
+                        const newReply = {
+                            sender: 'admin',
+                            message: `📎 ${fileName} (${fileSize}MB)`,
+                            mediaUrl: mediaBase64,
+                            mediaType: fileType,
+                            timestamp: new Date()
+                        };
+                        
+                        // Add reply with media to complaint
+                        await complaintsRef.doc(currentComplaintId).update({
+                            replies: firebase.firestore.FieldValue.arrayUnion(newReply),
+                            lastReplyAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        // Send notification to staff
+                        await db.collection('notifications').add({
+                            userId: complaint.userId,
+                            type: 'complaint_reply',
+                            title: 'Admin Sent You a Media File',
+                            message: `📎 ${fileName}`,
+                            complaintId: currentComplaintId,
+                            read: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        showNotification(`${fileType.startsWith('image/') ? 'Image' : 'Video'} uploaded successfully!`, 'success');
+                        
+                        // Reload conversation
+                        const updatedComplaint = complaintsData.find(c => c.id === currentComplaintId);
+                        if (updatedComplaint) {
+                            loadConversation(updatedComplaint);
+                        }
+                    };
+                    
+                    reader.readAsDataURL(file);
+                    
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    showNotification('Failed to upload media', 'error');
+                }
+                
+                // Reset input
+                e.target.value = '';
+            }
+        });
+    }
+});
 
 function handleVoiceNote() {
     // Check if browser supports audio recording
@@ -886,6 +1162,36 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 let currentRequest = null;
 let allRequests = [];
+let requestsRef;
+ 
+ function getInitials(name) {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function getTimeAgo(date) {
+    if (!date) return 'Just now';
+    
+    const now = new Date();
+    const postDate = date instanceof Date ? date : new Date(date);
+    const seconds = Math.floor((now - postDate) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+    
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    
+    return postDate.toLocaleDateString();
+}
 
 function showRequests() {
     document.getElementById('requestsPage').style.display = 'block';
@@ -895,59 +1201,42 @@ function showRequests() {
 function closeRequests() {
     document.getElementById('requestsPage').style.display = 'none';
 }
-
 function loadRequests() {
-    allRequests = [
-        {
-            id: 1,
-            userName: 'Adeyemi Michael',
-            initials: 'AM',
-            type: 'Day Off Request',
-            requestType: 'dayoff',
-            time: '2 hours ago',
-            status: 'pending',
-            details: {
-                startDate: 'October 15, 2025',
-                endDate: 'October 17, 2025',
-                days: '3 days',
-                reason: 'Family emergency. Need to travel to my hometown to attend to urgent family matters.'
-            }
-        },
-        {
-            id: 2,
-            userName: 'Folake Kehinde',
-            initials: 'FK',
-            type: 'Loan Request',
-            requestType: 'loan',
-            time: '5 hours ago',
-            status: 'pending',
-            details: {
-                amount: '₦50,000',
-                purpose: 'Medical expenses',
-                repaymentPlan: '5 months',
-                reason: 'Need funds for my mother\'s medical treatment. Will repay in 5 monthly installments.'
-            }
-        },
-        {
-            id: 3,
-            userName: 'Tunde Bakare',
-            initials: 'TB',
-            type: 'Day Off Request',
-            requestType: 'dayoff',
-            time: '1 day ago',
-            status: 'pending',
-            details: {
-                startDate: 'October 20, 2025',
-                endDate: 'October 20, 2025',
-                days: '1 day',
-                reason: 'Attending professional training workshop on safety protocols.'
-            }
-        }
-    ];
+    const container = document.getElementById('requestsList');
     
-    renderRequests();
+    if (container) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading requests...</div>';
+    }
+    
+    requestsRef
+        .where('status', '==', 'pending')
+        .onSnapshot((snapshot) => {
+            allRequests = [];
+            
+            snapshot.forEach((doc) => {
+                allRequests.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            // Sort manually - newest first (no index needed)
+            allRequests.sort((a, b) => {
+                if (!a.createdAt || !b.createdAt) return 0;
+                const timeA = a.createdAt.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
+                const timeB = b.createdAt.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
+                return timeB - timeA; // Newest first
+            });
+            
+            renderRequests();
+        }, (error) => {
+            console.error("Error loading requests:", error);
+            if (container) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #f44336;">Error loading requests</div>';
+            }
+        });
 }
-
+ 
 function renderRequests() {
     const container = document.getElementById('requestsList');
     
@@ -969,16 +1258,27 @@ function renderRequests() {
         requestEl.className = 'request-item';
         requestEl.onclick = () => openRequestDetail(request);
         
+        // Calculate time properly - checks both createdAt and submittedAt
+        let timeAgo = 'Just now';
+        if (request.createdAt || request.submittedAt) {
+            const timestamp = request.createdAt || request.submittedAt;
+            const createdDate = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            timeAgo = getTimeAgo(createdDate);
+        }
+        
+        const displayType = request.type === 'dayoff' ? 'Day Off' :
+            request.type === 'loan' ? 'Loan' : request.type;
+        
         requestEl.innerHTML = `
             <div class="request-item-header">
-                <div class="request-avatar">${request.initials}</div>
+                <div class="request-avatar">${getInitials(request.userName)}</div>
                 <div class="request-user-info">
                     <div class="request-user-name">${request.userName}</div>
-                    <div class="request-type">${request.type}</div>
+                    <div class="request-type">${displayType}</div>
                 </div>
                 <div>
                     <div class="request-badge">Pending</div>
-                    <div class="request-time">${request.time}</div>
+                    <div class="request-time">${timeAgo}</div>
                 </div>
             </div>
         `;
@@ -995,53 +1295,79 @@ function openRequestDetail(request) {
     
     // Set subtitle
     const subtitle = document.getElementById('requestSubtitle');
+    const displayType = request.type === 'dayoff' ? 'Day Off Request' :
+        request.type === 'loan' ? 'Loan Request' : request.type;
+    
     subtitle.innerHTML = `
-        <div class="request-subtitle-avatar">${request.initials}</div>
+        <div class="request-subtitle-avatar">${getInitials(request.userName)}</div>
         <div>
-            <strong>${request.userName}</strong> sent a <strong>${request.type}</strong>
+            <strong>${request.userName}</strong> sent a <strong>${displayType}</strong>
         </div>
     `;
     
     // Set application details
     const appCard = document.getElementById('requestApplicationCard');
     
-    if (request.requestType === 'dayoff') {
+    if (request.type === 'dayoff') {
+        const startDate = new Date(request.startDate);
+        const endDate = new Date(request.endDate);
+        
         appCard.innerHTML = `
             <div class="application-field">
                 <span class="application-label">Start Date</span>
-                <div class="application-value">${request.details.startDate}</div>
+                <div class="application-value">${startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
             </div>
             <div class="application-field">
                 <span class="application-label">End Date</span>
-                <div class="application-value">${request.details.endDate}</div>
+                <div class="application-value">${endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
             </div>
             <div class="application-field">
                 <span class="application-label">Duration</span>
-                <div class="application-value">${request.details.days}</div>
+                <div class="application-value">${request.daysCount} day${request.daysCount > 1 ? 's' : ''}</div>
+            </div>
+            <div class="application-field">
+                <span class="application-label">Department</span>
+                <div class="application-value">${request.userDepartment || 'N/A'}</div>
             </div>
             <div class="application-field">
                 <span class="application-label">Reason</span>
-                <div class="application-value">${request.details.reason}</div>
+                <div class="application-value">${request.reason}</div>
             </div>
         `;
-    } else if (request.requestType === 'loan') {
+    } else if (request.type === 'loan') {
         appCard.innerHTML = `
             <div class="application-field">
                 <span class="application-label">Amount Requested</span>
-                <div class="application-value">${request.details.amount}</div>
-            </div>
-            <div class="application-field">
-                <span class="application-label">Purpose</span>
-                <div class="application-value">${request.details.purpose}</div>
+                <div class="application-value">₦${parseInt(request.amount).toLocaleString()}</div>
             </div>
             <div class="application-field">
                 <span class="application-label">Repayment Plan</span>
-                <div class="application-value">${request.details.repaymentPlan}</div>
+                <div class="application-value">${request.repaymentPlan || 'Not specified'}</div>
             </div>
             <div class="application-field">
-                <span class="application-label">Reason</span>
-                <div class="application-value">${request.details.reason}</div>
+                <span class="application-label">Department</span>
+                <div class="application-value">${request.userDepartment || 'N/A'}</div>
             </div>
+            <div class="application-field">
+                <span class="application-label">Guarantor Name</span>
+                <div class="application-value">${request.guarantor?.name || 'N/A'}</div>
+            </div>
+            <div class="application-field">
+                <span class="application-label">Guarantor Department</span>
+                <div class="application-value">${request.guarantor?.department || 'N/A'}</div>
+            </div>
+            <div class="application-field">
+                <span class="application-label">Guarantor Phone</span>
+                <div class="application-value">${request.guarantor?.phone || 'N/A'}</div>
+            </div>
+            ${request.guarantor?.picture ? `
+                <div class="application-field">
+                    <span class="application-label">Guarantor Picture</span>
+                    <div class="application-value">
+                        <img src="${request.guarantor.picture}" alt="Guarantor" style="max-width: 200px; border-radius: 8px; margin-top: 10px;">
+                    </div>
+                </div>
+            ` : ''}
         `;
     }
     
@@ -1049,12 +1375,17 @@ function openRequestDetail(request) {
     document.getElementById('requestResponseInput').value = '';
 }
 
+function getInitials(name) {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+
 function closeRequestDetail() {
     document.getElementById('requestDetailPage').style.display = 'none';
     document.getElementById('requestsPage').style.display = 'block';
 }
-
-function approveRequest() {
+async function approveRequest() {
     if (!currentRequest) return;
     
     const response = document.getElementById('requestResponseInput').value.trim();
@@ -1064,18 +1395,39 @@ function approveRequest() {
         return;
     }
     
-    // Remove from list
-    allRequests = allRequests.filter(r => r.id !== currentRequest.id);
-    
-    showNotification(`${currentRequest.type} approved! ${currentRequest.userName} has been notified.`, 'success');
-    
-    setTimeout(() => {
-        closeRequestDetail();
-        renderRequests();
-    }, 1500);
+    try {
+        // Update request status
+        await requestsRef.doc(currentRequest.id).update({
+            status: 'approved',
+            adminResponse: response,
+            respondedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            respondedBy: auth.currentUser ? auth.currentUser.uid : 'admin'
+        });
+        
+        // Create notification for staff
+        await db.collection('notifications').add({
+            userId: currentRequest.userId,
+            type: 'request_approved',
+            title: `${currentRequest.type} Approved`,
+            message: response,
+            requestId: currentRequest.id,
+            requestType: currentRequest.type,
+            read: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showNotification(`${currentRequest.type} approved! ${currentRequest.userName} has been notified.`, 'success');
+        
+        setTimeout(() => {
+            closeRequestDetail();
+        }, 1500);
+        
+    } catch (error) {
+        console.error("Error approving request:", error);
+        showNotification('Error approving request', 'error');
+    }
 }
-
-function rejectRequest() {
+async function rejectRequest() {
     if (!currentRequest) return;
     
     const response = document.getElementById('requestResponseInput').value.trim();
@@ -1085,18 +1437,39 @@ function rejectRequest() {
         return;
     }
     
-    // Remove from list
-    allRequests = allRequests.filter(r => r.id !== currentRequest.id);
-    
-    showNotification(`${currentRequest.type} rejected. ${currentRequest.userName} has been notified.`, 'success');
-    
-    setTimeout(() => {
-        closeRequestDetail();
-        renderRequests();
-    }, 1500);
+    try {
+        // Update request status
+        await requestsRef.doc(currentRequest.id).update({
+            status: 'rejected',
+            adminResponse: response,
+            respondedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            respondedBy: auth.currentUser ? auth.currentUser.uid : 'admin'
+        });
+        
+        // Create notification for staff
+        await db.collection('notifications').add({
+            userId: currentRequest.userId,
+            type: 'request_rejected',
+            title: `${currentRequest.type} Rejected`,
+            message: response,
+            requestId: currentRequest.id,
+            requestType: currentRequest.type,
+            read: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showNotification(`${currentRequest.type} rejected. ${currentRequest.userName} has been notified.`, 'success');
+        
+        setTimeout(() => {
+            closeRequestDetail();
+        }, 1500);
+        
+    } catch (error) {
+        console.error("Error rejecting request:", error);
+        showNotification('Error rejecting request', 'error');
+    }
 }
-
-function sendResponse() {
+async function sendResponse() {
     const response = document.getElementById('requestResponseInput').value.trim();
     
     if (!response) {
@@ -1104,9 +1477,56 @@ function sendResponse() {
         return;
     }
     
-    showNotification('Response sent to staff member', 'success');
-    document.getElementById('requestResponseInput').value = '';
+    if (!currentRequest) return;
+    
+    try {
+        // Create a comment/message on the request
+        await db.collection('notifications').add({
+            userId: currentRequest.userId,
+            type: 'request_message',
+            title: 'Message from Admin',
+            message: response,
+            requestId: currentRequest.id,
+            requestType: currentRequest.type,
+            read: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showNotification('Response sent to staff member', 'success');
+        document.getElementById('requestResponseInput').value = '';
+        
+    } catch (error) {
+        console.error("Error sending response:", error);
+        showNotification('Error sending response', 'error');
+    }
 }
+
+// ==================== HELPER FUNCTION ====================
+function getTimeAgo(date) {
+    if (!date) return 'Just now';
+    
+    const now = new Date();
+    const postDate = date instanceof Date ? date : new Date(date);
+    const seconds = Math.floor((now - postDate) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+    
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    
+    return postDate.toLocaleDateString();
+}
+ 
+
 // Voice Note for Request Response
 let isRecordingRequest = false;
 let mediaRecorderRequest = null;
@@ -1248,7 +1668,6 @@ function updatePostButton() {
         postBtn.disabled = !hasContent;
     }
 }
-
 async function postAnnouncement() {
     const text = document.getElementById('announcementText').value.trim();
     
@@ -1286,7 +1705,7 @@ async function postAnnouncement() {
         }
         
         // Create announcement in Firebase
-        await db.collection('announcements').add({
+        const announcementDoc = await db.collection('announcements').add({
             title: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
             text: text,
             mediaUrl: mediaUrl,
@@ -1299,11 +1718,38 @@ async function postAnnouncement() {
             type: 'general'
         });
         
+        // Get all staff users to notify them
+        const staffSnapshot = await db.collection('users')
+            .where('role', '==', 'staff')
+            .get();
+        
+        // Create notifications for all staff
+        const notificationPromises = [];
+        staffSnapshot.forEach(doc => {
+            notificationPromises.push(
+                db.collection('notifications').add({
+                    userId: doc.id,
+                    type: 'announcement',
+                    title: 'New Announcement from Admin',
+                    message: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+                    announcementId: announcementDoc.id,
+                    read: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                })
+            );
+        });
+        
+        await Promise.all(notificationPromises);
+        
         showNotification('Announcement posted! All staff members have been notified.', 'success');
         
         // Clear form
         document.getElementById('announcementText').value = '';
         announcementMediaFile = null;
+        
+        // Reset media preview if exists
+        const mediaPreview = document.getElementById('announcementMediaPreview');
+        if (mediaPreview) mediaPreview.innerHTML = '';
         
         setTimeout(() => {
             closeCreateAnnouncement();
@@ -1314,7 +1760,6 @@ async function postAnnouncement() {
         showNotification('Failed to post announcement', 'error');
     }
 }
-
 
 // Voice Note for Announcement
 function toggleAnnouncementVoiceNote() {
@@ -1374,28 +1819,39 @@ function showPreviousAnnouncements() {
 function closePreviousAnnouncements() {
     document.getElementById('previousAnnouncementsPage').style.display = 'none';
 }
-
-function loadPreviousAnnouncements() {
-    if (previousAnnouncements.length === 0) {
-        previousAnnouncements = [
-            {
-                id: 1,
-                title: 'Company Meeting - December 20th',
-                text: 'All staff are required to attend the quarterly meeting on December 20th at 10:00 AM. We will be discussing Q4 performance and upcoming projects.',
-                date: 'December 15, 2024',
-                timestamp: Date.now() - 86400000
-            },
-            {
-                id: 2,
-                title: 'Holiday Schedule Announcement',
-                text: 'The office will be closed from December 24th to January 2nd for the holiday season. Normal operations resume January 3rd.',
-                date: 'December 10, 2024',
-                timestamp: Date.now() - 172800000
-            }
-        ];
-    }
+async function loadPreviousAnnouncements() {
+    const container = document.getElementById('previousAnnouncementsList');
+    if (!container) return;
     
-    renderAnnouncements(previousAnnouncements);
+    try {
+        container.innerHTML = '<div style="text-align:center; padding:40px;">Loading announcements...</div>';
+        
+        // Get announcements from Firebase
+        const snapshot = await db.collection('announcements')
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        previousAnnouncements = [];
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            previousAnnouncements.push({
+                id: doc.id,
+                ...data,
+                date: data.createdAt ? data.createdAt.toDate().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }) : 'Just now'
+            });
+        });
+        
+        renderAnnouncements(previousAnnouncements);
+        
+    } catch (error) {
+        console.error('Load announcements error:', error);
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#e74c3c;">Failed to load announcements</div>';
+    }
 }
 
 function renderAnnouncements(announcementsList) {
@@ -1427,6 +1883,50 @@ function renderAnnouncements(announcementsList) {
         `;
         
         container.appendChild(card);
+    });
+}
+
+// ==================== SHOW ANNOUNCEMENT DETAIL (OPTIONAL) ====================
+function showAnnouncementDetail(announcement) {
+    // Create a modal or detail view to show full announcement
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+    
+    modal.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">${announcement.title}</h2>
+                <button onclick="this.closest('div').parentElement.parentElement.remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div style="color: #666; margin-bottom: 15px;">${announcement.date}</div>
+            <div style="line-height: 1.6;">${announcement.text}</div>
+            ${announcement.mediaUrl ? `
+                <div style="margin-top: 20px;">
+                    ${announcement.mediaType?.startsWith('image/') ? 
+                        `<img src="${announcement.mediaUrl}" style="max-width: 100%; border-radius: 10px;">` :
+                        announcement.mediaType?.startsWith('video/') ?
+                        `<video src="${announcement.mediaUrl}" controls style="max-width: 100%; border-radius: 10px;"></video>` :
+                        ''
+                    }
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+    
+    document.body.appendChild(modal);
+}
+
+// ==================== HELPER FUNCTION ====================
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
     });
 }
 
@@ -1603,30 +2103,59 @@ function closeProfilePage() {
 }
 
 // Load Profile Data
-function loadProfileData() {
-    document.getElementById('profileName').textContent = profileData.name;
-    document.getElementById('profileRole').textContent = profileData.role;
-    document.getElementById('displayName').textContent = profileData.name;
-    document.getElementById('displayEmail').textContent = profileData.email;
-    document.getElementById('displayPhone').textContent = profileData.phone;
-    document.getElementById('displayRoleInfo').textContent = profileData.role;
-    
-    // Load profile photo if exists
-    if (profileData.photo) {
-        const profilePicLarge = document.getElementById('profilePicLarge');
-        profilePicLarge.innerHTML = `<img src="${profileData.photo}" alt="Profile">`;
+async function loadProfileData() {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        showNotification('Please login first', 'error');
+        return;
     }
-}
-
+    
+    try {
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        
+        if (!userDoc.exists) {
+            showNotification('Profile not found', 'error');
+            return;
+        }
+        
+        const userData = userDoc.data();
+        
+        document.getElementById('profileName').textContent = userData.fullName || 'User';
+        document.getElementById('profileRole').textContent = userData.role || 'Admin';
+        document.getElementById('displayName').textContent = userData.fullName || 'User';
+        document.getElementById('displayEmail').textContent = currentUser.email || 'No email';
+        document.getElementById('displayPhone').textContent = userData.phoneNumber || 'No phone';
+        document.getElementById('displayRoleInfo').textContent = userData.role || 'Admin';
+        
+        // Load profile photo if exists
+        const profilePicLarge = document.getElementById('profilePicLarge');
+        if (userData.profilePicture) {
+            profilePicLarge.innerHTML = `<img src="${userData.profilePicture}" alt="Profile" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+        } else {
+            profilePicLarge.innerHTML = getInitials(userData.fullName || 'U');
+        }
+        
+        // Update dashboard profile pic
+        const dashboardProfilePic = document.querySelector('.profile-pic');
+        if (dashboardProfilePic && userData.profilePicture) {
+            dashboardProfilePic.innerHTML = `<img src="${userData.profilePicture}" alt="Profile" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+        }
+        
+    } catch (error) {
+        console.error('Load profile error:', error);
+        showNotification('Failed to load profile', 'error');
+    }
+} 
 // Change Profile Photo
 function changeProfilePhoto() {
     document.getElementById('profilePhotoInput').click();
 }
 
+// Update the photo input event listener
 document.addEventListener('DOMContentLoaded', function() {
     const photoInput = document.getElementById('profilePhotoInput');
     if (photoInput) {
-        photoInput.addEventListener('change', function(e) {
+        photoInput.addEventListener('change', async function(e) {
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
                 
@@ -1640,42 +2169,86 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    profileData.photo = event.target.result;
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    showNotification('Please login first', 'error');
+                    return;
+                }
+                
+                try {
+                    showNotification('Uploading photo...', 'info');
                     
-                    // Update profile page
-                    document.getElementById('profilePicLarge').innerHTML = `<img src="${event.target.result}" alt="Profile">`;
+                    // Compress and convert to base64
+                    const reader = new FileReader();
+                    reader.onload = async function(event) {
+                        const img = new Image();
+                        img.onload = async function() {
+                            const canvas = document.createElement('canvas');
+                            const MAX = 400;
+                            let w = img.width, h = img.height;
+                            if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; }}
+                            else { if (h > MAX) { w *= MAX / h; h = MAX; }}
+                            canvas.width = w;
+                            canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                            const compressed = canvas.toDataURL('image/jpeg', 0.8);
+                            
+                            // Update in Firebase
+                            await db.collection('users').doc(currentUser.uid).update({
+                                profilePicture: compressed
+                            });
+                            
+                            // Update UI
+                            document.getElementById('profilePicLarge').innerHTML = `<img src="${compressed}" alt="Profile" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+                            
+                            const dashboardProfilePic = document.querySelector('.profile-pic');
+                            if (dashboardProfilePic) {
+                                dashboardProfilePic.innerHTML = `<img src="${compressed}" alt="Profile" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+                            }
+                            
+                            showNotification('Profile photo updated!', 'success');
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
                     
-                    // Update dashboard profile pic
-                    const dashboardProfilePic = document.querySelector('.profile-pic');
-                    if (dashboardProfilePic) {
-                        dashboardProfilePic.innerHTML = `<img src="${event.target.result}" alt="Profile">`;
-                    }
-                    
-                    showNotification('Profile photo updated successfully!', 'success');
-                };
-                reader.readAsDataURL(file);
+                } catch (error) {
+                    console.error('Upload photo error:', error);
+                    showNotification('Failed to upload photo', 'error');
+                }
             }
         });
     }
 });
-
 // Edit Profile
-function openEditProfile() {
-    document.getElementById('editName').value = profileData.name;
-    document.getElementById('editEmail').value = profileData.email;
-    document.getElementById('editPhone').value = profileData.phone;
-    document.getElementById('editRole').value = profileData.role;
+async function openEditProfile() {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        showNotification('Please login first', 'error');
+        return;
+    }
     
-    document.getElementById('editProfileModal').classList.add('show');
+    try {
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        const userData = userDoc.data();
+        
+        document.getElementById('editName').value = userData.fullName || '';
+        document.getElementById('editEmail').value = currentUser.email || '';
+        document.getElementById('editPhone').value = userData.phoneNumber || '';
+        document.getElementById('editRole').value = userData.role || '';
+        
+        document.getElementById('editProfileModal').classList.add('show');
+        
+    } catch (error) {
+        console.error('Load edit profile error:', error);
+        showNotification('Failed to load profile data', 'error');
+    }
 }
-
 function closeEditProfile() {
     document.getElementById('editProfileModal').classList.remove('show');
 }
 
-function saveProfileChanges() {
+async function saveProfileChanges() {
     const newName = document.getElementById('editName').value.trim();
     const newEmail = document.getElementById('editEmail').value.trim();
     const newPhone = document.getElementById('editPhone').value.trim();
@@ -1693,17 +2266,39 @@ function saveProfileChanges() {
         return;
     }
     
-    profileData.name = newName;
-    profileData.email = newEmail;
-    profileData.phone = newPhone;
-    profileData.role = newRole;
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        showNotification('Please login first', 'error');
+        return;
+    }
     
-    loadProfileData();
-    closeEditProfile();
-    showNotification('Profile updated successfully!', 'success');
+    try {
+        // Update Firestore
+        await db.collection('users').doc(currentUser.uid).update({
+            fullName: newName,
+            phoneNumber: newPhone,
+            role: newRole
+        });
+        
+        // Update email in Firebase Auth (if changed)
+        if (newEmail !== currentUser.email) {
+            await currentUser.updateEmail(newEmail);
+        }
+        
+        loadProfileData();
+        closeEditProfile();
+        showNotification('Profile updated successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Save profile error:', error);
+        
+        if (error.code === 'auth/requires-recent-login') {
+            showNotification('Please log out and log in again to change email', 'error');
+        } else {
+            showNotification('Failed to update profile: ' + error.message, 'error');
+        }
+    }
 }
-
-
 
 
 
@@ -1742,64 +2337,48 @@ function closeNotificationsPage() {
     document.getElementById('notificationsPage').style.display = 'none';
 }
 
-function loadAdminNotifications() {
-    adminNotifications = [
-        {
-            id: 1,
-            type: 'request',
-            title: 'New Request',
-            text: 'Folake Kehinde submitted a loan request for ₦50,000',
-            time: '30 minutes ago',
-            timestamp: Date.now() - 1800000,
-            unread: true,
-            action: 'showRequests'
-        },
-        {
-            id: 2,
-            type: 'complaint',
-            title: 'New Complaint',
-            text: 'Tunde Bakare filed a complaint about workplace conditions',
-            time: '2 hours ago',
-            timestamp: Date.now() - 7200000,
-            unread: true,
-            action: 'showComplaints'
-        },
-        {
-            id: 3,
-            type: 'announcement',
-            title: 'Announcement Posted',
-            text: 'Your announcement "Company Meeting" has been posted successfully',
-            time: '5 hours ago',
-            timestamp: Date.now() - 18000000,
-            unread: true,
-            action: 'showPreviousAnnouncements'
-        },
-        {
-            id: 4,
-            type: 'request',
-            title: 'Request Approved',
-            text: 'You approved Adeyemi Michael\'s day off request',
-            time: '1 day ago',
-            timestamp: Date.now() - 86400000,
-            unread: false,
-            action: null
-        },
-        {
-            id: 5,
-            type: 'system',
-            title: 'New Account Created',
-            text: 'Successfully created supervisor account for Sarah Johnson',
-            time: '2 days ago',
-            timestamp: Date.now() - 172800000,
-            unread: false,
-            action: null
-        }
-    ];
+// ==================== LOAD ADMIN NOTIFICATIONS ====================
+async function loadAdminNotifications() {
+    const container = document.getElementById('notificationsList');
+    if (!container) return;
     
-    updateUnreadCount();
-    renderNotifications(adminNotifications);
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:#e74c3c;">Please login first</div>';
+        return;
+    }
+    
+    try {
+        container.innerHTML = '<div style="text-align:center; padding:20px;">Loading notifications...</div>';
+        
+        // Get notifications where staff submitted something (complaints, requests, etc)
+        // Or system notifications for admin actions
+        const snapshot = await db.collection('adminNotifications')
+            .orderBy('createdAt', 'desc')
+            .limit(50)
+            .get();
+        
+        adminNotifications = [];
+        
+        if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+                adminNotifications.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+        }
+        
+        updateUnreadCount();
+        renderNotifications(adminNotifications);
+        
+    } catch (error) {
+        console.error('Load admin notifications error:', error);
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:#e74c3c;">Failed to load notifications</div>';
+    }
 }
 
+// ==================== RENDER NOTIFICATIONS ====================
 function renderNotifications(notificationsList) {
     const container = document.getElementById('notificationsList');
     
@@ -1808,7 +2387,7 @@ function renderNotifications(notificationsList) {
             <div class="no-notifications">
                 <i class="fas fa-bell-slash"></i>
                 <h3>No notifications found</h3>
-                <p>You don't have any notifications for the selected date.</p>
+                <p>You don't have any notifications yet.</p>
             </div>
         `;
         return;
@@ -1823,6 +2402,14 @@ function renderNotifications(notificationsList) {
         
         const iconClass = getNotificationIcon(notification.type);
         
+        // Format time
+        const timestamp = notification.createdAt || notification.timestamp;
+        const time = timestamp ? 
+            (timestamp.toDate ? getTimeAgo(timestamp.toDate()) : notification.time) : 
+            'Just now';
+        
+        const notificationText = notification.message || notification.text || 'No details';
+        
         notificationElement.innerHTML = `
             ${notification.unread ? '<div class="unread-indicator"></div>' : ''}
             <div class="notification-header">
@@ -1831,11 +2418,11 @@ function renderNotifications(notificationsList) {
                 </div>
                 <div class="notification-content">
                     <div class="notification-title">${notification.title}</div>
-                    <div class="notification-text">${notification.text}</div>
+                    <div class="notification-text">${notificationText}</div>
                     <div class="notification-meta">
                         <div class="notification-time">
                             <i class="fas fa-clock"></i>
-                            ${notification.time}
+                            ${time}
                         </div>
                         ${notification.unread ? '<span class="notification-badge">New</span>' : ''}
                     </div>
@@ -1847,34 +2434,112 @@ function renderNotifications(notificationsList) {
     });
 }
 
+// ==================== HANDLE NOTIFICATION CLICK ====================
+async function handleNotificationClick(notification) {
+    // Mark as read
+    try {
+        await db.collection('adminNotifications').doc(notification.id).update({
+            unread: false,
+            read: true
+        });
+        
+        notification.unread = false;
+        updateUnreadCount();
+        
+    } catch (error) {
+        console.error('Mark as read error:', error);
+    }
+    
+    // Close notifications page
+    closeAdminNotifications();
+    
+    // Navigate based on notification type
+    if (notification.type === 'complaint' || notification.action === 'showComplaints') {
+        // Go to complaints page
+        if (typeof showComplaints === 'function') {
+            showComplaints();
+        }
+        
+        // If there's a specific complaint ID, open it
+        if (notification.complaintId) {
+            setTimeout(() => {
+                const complaint = complaintsData.find(c => c.id === notification.complaintId);
+                if (complaint) {
+                    openComplaintReview(notification.complaintId);
+                }
+            }, 500);
+        }
+        
+    } else if (notification.type === 'request' || notification.action === 'showRequests') {
+        // Go to requests page
+        if (typeof showRequests === 'function') {
+            showRequests();
+        }
+        
+        // If there's a specific request ID, open it
+        if (notification.requestId) {
+            setTimeout(() => {
+                const request = allRequests.find(r => r.id === notification.requestId);
+                if (request) {
+                    openRequestDetail(request);
+                }
+            }, 500);
+        }
+        
+    } else if (notification.type === 'announcement' || notification.action === 'showPreviousAnnouncements') {
+        // Go to announcements
+        if (typeof showPreviousAnnouncements === 'function') {
+            showPreviousAnnouncements();
+        }
+        
+    } else if (notification.action && typeof window[notification.action] === 'function') {
+        // Call any other action function
+        window[notification.action]();
+    }
+}
+ function closeAdminNotifications() {
+    const notificationsPage = document.getElementById('notificationsPage');
+    if (notificationsPage) {
+        notificationsPage.style.display = 'none';
+    }
+}
+
+
 function getNotificationIcon(type) {
     const icons = {
-        announcement: 'fas fa-bullhorn',
-        request: 'fas fa-inbox',
+        request: 'fas fa-clipboard-list',
         complaint: 'fas fa-exclamation-circle',
-        query: 'fas fa-file-alt',
-        system: 'fas fa-cog'
+        announcement: 'fas fa-bullhorn',
+        system: 'fas fa-cog',
+        message: 'fas fa-envelope'
     };
-    
     return icons[type] || 'fas fa-bell';
 }
 
-function handleNotificationClick(notification) {
-    notification.unread = false;
-    updateUnreadCount();
-    renderNotifications(adminNotifications);
+function getTimeAgo(date) {
+    if (!date) return 'Just now';
     
-    if (notification.action) {
-        closeNotificationsPage();
-        setTimeout(() => {
-            if (typeof window[notification.action] === 'function') {
-                window[notification.action]();
-            }
-        }, 300);
-    } else {
-        showNotification('Notification opened', 'success');
-    }
+    const now = new Date();
+    const postDate = date instanceof Date ? date : new Date(date);
+    const seconds = Math.floor((now - postDate) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+    
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    
+    return postDate.toLocaleDateString();
 }
+
 
 function filterNotifications() {
     const selectedDate = document.getElementById('notificationDateFilter').value;
@@ -1910,22 +2575,27 @@ function markAllAsRead() {
     renderNotifications(adminNotifications);
     showNotification('All notifications marked as read', 'success');
 }
-
 function updateUnreadCount() {
-    unreadCount = adminNotifications.filter(n => n.unread).length;
+    const unreadCount = adminNotifications.filter(n => n.unread).length;
     
-    const notificationBadge = document.querySelector('#notificationIcon .notification-badge');
-    if (notificationBadge) {
+    // Update badge
+    const badgeElements = document.querySelectorAll('.notification-badge-count, .notification-badge');
+    badgeElements.forEach(badge => {
         if (unreadCount > 0) {
-            notificationBadge.textContent = unreadCount;
-            notificationBadge.style.display = 'flex';
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.style.display = 'flex';
         } else {
-            notificationBadge.style.display = 'none';
+            badge.style.display = 'none';
         }
-    }
+    });
 }
-let currentPostId = null;
+
+
+let currentPostId = null
+ 
 let postComments = {};
+
+ 
 
 
 function showComments(postId) {
@@ -1938,40 +2608,31 @@ function closeComments() {
     document.getElementById('commentsModal').classList.remove('show');
     currentPostId = null;
     document.getElementById('commentInput').value = '';
-}
- 
+} 
+
 // Load Comments from Firebase
 function loadComments(postId) {
-    db.collection('posts').doc(postId).collection('comments')
-        .orderBy('createdAt', 'asc')
-        .get()
-        .then((snapshot) => {
-            const comments = [];
-            
-            snapshot.forEach((doc) => {
-                const comment = doc.data();
-                comments.push({
-                    id: doc.id,
-                    author: comment.authorName,
-                    initials: getInitials(comment.authorName),
-                    text: comment.text,
-                    time: formatTime(comment.createdAt),
-                    likes: comment.likes || 0,
-                    likedBy: comment.likedBy || []
-                });
-            });
-            
-            renderComments(comments);
-        })
-        .catch((error) => {
-            console.error("Error loading comments:", error);
-        });
-}
- 
-function renderComments(comments) {
     const container = document.getElementById('commentsList');
-    const adminCode = localStorage.getItem('accessCode') || 'admin';
+    container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i></div>';
     
+    // Real-time listener for comments
+    postsRef.doc(postId).collection('comments').orderBy('timestamp', 'asc').onSnapshot((snapshot) => {
+        const comments = [];
+        snapshot.forEach((doc) => {
+            comments.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        renderComments(comments, container);
+    }, (error) => {
+        console.error("Error loading comments:", error);
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #f44336;">Error loading comments</div>';
+    });
+}
+
+function renderComments(comments, container) {
     if (comments.length === 0) {
         container.innerHTML = `
             <div class="no-comments">
@@ -1985,23 +2646,25 @@ function renderComments(comments) {
     container.innerHTML = '';
     
     comments.forEach(comment => {
-        const isLiked = comment.likedBy.includes(adminCode);
-        
         const commentEl = document.createElement('div');
         commentEl.className = 'comment-item';
         
         commentEl.innerHTML = `
-            <div class="comment-avatar">${comment.initials}</div>
+            <div class="comment-avatar">${comment.initials || 'U'}</div>
             <div class="comment-content">
                 <div class="comment-header">
                     <span class="comment-author">${comment.author}</span>
-                    <span class="comment-time">${comment.time}</span>
+                    <span class="comment-time">${formatTime(comment.timestamp)}</span>
                 </div>
                 <div class="comment-text">${comment.text}</div>
                 <div class="comment-actions">
-                    <button class="comment-action-btn ${isLiked ? 'liked' : ''}" onclick="toggleCommentLike('${currentPostId}', '${comment.id}')">
+                    <button class="comment-action-btn ${isCommentLikedByCurrentUser(comment) ? 'liked' : ''}" onclick="toggleCommentLike('${currentPostId}', '${comment.id}')">
                         <i class="fas fa-heart"></i>
-                        <span>${comment.likes}</span>
+                        <span>${comment.likes || 0}</span>
+                    </button>
+                    <button class="comment-action-btn" onclick="replyToComment('${comment.id}')">
+                        <i class="fas fa-reply"></i>
+                        Reply
                     </button>
                 </div>
             </div>
@@ -2009,78 +2672,119 @@ function renderComments(comments) {
         
         container.appendChild(commentEl);
     });
-}
- 
+} 
 // Send Comment
-function sendComment() {
+async function sendComment() {
     const input = document.getElementById('commentInput');
     const text = input.value.trim();
     
     if (!text || !currentPostId) return;
     
-    const adminCode = localStorage.getItem('accessCode') || 'admin';
-    const adminName = localStorage.getItem('userName') || 'Admin';
+    const user = auth.currentUser;
+    if (!user) {
+        showNotification('Please login to comment', 'error');
+        return;
+    }
     
-    // Add comment to Firebase
-    db.collection('posts').doc(currentPostId).collection('comments').add({
-        text: text,
-        authorName: adminName,
-        authorCode: adminCode,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        likes: 0,
-        likedBy: []
-    }).then(() => {
+    try {
+        const newComment = {
+            author: user.displayName || 'HR Admin',
+            initials: getInitials(user.displayName || 'HR Admin'),
+            text: text,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            likes: 0,
+            likedBy: []
+        };
+        
+        // Add comment to subcollection
+        await postsRef.doc(currentPostId).collection('comments').add(newComment);
+        
         // Update comment count on post
-        db.collection('posts').doc(currentPostId).update({
-            commentCount: firebase.firestore.FieldValue.increment(1)
+        await postsRef.doc(currentPostId).update({
+            commentsCount: firebase.firestore.FieldValue.increment(1)
         });
         
         input.value = '';
-        loadComments(currentPostId);
         showNotification('Comment posted!', 'success');
-    }).catch((error) => {
+    } catch (error) {
         console.error("Error posting comment:", error);
-        showNotification('Failed to post comment', 'error');
-    });
-}
-// Toggle Comment Like
-function toggleCommentLike(postId, commentId) {
-    const adminCode = localStorage.getItem('accessCode') || 'admin';
-    const commentRef = db.collection('posts').doc(postId).collection('comments').doc(commentId);
-    
-    commentRef.get().then((doc) => {
-        if (doc.exists) {
-            const data = doc.data();
-            const likedBy = data.likedBy || [];
-            const likes = data.likes || 0;
-            
-            if (likedBy.includes(adminCode)) {
-                // Unlike
-                commentRef.update({
-                    likes: likes - 1,
-                    likedBy: firebase.firestore.FieldValue.arrayRemove(adminCode)
-                }).then(() => {
-                    loadComments(postId);
-                });
-            } else {
-                // Like
-                commentRef.update({
-                    likes: likes + 1,
-                    likedBy: firebase.firestore.FieldValue.arrayUnion(adminCode)
-                }).then(() => {
-                    loadComments(postId);
-                });
-            }
-        }
-    });
+        showNotification('Error posting comment', 'error');
+    }
 }
 
+async function toggleCommentLike(postId, commentId) {
+    const user = auth.currentUser;
+    if (!user) {
+        showNotification('Please login to like comments', 'error');
+        return;
+    }
+    
+    const commentRef = postsRef.doc(postId).collection('comments').doc(commentId);
+    
+    try {
+        const commentDoc = await commentRef.get();
+        const commentData = commentDoc.data();
+        const likedBy = commentData.likedBy || [];
+        
+        if (likedBy.includes(user.uid)) {
+            // Unlike
+            await commentRef.update({
+                likes: firebase.firestore.FieldValue.increment(-1),
+                likedBy: firebase.firestore.FieldValue.arrayRemove(user.uid)
+            });
+        } else {
+            // Like
+            await commentRef.update({
+                likes: firebase.firestore.FieldValue.increment(1),
+                likedBy: firebase.firestore.FieldValue.arrayUnion(user.uid)
+            });
+        }
+    } catch (error) {
+        console.error("Error toggling comment like:", error);
+        showNotification('Error updating like', 'error');
+    }
+}
 
 
 function replyToComment(commentId) {
     const input = document.getElementById('commentInput');
     input.focus();
     showNotification('Reply feature coming soon!', 'success');
+}
+
+// ==================== HELPER FUNCTIONS ====================
+function isLikedByCurrentUser(post) {
+    const user = auth.currentUser;
+    if (!user || !post.likedBy) return false;
+    return post.likedBy.includes(user.uid);
+}
+
+function isCommentLikedByCurrentUser(comment) {
+    const user = auth.currentUser;
+    if (!user || !comment.likedBy) return false;
+    return comment.likedBy.includes(user.uid);
+}
+
+function formatTime(timestamp) {
+    if (!timestamp) return 'Just now';
+    
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    return date.toLocaleDateString();
+}
+
+function getInitials(name) {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
 }
 
 // Auto-enable/disable send button
@@ -2362,22 +3066,48 @@ function formatTime(timestamp) {
     return date.toLocaleDateString();
 }
 
-function loadStaffFeed() {
-    const feedContainer = document.getElementById('feedPosts');
+async function deleteStaffPost(postId, author) {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
     
-    feedContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><p>Loading posts...</p></div>';
-    
-    db.collection('posts')
-        .orderBy('createdAt', 'desc')
-        .get()
-        .then((snapshot) => {
-            console.log("Total posts found:", snapshot.size);
+    try {
+        // Delete all comments in subcollection first
+        const commentsSnapshot = await postsRef.doc(postId).collection('comments').get();
+        const deletePromises = commentsSnapshot.docs.map(doc => doc.ref.delete());
+        await Promise.all(deletePromises);
+        
+        // Delete the post
+        await postsRef.doc(postId).delete();
+        
+        if (postElement) {
+            postElement.style.opacity = '0';
+            postElement.style.transform = 'scale(0.8)';
             
-            snapshot.forEach((doc) => {
-                console.log("Post ID:", doc.id);
-                console.log("Post data:", doc.data());
-            });
-            
-            // Rest of the code...
+            setTimeout(() => {
+                postElement.remove();
+                showNotification(`Post by ${author} deleted. User has been notified.`, 'success');
+            }, 300);
+        }
+    } catch (error) {
+        console.error("Error deleting post:", error);
+        showNotification('Error deleting post', 'error');
+    }
+}
+function initializeAdminNotifications() {
+    // Real-time listener for new notifications
+    db.collection('adminNotifications')
+        .where('unread', '==', true)
+        .onSnapshot(snapshot => {
+            if (!snapshot.empty) {
+                loadAdminNotifications();
+            }
         });
 }
+
+// Call on page load
+document.addEventListener('DOMContentLoaded', function() {
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            initializeAdminNotifications();
+        }
+    });
+});
