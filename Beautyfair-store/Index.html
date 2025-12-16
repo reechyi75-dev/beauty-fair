@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeautyFair Admin Dashboard</title>
+    <link rel="stylesheet" href="app.css">
+    
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Firebase Config -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDx9rgfPO-_mTIBLau0fclXILcaghzWow4",
+            authDomain: "beauty-fair-store.firebaseapp.com",
+            projectId: "beauty-fair-store",
+            storageBucket: "beauty-fair-store.firebasestorage.app",
+            messagingSenderId: "527909034598",
+            appId: "1:527909034598:web:ad5cce4a7f2e2e5bf02ba7"
+        };
+        firebase.initializeApp(firebaseConfig);
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- ============================================ -->
+    <!-- LOGIN SCREEN -->
+    <!-- ============================================ -->
+    <div class="login-container" id="loginScreen">
+        <!-- Left Side - Branding -->
+        <div class="login-left">
+            <div class="brand-section">
+                <h1 class="brand-name">BeautyFair</h1>
+                <div class="brand-decoration"></div>
+                <p class="brand-description">Manage your perfume and cream store with ease</p>
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="login-right">
+            <div class="login-box">
+                <div class="login-header">
+                    <h2>Welcome Back</h2>
+                    <p>Enter your credentials to access the admin dashboard</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="login-form">
+                    <!-- Email Field -->
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                placeholder="admin@beautyfair.com" 
+                                required
+                                autocomplete="email"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                placeholder="Enter your password" 
+                                required
+                                autocomplete="current-password"
+                            >
+                            <button type="button" class="toggle-password" id="togglePassword">
+                                <svg id="eyeOpen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="current""Color" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg id="eyeClosed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="form-options">
+                        <label class="remember-me">
+                            <input type="checkbox" id="rememberMe" checked>
+                            <span>Remember me</span>
+                        </label>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="error-message" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span id="errorText">Invalid email or password</span>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="success-message" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Login successful! Redirecting...</span>
+                    </div>
+
+                    <!-- Login Button -->
+                    <button type="submit" class="login-btn" id="loginBtn">
+                        <span id="btnText">Sign In</span>
+                        <span id="btnLoader" class="btn-loader" style="display: none;">
+                            <svg width="20" height="20" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"></circle>
+                                <path d="M12 2 A10 10 0 0 1 22 12" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Hamburger Menu Button -->
+<button class="menu-toggle" id="menuToggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+</button>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ============================================ -->
+    <!-- DASHBOARD SCREEN -->
+    <!-- ============================================ -->
+    <div class="dashboard-container" id="dashboardScreen" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="brand-title">BeautyFair</h1>
+                <p class="brand-subtitle">Admin Dashboard</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-tab="dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </button>
+                
+                <button class="nav-btn" data-tab="products">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <span>Products</span>
+                </button>
+                
+                <button class="nav-btn" data-tab="orders">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span>Orders</span>
+                </button>
+                
+                <button class="nav-btn" data-tab="customers">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Customers</span>
+                </button>
+                
+                <button class="nav-btn" data-tab="analytics">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Analytics</span>
+                </button>
+                
+                <button class="nav-btn" data-tab="settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m5.2-15.8l-4.2 4.2m0 5.2l4.2 4.2M23 12h-6m-6 0H1m15.8 5.2l-4.2-4.2m0-5.2l-4.2-4.2"></path>
+                    </svg>
+                    <span>Settings</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">A</div>
+                    <div class="user-info">
+                        <p class="user-name">Admin User</p>
+                        <p class="user-email">admin@beautyfair.com</p>
+                    </div>
+                </div>
+                <button class="logout-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="search-container">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" placeholder="Search products, orders, customers..." class="search-input">
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="notification-dot"></span>
+                    </button>
+                    <button class="header-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 1v6m0 6v6m5.2-15.8l-4.2 4.2m0 5.2l4.2 4.2M23 12h-6m-6 0H1m15.8 5.2l-4.2-4.2m0-5.2l-4.2-4.2"></path>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard">
+                <h2 class="page-title">Dashboard Overview</h2>
+                
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-revenue">
+                        <div class="stat-content">
+                            <p class="stat-label">Total Revenue</p>
+                            <h3 class="stat-value">₦0</h3>
+                            <p class="stat-growth">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                    <polyline points="17 6 23 6 23 12"></polyline>
+                                </svg>
+                          
+                            </p>
+                        </div>
+                        <svg class="stat-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <text x="12" y="16" font-size="20" font-weight="bold" text-anchor="middle" fill="currentColor">₦</text>
+                        </svg>
+                    </div>
+
+                    <div class="stat-card stat-orders">
+                        <div class="stat-content">
+                            <p class="stat-label">Total Orders</p>
+                            <h3 class="stat-value">1,158</h3>
+                            <p class="stat-growth">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                    <polyline points="17 6 23 6 23 12"></polyline>
+                                </svg>
+                               
+                            </p>
+                        </div>
+                        <svg class="stat-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                    </div>
+
+                    <div class="stat-card stat-products">
+                        <div class="stat-content">
+                            <p class="stat-label">Total Products</p>
+                            <h3 class="stat-value">45</h3>
+                            <p class="stat-growth">2 categories</p>
+                        </div>
+                        <svg class="stat-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        </svg>
+                    </div>
+
+                    <div class="stat-card stat-customers">
+                        <div class="stat-content">
+                            <p class="stat-label">Total Customers</p>
+                            <h3 class="stat-value">0</h3>
+                            <p class="stat-growth">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                    <polyline points="17 6 23 6 23 12"></polyline>
+                                </svg>
+                                
+                            </p>
+                        </div>
+                        <svg class="stat-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Sales Trend</h3>
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title">Monthly Sales</h3>
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Alert -->
+                <div class="alert-box">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div>
+                        <h4 class="alert-title">Low Stock Alert</h4>
+                        <p class="alert-text">3 products are running low on stock. Review inventory to avoid stockouts.</p>
+                    </div>
+                </div>
+
+                <!-- Recent Orders Table -->
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Recent Orders</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Product</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="order-id">#ORD-1247</td>
+                                    <td>Sarah Johnson</td>
+                                    <td>Lavender Dream Perfume</td>
+                                    <td class="amount">₦44,995</td>
+                                    <td><span class="status-badge status-shipped">Shipped</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="order-id">#ORD-1246</td>
+                                    <td>Michael Chen</td>
+                                    <td>Rose Essence Cream</td>
+                                    <td class="amount">₦22,750</td>
+                                    <td><span class="status-badge status-processing">Processing</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="order-id">#ORD-1245</td>
+                                    <td>Emma Davis</td>
+                                    <td>Ocean Breeze Perfume</td>
+                                    <td class="amount">₦47,500</td>
+                                    <td><span class="status-badge status-delivered">Delivered</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="order-id">#ORD-1244</td>
+                                    <td>James Wilson</td>
+                                    <td>Night Repair Cream</td>
+                                    <td class="amount">₦26,495</td>
+                                    <td><span class="status-badge status-pending">Pending</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Tab -->
+            <div class="tab-content" id="products">
+                <div class="page-header">
+                    <h2 class="page-title">Products</h2>
+                    <button class="primary-btn">+ Add New Product</button>
+                </div>
+                        
+                
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Sales</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                    <tbody>
+    <tr>
+        <td colspan="6" style="text-align: center; padding: 40px;">
+            <div class="loading-spinner"></div>
+            <p style="color: #94a3b8; margin-top: 16px;">Loading products...</p>
+        </td>
+    </tr>
+</tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div class="tab-content" id="orders">
+                <h2 class="page-title">All Orders</h2>
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="order-id">#ORD-1247</td>
+                                <td>Sarah Johnson</td>
+                                <td>Lavender Dream Perfume</td>
+                                <td class="amount">₦44,995</td>
+                                <td><span class="status-badge status-shipped">Shipped</span></td>
+                                <td><button class="action-btn view-btn">View Details</button></td>
+                            </tr>
+                            <tr>
+                                <td class="order-id">#ORD-1246</td>
+                                <td>Michael Chen</td>
+                                <td>Rose Essence Cream</td>
+                                <td class="amount">₦22,750</td>
+                                <td><span class="status-badge status-processing">Processing</span></td>
+                                <td><button class="action-btn view-btn">View Details</button></td>
+                            </tr>
+                            <tr>
+                                <td class="order-id">#ORD-1245</td>
+                                <td>Emma Davis</td>
+                                <td>Ocean Breeze Perfume</td>
+                                <td class="amount">₦47,500</td>
+                                <td><span class="status-badge status-delivered">Delivered</span></td>
+                                <td><button class="action-btn view-btn">View Details</button></td>
+                            </tr>
+                            <tr>
+                                <td class="order-id">#ORD-1244</td>
+                                <td>James Wilson</td>
+                                <td>Night Repair Cream</td>
+                                <td class="amount">₦26,495</td>
+                                <td><span class="status-badge status-pending">Pending</span></td>
+                                <td><button class="action-btn view-btn">View Details</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+<!-- Customers Tab -->
+<div class="tab-content" id="customers">
+    <h2 class="page-title">Customers</h2>
+    
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Email</th>
+                    <th>Total Orders</th>
+                    <th>Total Spent</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="customersTableBody">
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #94a3b8;">No customers yet</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-content" id="analytics">
+                <h2 class="page-title">Analytics</h2>
+                <div class="empty-state">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <p>Advanced analytics and reporting features would appear here, including revenue analytics, customer behavior, and product performance.</p>
+                </div>
+            </div>
+
+<!-- Settings Tab -->
+<div class="tab-content" id="settings">
+    <h2 class="page-title">Store Settings</h2>
+    
+    <div class="settings-container">
+        <!-- Store Information Card -->
+        <div class="settings-card">
+            <h3 class="settings-title">Store Information</h3>
+            <p class="settings-subtitle">Update your store details and contact information</p>
+            
+            <form id="settingsForm" class="settings-form">
+                <div class="form-group">
+                    <label for="storeName">Store Name *</label>
+                    <input type="text" id="storeName" required placeholder="e.g., BeautyFair Store">
+                </div>
+                
+                <div class="form-group">
+                    <label for="storeEmail">Store Email *</label>
+                    <input type="email" id="storeEmail" required placeholder="e.g., info@beautyfair.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="storePhone">Store Phone *</label>
+                    <input type="tel" id="storePhone" required placeholder="e.g., +234 123 456 7890">
+                </div>
+                
+                <div class="form-group">
+                    <label for="storeAddress">Store Address</label>
+                    <textarea id="storeAddress" rows="3" placeholder="e.g., 123 Main Street, Lagos, Nigeria"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="storeDescription">Store Description</label>
+                    <textarea id="storeDescription" rows="4" placeholder="Brief description of your store..."></textarea>
+                </div>
+                
+                <div class="settings-actions">
+                    <button type="submit" class="primary-btn">
+                        <span id="saveSettingsBtnText">Save Settings</span>
+                        <span id="saveSettingsLoader" style="display: none;">Saving...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Delivery Settings Card -->
+        <div class="settings-card" style="margin-top: 24px;">
+            <h3 class="settings-title">Delivery Settings</h3>
+            <p class="settings-subtitle">Set delivery fees for different locations</p>
+            
+            <form id="deliverySettingsForm" class="settings-form">
+                <div class="form-group">
+                    <label for="deliveryLagos">Lagos Delivery Fee (₦) *</label>
+                    <input type="number" id="deliveryLagos" required placeholder="e.g., 2000" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="deliveryAbuja">Abuja Delivery Fee (₦) *</label>
+                    <input type="number" id="deliveryAbuja" required placeholder="e.g., 3000" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="deliveryPortHarcourt">Port Harcourt Delivery Fee (₦) *</label>
+                    <input type="number" id="deliveryPortHarcourt" required placeholder="e.g., 3500" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="deliveryIbadan">Ibadan Delivery Fee (₦) *</label>
+                    <input type="number" id="deliveryIbadan" required placeholder="e.g., 2500" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="deliveryKano">Kano Delivery Fee (₦) *</label>
+                    <input type="number" id="deliveryKano" required placeholder="e.g., 4000" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="deliveryOthers">Other Locations (₦) *</label>
+                    <input type="number" id="deliveryOthers" required placeholder="e.g., 5000" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="freeDeliveryThreshold">Free Delivery Above (₦)</label>
+                    <input type="number" id="freeDeliveryThreshold" placeholder="e.g., 50000 (optional)" min="0">
+                    <small style="color: #94a3b8; font-size: 13px;">Leave empty if no free delivery threshold</small>
+                </div>
+                
+                <div class="settings-actions">
+                    <button type="submit" class="primary-btn">
+                        <span id="saveDeliveryBtnText">Save Delivery Settings</span>
+                        <span id="saveDeliveryLoader" style="display: none;">Saving...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <!-- Admin Profile Card -->
+<div class="settings-card" style="margin-top: 24px;">
+    <h3 class="settings-title">Admin Profile</h3>
+    <p class="settings-subtitle">Update your admin account details</p>
+    
+    <form id="adminProfileForm" class="settings-form">
+        <div class="form-group">
+            <label for="adminName">Admin Name</label>
+            <input type="text" id="adminName" placeholder="e.g., John Doe">
+        </div>
+        
+        <div class="form-group">
+            <label for="adminEmail">Admin Email (Read Only)</label>
+            <input type="email" id="adminEmail" disabled style="opacity: 0.6; cursor: not-allowed;">
+        </div>
+        
+        <div class="settings-actions">
+            <button type="submit" class="primary-btn">
+                <span id="saveProfileBtnText">Update Profile</span>
+                <span id="saveProfileLoader" style="display: none;">Updating...</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Hero Slider Images Card -->
+<div class="settings-card" style="margin-top: 24px;">
+    <h3 class="settings-title">Hero Slider Images</h3>
+    <p class="settings-subtitle">Upload 3 images for the homepage slider</p>
+    
+    <form id="sliderImagesForm" class="settings-form">
+        <div class="form-group">
+            <label for="sliderImage1">Slide 1 Image *</label>
+            <input type="file" id="sliderImage1" accept="image/*" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="sliderImage2">Slide 2 Image *</label>
+            <input type="file" id="sliderImage2" accept="image/*" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="sliderImage3">Slide 3 Image *</label>
+            <input type="file" id="sliderImage3" accept="image/*" required>
+        </div>
+        
+        <div class="settings-actions">
+            <button type="submit" class="primary-btn">
+                <span id="saveSliderBtnText">Save Slider Images</span>
+                <span id="saveSliderLoader" style="display: none;">Saving...</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Ms Beauty Training Card -->
+<div class="settings-card" style="margin-top: 24px;">
+    <h3 class="settings-title">Ms Beauty AI Training</h3>
+    <p class="settings-subtitle">Train Ms Beauty with questions and answers</p>
+    
+    <form id="msBeautyTrainingForm" class="settings-form">
+        <div class="form-group">
+            <label for="trainingQuestion">Question/Keyword *</label>
+            <input type="text" id="trainingQuestion" required placeholder="e.g., what are your payment methods">
+        </div>
+        
+        <div class="form-group">
+            <label for="trainingAnswer">Answer *</label>
+            <textarea id="trainingAnswer" required rows="3" placeholder="e.g., We accept bank transfer and card payments!"></textarea>
+        </div>
+        
+        <div class="settings-actions">
+            <button type="submit" class="primary-btn">
+                <span id="addTrainingBtnText">Add Training</span>
+                <span id="addTrainingLoader" style="display: none;">Adding...</span>
+            </button>
+        </div>
+    </form>
+    
+    <div style="margin-top: 30px;">
+        <h4 style="color: white; font-size: 18px; margin-bottom: 15px;">Current Training Data</h4>
+        <div id="trainingDataList" style="display: flex; flex-direction: column; gap: 10px;">
+            <p style="color: #94a3b8;">No training data yet. Add your first Q&A above!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Card -->
+<div class="settings-card" style="margin-top: 24px;">
+    <h3 class="settings-title">Change Password</h3>
+    <p class="settings-subtitle">Update your admin password</p>
+    
+    <form id="changePasswordForm" class="settings-form">
+        <div class="form-group">
+            <label for="currentPassword">Current Password *</label>
+            <input type="password" id="currentPassword" required placeholder="Enter current password">
+        </div>
+        
+        <div class="form-group">
+            <label for="newPassword">New Password *</label>
+            <input type="password" id="newPassword" required placeholder="Enter new password (min 6 characters)" minlength="6">
+        </div>
+        
+        <div class="form-group">
+            <label for="confirmPassword">Confirm New Password *</label>
+            <input type="password" id="confirmPassword" required placeholder="Confirm new password">
+        </div>
+        
+        <div class="settings-actions">
+            <button type="submit" class="primary-btn">
+                <span id="changePasswordBtnText">Change Password</span>
+                <span id="changePasswordLoader" style="display: none;">Changing...</span>
+            </button>
+        </div>
+    </form>
+</div>
+    </div>
+</div>
+
+
+    <!-- Order Details Modal -->
+<div id="orderDetailsModal" class="order-modal">
+    <div class="order-modal-overlay" onclick="closeOrderDetails()"></div>
+    <div class="order-modal-content">
+        <div class="order-modal-header">
+            <h3 id="orderModalTitle">Order Details</h3>
+            <button class="modal-close" onclick="closeOrderDetails()">×</button>
+        </div>
+        
+        <div class="order-modal-body">
+            <!-- Customer Information -->
+            <div class="order-detail-section">
+                <h4>Customer Information</h4>
+                <div class="order-detail-row">
+                    <span class="order-detail-label">Customer Name</span>
+                    <span class="order-detail-value" id="orderCustomer">-</span>
+                </div>
+                <div class="order-detail-row">
+                    <span class="order-detail-label">Order ID</span>
+                    <span class="order-detail-value" id="orderIdDisplay">-</span>
+                </div>
+            </div>
+            
+            <!-- Product Details -->
+            <div class="order-detail-section">
+                <h4>Product Details</h4>
+                <div class="order-detail-row">
+                    <span class="order-detail-label">Product</span>
+                    <span class="order-detail-value" id="orderProduct">-</span>
+                </div>
+            </div>
+            
+            <!-- Payment Information -->
+<div class="order-detail-section">
+    <h4>Payment Information</h4>
+    <div class="order-detail-row">
+        <span class="order-detail-label">Amount</span>
+        <span class="order-detail-value" id="orderAmount">-</span>
+    </div>
+    <div class="order-detail-row">
+        <span class="order-detail-label">Status</span>
+        <span class="order-detail-value" id="orderStatus">-</span>
+    </div>
+    <div class="order-detail-row">
+        <span class="order-detail-label">Payment Status</span>
+        <span class="order-detail-value" id="orderPaymentStatus">-</span>
+    </div>
+</div>
+
+<!-- Payment Approval Actions -->
+<div class="order-detail-section" id="paymentApprovalSection" style="display: none;">
+    <h4 style="color: #f59e0b;">Payment Approval Required</h4>
+    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 12px;">Review and approve or reject this payment.</p>
+    <div style="display: flex; gap: 12px;">
+        <button class="approve-payment-btn" onclick="approvePayment()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Approve Payment
+        </button>
+        <button class="reject-payment-btn" onclick="rejectPayment()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Reject Payment
+        </button>
+    </div>
+</div> 
+            
+<!-- Customer Details Modal -->
+<div id="customerDetailsModal" class="customer-modal">
+    <div class="customer-modal-overlay" onclick="closeCustomerDetails()"></div>
+    <div class="customer-modal-content">
+        <div class="customer-modal-header">
+            <h3 id="customerModalTitle">Customer Details</h3>
+            <button class="modal-close" onclick="closeCustomerDetails()">×</button>
+        </div>
+        
+        <div class="customer-info-summary">
+            <div class="customer-stats">
+                <div class="customer-stat">
+                    <div class="customer-stat-label">Total Orders</div>
+                    <div class="customer-stat-value" id="customerTotalOrders">0</div>
+                </div>
+                <div class="customer-stat">
+                    <div class="customer-stat-label">Total Spent</div>
+                    <div class="customer-stat-value" id="customerTotalSpent">₦0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="customer-orders-section">
+            <h4>Order History</h4>
+            <div id="customerOrdersList">
+                <!-- Orders will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="customer-modal-footer">
+            <button class="close-customer-btn" onclick="closeCustomerDetails()">Close</button>
+        </div>
+    </div>
+</div>
+
+
+
+    <script src="4app.js"></script>
+</body>
+</html>

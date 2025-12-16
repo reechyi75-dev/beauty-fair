@@ -1,5 +1,22 @@
 // Supervisor Interface - Complete JavaScript
 
+// 🔒 AUTH CHECK - Wait for Firebase to load first
+function checkAuth() {
+    if (typeof window.auth !== 'undefined') {
+        window.auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+            }
+        });
+    } else {
+        // Firebase not loaded yet, wait a bit
+        setTimeout(checkAuth, 100);
+    }
+}
+
+// Start auth check
+checkAuth();
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateGreeting();
@@ -26,10 +43,10 @@ function updateGreeting() {
 
 function updateDateTime() {
     const now = new Date();
-    const options = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
+    const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'

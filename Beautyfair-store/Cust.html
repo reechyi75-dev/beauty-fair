@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beauty Fair Store </title>
+    <link rel="stylesheet" href="5app.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Firebase Config -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDx9rgfPO-_mTIBLau0fclXILcaghzWow4",
+            authDomain: "beauty-fair-store.firebaseapp.com",
+            projectId: "beauty-fair-store",
+            storageBucket: "beauty-fair-store.firebasestorage.app",
+            messagingSenderId: "527909034598",
+            appId: "1:527909034598:web:ad5cce4a7f2e2e5bf02ba7"
+        };
+        firebase.initializeApp(firebaseConfig);
+        window.db = firebase.firestore();
+    </script>
+</head>
+<body>
+    <!-- Top Header Bar -->
+    <header class="top-bar">
+        <div class="store-name">BeautyFair Store</div>
+        <button class="hamburger-menu" id="hamburgerMenu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <!-- Hero Box -->
+    <section class="hero-box">
+
+        
+        <!-- Sliding Images -->
+        <div class="slider-container">
+            <div class="slider-images">
+                <img src="https://via.placeholder.com/800x400/FF69B4/FFFFFF?text=Premium+Perfumes" alt="Slide 1" class="slide active">
+                <img src="https://via.placeholder.com/800x400/FFD700/000000?text=Luxury+Creams" alt="Slide 2" class="slide">
+                <img src="https://via.placeholder.com/800x400/FF1493/FFFFFF?text=Beauty+Products" alt="Slide 3" class="slide">
+            </div>
+        </div>
+        
+        <!-- Bottom Scrolling Text -->
+        <div class="scrolling-text-container">
+            <div class="scrolling-text">
+                Dear esteemed customer, for personalized assistance kindly chat with Ms Beauty, our AI assistant
+            </div>
+        </div>
+    </section>
+
+<!-- Featured Banner Section -->
+<section class="featured-banner">
+    <div class="banner-content">
+        <div class="banner-icon">✨</div>
+        <div class="banner-text">
+            <h3>We Are Proudly:</h3>
+            <p>Authentic • Affordable • Fast Delivery</p>
+        </div>
+    </div>
+</section>
+
+<!-- ALTERNATIVE OPTION 1: Stats Banner -->
+<!-- 
+<section class="stats-banner">
+    <div class="stat-item">
+        <div class="stat-number">500+</div>
+        <div class="stat-label">Happy Customers</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number">100%</div>
+        <div class="stat-label">Authentic</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Support</div>
+    </div>
+</section>
+-->
+
+<!-- ALTERNATIVE OPTION 2: Trust Badges -->
+<!--
+<section class="trust-badges">
+    <div class="badge">🎯 Authentic Products</div>
+    <div class="badge">🚚 Fast Delivery</div>
+    <div class="badge">💝 Great Prices</div>
+</section>
+-->
+
+    <!-- Products Section -->
+    <section class="products-section">
+        <div class="container">
+            
+            <div class="container">
+    <!-- Filter Header -->
+    <h3 class="filter-header">Filter Products</h3>
+    
+    <!-- Category Filter -->
+    <div class="category-filter">
+        <button class="filter-btn" data-category="all">All Products</button>
+        <button class="filter-btn" data-category="Perfume">Perfumes</button>
+        <button class="filter-btn" data-category="Cream">Creams</button>
+    </div>
+    
+    <!-- Products Grid -->
+    <div class="products-grid" id="productsGrid">
+        <div class="loading">Loading products...</div>
+    </div>
+</div>
+          
+            <!-- Products Grid -->
+            <div class="products-grid" id="productsGrid">
+                <div class="loading">Loading products...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fixed Chat Icon -->
+    <button class="fixed-chat-icon" id="chatIcon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+            <circle cx="12" cy="11" r="1"/>
+            <circle cx="9" cy="11" r="1"/>
+            <circle cx="15" cy="11" r="1"/>
+        </svg>
+    </button>
+
+    <!-- Chat Page (Hidden by default) -->
+    <div class="chat-page" id="chatPage">
+        <div class="chat-header">
+            <h2>Ms Beauty</h2>
+            <button class="close-chat" id="closeChat">×</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="bot-message">
+                <p>hello! Welcome, I'm Ms Beauty, how can I help you today? </p>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chatInput" placeholder="Type your message..." />
+            <button id="sendMessage">Send</button>
+        </div>
+    </div>
+
+    <!-- Mobile Menu (Hidden by default) -->
+    <div class="mobile-menu" id="mobileMenu">
+    <button class="close-menu" id="closeMenu">×</button>
+    <nav>
+        <a href="#" class="menu-link">Home</a>
+        <a href="#" class="menu-link" data-category="Perfume">Perfumes</a>
+        <a href="#" class="menu-link" data-category="Cream">Creams</a>
+        <a href="#" class="menu-link" id="msBeautyLink">Ms Beauty (Chat)</a>
+        <a href="#" class="menu-link">About Us</a>
+        <a href="#" class="menu-link">Contact</a>
+    </nav>
+</div>
+
+
+<!-- Cart Page (Hidden by default) -->
+<div class="cart-page" id="cartPage">
+    <div class="cart-header">
+        <button class="back-btn" id="backFromCart">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <h2>My Cart</h2>
+        <div class="cart-count" id="cartBadge">0</div>
+    </div>
+    
+    <div class="cart-content" id="cartContent">
+        <div class="empty-cart" id="emptyCart">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <h3>Your cart is empty</h3>
+            <p>Add some products to get started!</p>
+            <button class="continue-shopping" onclick="closeCart()">Continue Shopping</button>
+        </div>
+        
+        <div class="cart-items" id="cartItems" style="display: none;">
+            <!-- Cart items will be inserted here -->
+        </div>
+    </div>
+    
+    <div class="cart-footer" id="cartFooter" style="display: none;">
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Subtotal:</span>
+                <span class="subtotal" id="cartSubtotal">₦0</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total:</span>
+                <span class="total-amount" id="cartTotal">₦0</span>
+            </div>
+        </div>
+        <button class="checkout-btn" id="checkoutBtn">
+            Proceed to Checkout
+        </button>
+    </div>
+</div>
+
+<!-- Cart Icon Button (Fixed) -->
+<button class="fixed-cart-icon" id="cartIcon">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+    </svg>
+    <span class="cart-badge" id="cartIconBadge">0</span>
+</button>
+</div>
+
+<!-- Checkout Page (Hidden by default) -->
+<div class="checkout-page" id="checkoutPage">
+    <div class="checkout-header">
+        <button class="back-btn" id="backFromCheckout">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <h2>Checkout</h2>
+    </div>
+    
+    <div class="checkout-content">
+        <!-- Order Summary -->
+        <div class="checkout-section">
+            <h3>Order Summary</h3>
+            <div class="order-summary" id="checkoutOrderSummary">
+                <!-- Order items will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- Customer Information Form -->
+        <form class="checkout-form" id="checkoutForm">
+            <div class="checkout-section">
+                <h3>Customer Information</h3>
+                
+                <div class="form-group">
+                    <label for="customerName">Full Name *</label>
+                    <input type="text" id="customerName" required placeholder="Enter your full name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerPhone">Phone Number *</label>
+                    <input type="tel" id="customerPhone" required placeholder="e.g., 08012345678">
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerEmail">Email (Optional)</label>
+                    <input type="email" id="customerEmail" placeholder="your.email@example.com">
+                </div>
+            </div>
+            
+            <div class="checkout-section">
+                <h3>Delivery Information</h3>
+                
+                <div class="form-group">
+                    <label for="deliveryLocation">Select Location *</label>
+                    <select id="deliveryLocation" required>
+                        <option value="">Choose your location</option>
+                        <option value="lagos-island" data-fee="2000">Lagos Island - ₦2,000</option>
+                        <option value="lagos-mainland" data-fee="2500">Lagos Mainland - ₦2,500</option>
+                        <option value="lekki" data-fee="3000">Lekki - ₦3,000</option>
+                        <option value="ajah" data-fee="3500">Ajah - ₦3,500</option>
+                        <option value="ikorodu" data-fee="3000">Ikorodu - ₦3,000</option>
+                        <option value="surulere" data-fee="2500">Surulere - ₦2,500</option>
+                        <option value="ikeja" data-fee="2000">Ikeja - ₦2,000</option>
+                        <option value="other" data-fee="4000">Other Areas - ₦4,000</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="deliveryAddress">Delivery Address *</label>
+                    <textarea id="deliveryAddress" required rows="3" placeholder="Enter your full delivery address"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="orderNotes">Order Notes (Optional)</label>
+                    <textarea id="orderNotes" rows="2" placeholder="Any special instructions?"></textarea>
+                </div>
+            </div>
+            
+            <!-- Price Breakdown -->
+            <div class="checkout-section price-breakdown">
+                <div class="price-row">
+                    <span>Subtotal:</span>
+                    <span id="checkoutSubtotal">₦0</span>
+                </div>
+                <div class="price-row">
+                    <span>Delivery Fee:</span>
+                    <span id="checkoutDeliveryFee">₦0</span>
+                </div>
+                <div class="price-row total-row">
+                    <span>Total:</span>
+                    <span id="checkoutTotal">₦0</span>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <button type="submit" class="place-order-btn" id="placeOrderBtn">
+                <span id="placeOrderText">Place Order</span>
+                <span id="placeOrderLoader" style="display: none;">Processing...</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- ORDER CONFIRMATION PAGE HTML -->
+<!-- Add this to your existing HTML file before closing </body> tag -->
+<!-- ========================================== -->
+
+<!-- Order Confirmation Page (Hidden by default) -->
+<div class="order-confirmation-page" id="orderConfirmationPage">
+    <div class="confirmation-content">
+        <!-- Success Icon -->
+        <div class="success-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9 12l2 2 4-4"></path>
+            </svg>
+        </div>
+        
+        <!-- Success Message -->
+        <h2 class="confirmation-title">Order Placed Successfully!</h2>
+        <p class="confirmation-subtitle">Thank you for your order. We'll contact you shortly.</p>
+        
+        <!-- Order Details Card -->
+        <div class="order-details-card">
+            <div class="order-id-section">
+                <span class="order-id-label">Order ID:</span>
+                <span class="order-id-value" id="confirmOrderId">#ORD-000000</span>
+            </div>
+            
+            <!-- Customer Info -->
+            <div class="confirmation-section">
+                <h3>Customer Information</h3>
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value" id="confirmCustomerName">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phone:</span>
+                    <span class="info-value" id="confirmCustomerPhone">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value" id="confirmCustomerEmail">-</span>
+                </div>
+            </div>
+            
+            <!-- Delivery Info -->
+            <div class="confirmation-section">
+                <h3>Delivery Information</h3>
+                <div class="info-row">
+                    <span class="info-label">Location:</span>
+                    <span class="info-value" id="confirmLocation">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Address:</span>
+                    <span class="info-value" id="confirmAddress">-</span>
+                </div>
+            </div>
+            
+            <!-- Order Items -->
+            <div class="confirmation-section">
+                <h3>Order Items</h3>
+                <div class="confirmation-items" id="confirmationItems">
+                    <!-- Items will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Price Summary -->
+            <div class="confirmation-section price-summary">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span id="confirmSubtotal">₦0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Delivery Fee:</span>
+                    <span id="confirmDeliveryFee">₦0</span>
+                </div>
+                <div class="summary-row total-row">
+                    <span>Total Amount:</span>
+                    <span id="confirmTotal">₦0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="confirmation-actions">
+            <button class="continue-shopping-btn" onclick="closeConfirmation()">
+                Continue Shopping
+            </button>
+            <button class="track-order-btn" onclick="trackOrder()">
+                Track Order
+            </button>
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="confirmation-note">
+            <p>📱 We'll send you updates via SMS and WhatsApp</p>
+            <p>💬 For inquiries, chat with Ms Beauty or call us</p>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- ORDER TRACKING PAGE HTML -->
+<!-- Add this to your existing HTML file before closing </body> tag -->
+<!-- ========================================== -->
+
+<!-- Order Tracking Page (Hidden by default) -->
+<div class="order-tracking-page" id="orderTrackingPage">
+    <div class="tracking-header">
+        <button class="back-btn" id="backFromTracking">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <h2>Track Order</h2>
+    </div>
+    
+    <div class="tracking-content">
+        <!-- Search Section -->
+        <div class="tracking-search-section">
+            <h3>Enter Your Order Details</h3>
+            <p class="search-subtitle">Track your order using Order ID or Phone Number</p>
+            
+            <form class="tracking-search-form" id="trackingSearchForm">
+                <div class="form-group">
+                    <label for="trackOrderId">Order ID (Optional)</label>
+                    <input type="text" id="trackOrderId" placeholder="e.g., ORD-1234567890">
+                </div>
+                
+                <div class="form-group">
+                    <label for="trackPhone">Phone Number *</label>
+                    <input type="tel" id="trackPhone" required placeholder="e.g., 08012345678">
+                </div>
+                
+                <button type="submit" class="track-submit-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    Track Order
+                </button>
+            </form>
+        </div>
+        
+        <!-- Results Section -->
+        <div class="tracking-results" id="trackingResults" style="display: none;">
+            <div class="results-header">
+                <h3>Your Orders</h3>
+                <p id="resultsCount">0 orders found</p>
+            </div>
+            
+            <div class="orders-list" id="ordersList">
+                <!-- Orders will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- No Results -->
+        <div class="no-results" id="noResults" style="display: none;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <h3>No Orders Found</h3>
+            <p>We couldn't find any orders with the provided details. Please check and try again.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal (for tracking) -->
+<div class="order-details-modal" id="orderDetailsModal">
+    <div class="modal-overlay" onclick="closeOrderDetails()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Order Details</h3>
+            <button class="modal-close" onclick="closeOrderDetails()">×</button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Order ID & Status -->
+            <div class="order-status-banner" id="orderStatusBanner">
+                <div class="status-info">
+                    <span class="status-label">Order ID:</span>
+                    <span class="status-id" id="modalOrderId">#ORD-000000</span>
+                </div>
+                <div class="status-badge-large" id="modalOrderStatus">Pending</div>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="order-timeline" id="orderTimeline">
+                <div class="timeline-item active">
+                    <div class="timeline-icon">✓</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Order Placed</div>
+                        <div class="timeline-date">Just now</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">○</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Processing</div>
+                        <div class="timeline-date">Pending</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">○</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Shipped</div>
+                        <div class="timeline-date">Pending</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">○</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Delivered</div>
+                        <div class="timeline-date">Pending</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Items -->
+            <div class="modal-section">
+                <h4>Items</h4>
+                <div id="modalOrderItems">
+                    <!-- Items will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Customer & Delivery Info -->
+            <div class="modal-section">
+                <h4>Customer Information</h4>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Name:</span>
+                        <span id="modalCustomerName">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Phone:</span>
+                        <span id="modalCustomerPhone">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Location:</span>
+                        <span id="modalLocation">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Address:</span>
+                        <span id="modalAddress">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Price Summary -->
+            <div class="modal-section price-section">
+                <div class="price-row">
+                    <span>Subtotal:</span>
+                    <span id="modalSubtotal">₦0</span>
+                </div>
+                <div class="price-row">
+                    <span>Delivery Fee:</span>
+                    <span id="modalDeliveryFee">₦0</span>
+                </div>
+                <div class="price-row total-row">
+                    <span>Total:</span>
+                    <span id="modalTotal">₦0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="close-modal-btn" onclick="closeOrderDetails()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- BOTTOM NAVIGATION HTML -->
+<!-- Add this to your HTML file (replaces the fixed cart icon) -->
+<!-- ========================================== -->
+
+<!-- Bottom Navigation Bar -->
+<nav class="bottom-navigation">
+    <!-- Tracking -->
+    <button class="nav-item" id="navTracking">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
+            <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"></path>
+        </svg>
+        <span>Track</span>
+    </button>
+    
+    <!-- Search -->
+    <button class="nav-item" id="navSearch">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <span>Search</span>
+    </button>
+    
+    <!-- Cart (Center) -->
+    <button class="nav-item nav-item-center" id="navCart">
+        <div class="nav-cart-circle">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span class="nav-cart-badge" id="navCartBadge">0</span>
+        </div>
+        <span>Cart</span>
+    </button>
+    
+    <!-- Wishlist -->
+    <button class="nav-item" id="navWishlist">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <span>Wishlist</span>
+        <span class="nav-wishlist-badge" id="navWishlistBadge" style="display: none;">0</span>
+    </button>
+    
+    <!-- Account -->
+    <button class="nav-item" id="navAccount">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>Account</span>
+    </button>
+</nav>
+
+<style>
+/* ========================================== */
+/* BOTTOM NAVIGATION STYLES */
+/* ========================================== */
+
+/* Bottom Navigation Bar */
+.bottom-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #001f3f, #003366, #004080);
+    border-top: 2px solid #FFD700;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 0 12px 0;
+    z-index: 100;
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Nav Item */
+.nav-item {
+    background: none;
+    border: none;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    flex: 1;
+    max-width: 80px;
+}
+
+.nav-item:hover {
+    background: rgba(255, 215, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.nav-item svg {
+    color: white;
+}
+
+.nav-item span {
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+}
+
+/* Center Cart Item (Special Styling) */
+.nav-item-center {
+    position: relative;
+    margin-top: -7px;
+    max-width: 70px;
+}
+
+.nav-cart-circle {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #FFD700, #FF69B4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 15px rgba(255, 105, 180, 0.5);
+    position: relative;
+    border: 1px solid #001f3f;
+}
+
+.nav-item-center:hover .nav-cart-circle {
+    transform: scale(1.1);
+}
+
+/* Cart Badge */
+.nav-cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -3px;
+    background: #ff4444;
+    color: white;
+    font-weight: bold;
+    font-size: 5px;
+    padding: 3px 7px;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+    border: 1px solid #001f3f;
+}
+
+/* Wishlist Badge */
+.nav-wishlist-badge {
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    background: #ff4444;
+    color: white;
+    font-weight: bold;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
+}
+
+/* Active State */
+.nav-item.active {
+    background: rgba(255, 215, 0, 0.2);
+    color: #FFD700;
+}
+
+.nav-item.active svg {
+    color: #FFD700;
+}
+
+.nav-item.active span {
+    color: #FFD700;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-item span {
+        font-size: 10px;
+    }
+    
+    .nav-cart-circle {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .nav-cart-circle svg {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* Remove old fixed cart icon (if it exists) */
+.fixed-cart-icon {
+    display: none !important;
+}
+
+/* Add padding to body to prevent content from hiding under nav */
+body {
+    padding-bottom: 80px;
+}
+</style>
+
+<script>
+// ========================================
+// BOTTOM NAVIGATION FUNCTIONALITY
+// ========================================
+
+// Track Order Button
+document.getElementById('navTracking').addEventListener('click', () => {
+    openOrderTracking();
+    setActiveNav('navTracking');
+});
+
+// Search Button
+document.getElementById('navSearch').addEventListener('click', () => {
+    openSearchPage();
+    setActiveNav('navSearch');
+});
+
+// Cart Button
+document.getElementById('navCart').addEventListener('click', () => {
+    openCart();
+    setActiveNav('navCart');
+});
+
+// Wishlist Button
+document.getElementById('navWishlist').addEventListener('click', () => {
+    openWishlist();
+    setActiveNav('navWishlist');
+});
+
+// Account Button
+document.getElementById('navAccount').addEventListener('click', () => {
+    openAccount();
+    setActiveNav('navAccount');
+});
+
+// Set active navigation item
+function setActiveNav(activeId) {
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.getElementById(activeId).classList.add('active');
+}
+
+// Update cart badge
+function updateNavCartBadge() {
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    document.getElementById('navCartBadge').textContent = totalItems;
+    
+    // Also update old badges if they exist
+    const oldBadge1 = document.getElementById('cartBadge');
+    const oldBadge2 = document.getElementById('cartIconBadge');
+    if (oldBadge1) oldBadge1.textContent = totalItems;
+    if (oldBadge2) oldBadge2.textContent = totalItems;
+}
+
+// Update the existing updateCartBadges function
+const originalUpdateCartBadges = window.updateCartBadges;
+window.updateCartBadges = function() {
+    if (originalUpdateCartBadges) originalUpdateCartBadges();
+    updateNavCartBadge();
+};
+
+// Search Page (placeholder)
+function openSearchPage() {
+    alert('🔍 Search feature coming soon! You can search for products.');
+}
+
+// Wishlist Page (placeholder)
+let wishlist = JSON.parse(localStorage.getItem('beautyfair_wishlist')) || [];
+
+function openWishlist() {
+    if (wishlist.length === 0) {
+        alert('💝 Your wishlist is empty! Add products to your wishlist.');
+    } else {
+        alert(`💝 You have ${wishlist.length} item(s) in your wishlist.\n\nWishlist page coming soon!`);
+    }
+}
+
+function updateWishlistBadge() {
+    const badge = document.getElementById('navWishlistBadge');
+    if (wishlist.length > 0) {
+        badge.textContent = wishlist.length;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Account Page (placeholder)
+function openAccount() {
+    alert('👤 Account feature coming soon!\n\nYou will be able to:\n- View your profile\n- Check order history\n- Update settings\n- Contact support');
+}
+
+// Initialize
+updateNavCartBadge();
+updateWishlistBadge();
+
+console.log('✅ Bottom navigation loaded');
+</script>
+
+<!-- ========================================== -->
+<!-- SEARCH PAGE HTML -->
+<!-- Add this to your HTML file before closing </body> tag -->
+<!-- ========================================== -->
+
+<!-- Search Page (Hidden by default) -->
+<div class="search-page" id="searchPage">
+    <div class="search-header">
+        <button class="back-btn" id="backFromSearch">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <div class="search-input-container">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search for products..." autocomplete="off">
+            <button class="clear-search" id="clearSearch" style="display: none;">×</button>
+        </div>
+    </div>
+    
+    <div class="search-content">
+        <!-- Search Suggestions (when empty) -->
+        <div class="search-suggestions" id="searchSuggestions">
+            <h3>Popular Searches</h3>
+            <div class="suggestion-chips">
+                <button class="chip" onclick="searchFor('perfume')">Perfume</button>
+                <button class="chip" onclick="searchFor('cream')">Cream</button>
+                <button class="chip" onclick="searchFor('skincare')">Skincare</button>
+                <button class="chip" onclick="searchFor('beauty')">Beauty Products</button>
+            </div>
+            
+            <h3>Recent Searches</h3>
+            <div class="recent-searches" id="recentSearches">
+                <p style="color: #999; text-align: center; padding: 20px;">No recent searches</p>
+            </div>
+        </div>
+        
+        <!-- Search Results -->
+        <div class="search-results" id="searchResults" style="display: none;">
+            <div class="results-header">
+                <h3 id="resultsTitle">Search Results</h3>
+                <p id="resultsCount">0 products found</p>
+            </div>
+            
+            <div class="search-products-grid" id="searchProductsGrid">
+                <!-- Products will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- No Results -->
+        <div class="search-no-results" id="searchNoResults" style="display: none;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <h3>No Products Found</h3>
+            <p>Try searching with different keywords</p>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ========================================== */
+/* SEARCH PAGE STYLES */
+/* ========================================== */
+
+.search-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 260;
+    display: none;
+    flex-direction: column;
+}
+
+.search-page.active {
+    display: flex;
+}
+
+.search-header {
+    background: linear-gradient(90deg, #001f3f, #003366);
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 2px solid #FFD700;
+}
+
+.search-input-container {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 25px;
+    padding: 10px 15px;
+}
+
+.search-input-container svg {
+    color: #666;
+    flex-shrink: 0;
+}
+
+.search-input-container input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    padding: 0 10px;
+    background: transparent;
+}
+
+.clear-search {
+    background: #ccc;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 20px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.search-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* Search Suggestions */
+.search-suggestions h3 {
+    font-size: 16px;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    margin-top: 20px;
+}
+
+.search-suggestions h3:first-child {
+    margin-top: 0;
+}
+
+.suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.chip {
+    padding: 8px 16px;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid #FFD700;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.chip:hover {
+    background: linear-gradient(90deg, #FFD700, #FF69B4);
+    color: black;
+    font-weight: bold;
+}
+
+.recent-searches {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: rgba(255, 215, 0, 0.05);
+    border: 1px solid #FFD700;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.recent-item:hover {
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.recent-text {
+    flex: 1;
+    color: #1a1a1a;
+}
+
+.remove-recent {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+/* Search Results */
+.results-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #FFD700;
+}
+
+.results-header h3 {
+    font-size: 20px;
+    color: #1a1a1a;
+    margin-bottom: 5px;
+}
+
+.results-header p {
+    color: #666;
+    font-size: 14px;
+}
+
+.search-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+/* No Results */
+.search-no-results {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.search-no-results svg {
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.search-no-results h3 {
+    font-size: 22px;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+}
+
+.search-no-results p {
+    color: #666;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}
+</style>
+
+<script>
+// ========================================
+// SEARCH PAGE FUNCTIONALITY
+// ========================================
+
+let recentSearches = JSON.parse(localStorage.getItem('beautyfair_recent_searches')) || [];
+
+// Open search page
+function openSearchPage() {
+    document.getElementById('searchPage').classList.add('active');
+    document.getElementById('searchInput').focus();
+    displayRecentSearches();
+}
+
+// Close search page
+function closeSearchPage() {
+    document.getElementById('searchPage').classList.remove('active');
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchSuggestions').style.display = 'block';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('searchNoResults').style.display = 'none';
+}
+
+// Search input handler
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const query = e.target.value.trim();
+    const clearBtn = document.getElementById('clearSearch');
+    
+    if (query.length > 0) {
+        clearBtn.style.display = 'block';
+        performSearch(query);
+    } else {
+        clearBtn.style.display = 'none';
+        document.getElementById('searchSuggestions').style.display = 'block';
+        document.getElementById('searchResults').style.display = 'none';
+        document.getElementById('searchNoResults').style.display = 'none';
+    }
+});
+
+// Clear search
+document.getElementById('clearSearch').addEventListener('click', function() {
+    document.getElementById('searchInput').value = '';
+    this.style.display = 'none';
+    document.getElementById('searchSuggestions').style.display = 'block';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('searchNoResults').style.display = 'none';
+});
+
+// Perform search
+function performSearch(query) {
+    const filtered = allProducts.filter(product => 
+        product.name.toLowerCase().includes(query.toLowerCase()) ||
+        product.category.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    // Save to recent searches
+    saveRecentSearch(query);
+    
+    document.getElementById('searchSuggestions').style.display = 'none';
+    
+    if (filtered.length === 0) {
+        document.getElementById('searchResults').style.display = 'none';
+        document.getElementById('searchNoResults').style.display = 'block';
+    } else {
+        displaySearchResults(filtered, query);
+    }
+}
+
+// Display search results
+function displaySearchResults(products, query) {
+    const grid = document.getElementById('searchProductsGrid');
+    
+    document.getElementById('resultsTitle').textContent = `Results for "${query}"`;
+    document.getElementById('resultsCount').textContent = `${products.length} product${products.length !== 1 ? 's' : ''} found`;
+    
+    grid.innerHTML = products.map(product => `
+        <div class="product-card">
+            <div class="product-image">🌸</div>
+            <div class="product-name">${product.name}</div>
+            <div class="product-price">₦${product.price.toLocaleString()}</div>
+            <button class="add-cart-btn" onclick="addToCart('${product.id}')" ${product.stock === 0 ? 'disabled' : ''}>
+                ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+        </div>
+    `).join('');
+    
+    document.getElementById('searchResults').style.display = 'block';
+    document.getElementById('searchNoResults').style.display = 'none';
+}
+
+// Search for specific term (from chips)
+function searchFor(term) {
+    document.getElementById('searchInput').value = term;
+    performSearch(term);
+}
+
+// Save recent search
+function saveRecentSearch(query) {
+    if (!query || query.length < 2) return;
+    
+    // Remove if already exists
+    recentSearches = recentSearches.filter(s => s !== query);
+    
+    // Add to beginning
+    recentSearches.unshift(query);
+    
+    // Keep only last 5
+    recentSearches = recentSearches.slice(0, 5);
+    
+    localStorage.setItem('beautyfair_recent_searches', JSON.stringify(recentSearches));
+    displayRecentSearches();
+}
+
+// Display recent searches
+function displayRecentSearches() {
+    const container = document.getElementById('recentSearches');
+    
+    if (recentSearches.length === 0) {
+        container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No recent searches</p>';
+        return;
+    }
+    
+    container.innerHTML = recentSearches.map(search => `
+        <div class="recent-item" onclick="searchFor('${search}')">
+            <span class="recent-text">${search}</span>
+            <button class="remove-recent" onclick="event.stopPropagation(); removeRecentSearch('${search}')">×</button>
+        </div>
+    `).join('');
+}
+
+// Remove recent search
+function removeRecentSearch(query) {
+    recentSearches = recentSearches.filter(s => s !== query);
+    localStorage.setItem('beautyfair_recent_searches', JSON.stringify(recentSearches));
+    displayRecentSearches();
+}
+
+// Back button
+document.getElementById('backFromSearch').addEventListener('click', closeSearchPage);
+
+// Make functions global
+window.openSearchPage = openSearchPage;
+window.closeSearchPage = closeSearchPage;
+window.searchFor = searchFor;
+window.removeRecentSearch = removeRecentSearch;
+
+console.log('✅ Search page loaded');
+</script>
+
+<!-- ========================================== -->
+<!-- WISHLIST PAGE HTML -->
+<!-- Add this to your HTML file before closing </body> tag -->
+<!-- ========================================== -->
+
+<!-- Wishlist Page (Hidden by default) -->
+<div class="wishlist-page" id="wishlistPage">
+    <div class="wishlist-header">
+        <button class="back-btn" id="backFromWishlist">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <h2>My Wishlist</h2>
+        <div class="wishlist-count" id="wishlistHeaderCount">0</div>
+    </div>
+    
+    <div class="wishlist-content">
+        <!-- Empty Wishlist -->
+        <div class="empty-wishlist" id="emptyWishlist">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <h3>Your wishlist is empty</h3>
+            <p>Add your favorite products to save them for later!</p>
+            <button class="browse-products-btn" onclick="closeWishlistPage()">Browse Products</button>
+        </div>
+        
+        <!-- Wishlist Items -->
+        <div class="wishlist-items" id="wishlistItems" style="display: none;">
+            <div class="wishlist-grid" id="wishlistGrid">
+                <!-- Wishlist items will be inserted here -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="wishlist-footer" id="wishlistFooter" style="display: none;">
+        <button class="add-all-to-cart-btn" id="addAllToCartBtn">
+            Add All to Cart
+        </button>
+        <button class="clear-wishlist-btn" id="clearWishlistBtn">
+            Clear Wishlist
+        </button>
+    </div>
+</div>
+
+<style>
+/* ========================================== */
+/* WISHLIST PAGE STYLES */
+/* ========================================== */
+
+.wishlist-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 260;
+    display: none;
+    flex-direction: column;
+}
+
+.wishlist-page.active {
+    display: flex;
+}
+
+.wishlist-header {
+    background: linear-gradient(90deg, #001f3f, #003366);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 2px solid #FFD700;
+}
+
+.wishlist-header h2 {
+    color: white;
+    font-size: 24px;
+    flex: 1;
+}
+
+.wishlist-count {
+    background: linear-gradient(135deg, #FF69B4, #FFD700);
+    color: black;
+    font-weight: bold;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.wishlist-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* Empty Wishlist */
+.empty-wishlist {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.empty-wishlist svg {
+    color: #FF69B4;
+    margin-bottom: 20px;
+}
+
+.empty-wishlist h3 {
+    font-size: 24px;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+}
+
+.empty-wishlist p {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.browse-products-btn {
+    padding: 12px 30px;
+    background: linear-gradient(90deg, #FFD700, #FF69B4);
+    border: none;
+    border-radius: 25px;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.browse-products-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Wishlist Grid */
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 15px;
+}
+
+.wishlist-item {
+    background: white;
+    border: 2px solid #FFD700;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.wishlist-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+}
+
+.remove-wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 68, 68, 0.9);
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.remove-wishlist-btn:hover {
+    background: #ff0000;
+    transform: scale(1.1);
+}
+
+.wishlist-item-icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.wishlist-item-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.wishlist-item-price {
+    font-size: 16px;
+    color: #FF69B4;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.wishlist-add-cart-btn {
+    width: 100%;
+    padding: 8px;
+    background: linear-gradient(90deg, #FFD700, #FF69B4);
+    border: none;
+    border-radius: 8px;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.wishlist-add-cart-btn:hover {
+    transform: scale(1.05);
+}
+
+.wishlist-add-cart-btn:disabled {
+    background: #999;
+    cursor: not-allowed;
+}
+
+/* Wishlist Footer */
+.wishlist-footer {
+    background: rgba(0, 0, 0, 0.05);
+    border-top: 2px solid #FFD700;
+    padding: 15px 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.add-all-to-cart-btn,
+.clear-wishlist-btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 25px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-all-to-cart-btn {
+    background: linear-gradient(90deg, #FFD700, #FF69B4);
+    color: black;
+}
+
+.add-all-to-cart-btn:hover {
+    transform: scale(1.02);
+}
+
+.clear-wishlist-btn {
+    background: white;
+    border: 2px solid #ff4444;
+    color: #ff4444;
+}
+
+.clear-wishlist-btn:hover {
+    background: #ff4444;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .wishlist-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}
+</style>
+
+<script>
+// ========================================
+// WISHLIST PAGE FUNCTIONALITY
+// ========================================
+
+
+// Open wishlist page
+function openWishlist() {
+    displayWishlist();
+    document.getElementById('wishlistPage').classList.add('active');
+}
+
+// Close wishlist page
+function closeWishlistPage() {
+    document.getElementById('wishlistPage').classList.remove('active');
+}
+
+// Display wishlist
+function displayWishlist() {
+    const emptyWishlist = document.getElementById('emptyWishlist');
+    const wishlistItems = document.getElementById('wishlistItems');
+    const wishlistFooter = document.getElementById('wishlistFooter');
+    const wishlistGrid = document.getElementById('wishlistGrid');
+    
+    updateWishlistCount();
+    
+    if (wishlist.length === 0) {
+        emptyWishlist.style.display = 'flex';
+        wishlistItems.style.display = 'none';
+        wishlistFooter.style.display = 'none';
+        return;
+    }
+    
+    emptyWishlist.style.display = 'none';
+    wishlistItems.style.display = 'block';
+    wishlistFooter.style.display = 'flex';
+    
+    // Get full product details
+    const wishlistProducts = wishlist.map(id =>
+        allProducts.find(p => p.id === id)
+    ).filter(p => p); // Remove any null/undefined
+    
+    wishlistGrid.innerHTML = wishlistProducts.map(product => {
+        // Generate star rating
+        const rating = product.rating || 4.5;
+        const fullStars = Math.floor(rating);
+        const halfStar = rating % 1 >= 0.5;
+        let stars = '★'.repeat(fullStars);
+        if (halfStar) stars += '☆';
+        
+        return `
+        <div class="wishlist-item">
+            <button class="remove-wishlist-btn" onclick="removeFromWishlist('${product.id}')">×</button>
+            
+            <div class="wishlist-item-image">
+                ${product.imageUrl ? 
+                    `<img src="${product.imageUrl}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">` 
+                    : '🌸'}
+            </div>
+            
+            <div class="wishlist-item-category">${product.category}</div>
+            <div class="wishlist-item-name">${product.name}</div>
+            
+            <div class="wishlist-item-rating">
+                <span class="stars">${stars}</span>
+                <span class="rating-number">(${rating})</span>
+            </div>
+            
+            <div class="wishlist-item-price">₦${product.price.toLocaleString()}</div>
+            
+            <div class="wishlist-stock ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}">
+                ${product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+            </div>
+            
+            <button class="wishlist-add-cart-btn" onclick="addToCartFromWishlist('${product.id}')" ${product.stock === 0 ? 'disabled' : ''}>
+                ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+        </div>
+    `;
+    }).join('');
+}
+
+// ========================================
+// ADD TO CART FROM WISHLIST
+// ========================================
+
+function addToCartFromWishlist(productId) {
+    addToCart(productId);
+    showNotification('✅ Added to cart from wishlist!');
+}
+
+// Make function global
+window.addToCartFromWishlist = addToCartFromWishlist;
+// Add to wishlist
+function addToWishlist(productId) {
+    if (wishlist.includes(productId)) {
+        showNotification('💝 Already in wishlist');
+        return;
+    }
+    
+    wishlist.push(productId);
+    saveWishlist();
+    updateWishlistBadge();
+    showNotification('💝 Added to wishlist!');
+}
+
+// Remove from wishlist
+function removeFromWishlist(productId) {
+    wishlist = wishlist.filter(id => id !== productId);
+    saveWishlist();
+    updateWishlistBadge();
+    displayWishlist();
+    showNotification('❌ Removed from wishlist');
+}
+
+// Add to cart from wishlist
+function addToCartFromWishlist(productId) {
+    addToCart(productId);
+    // Optionally remove from wishlist after adding to cart
+    // removeFromWishlist(productId);
+}
+
+// Add all to cart
+document.getElementById('addAllToCartBtn').addEventListener('click', () => {
+    if (wishlist.length === 0) return;
+    
+    let addedCount = 0;
+    wishlist.forEach(productId => {
+        const product = allProducts.find(p => p.id === productId);
+        if (product && product.stock > 0) {
+            addToCart(productId);
+            addedCount++;
+        }
+    });
+    
+    showNotification(`✅ Added ${addedCount} item(s) to cart!`);
+});
+
+// Clear wishlist
+document.getElementById('clearWishlistBtn').addEventListener('click', () => {
+    if (confirm('Are you sure you want to clear your entire wishlist?')) {
+        wishlist = [];
+        saveWishlist();
+        updateWishlistBadge();
+        displayWishlist();
+        showNotification('🗑️ Wishlist cleared');
+    }
+});
+
+// Save wishlist
+function saveWishlist() {
+    localStorage.setItem('beautyfair_wishlist', JSON.stringify(wishlist));
+}
+
+// Update wishlist count
+function updateWishlistCount() {
+    document.getElementById('wishlistHeaderCount').textContent = wishlist.length;
+}
+
+// Update wishlist badge
+function updateWishlistBadge() {
+    const badge = document.getElementById('navWishlistBadge');
+    if (badge) {
+        if (wishlist.length > 0) {
+            badge.textContent = wishlist.length;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+// Back button
+document.getElementById('backFromWishlist').addEventListener('click', closeWishlistPage);
+
+// Make functions global
+window.openWishlist = openWishlist;
+window.closeWishlistPage = closeWishlistPage;
+window.addToWishlist = addToWishlist;
+window.removeFromWishlist = removeFromWishlist;
+window.addToCartFromWishlist = addToCartFromWishlist;
+
+// Initialize
+updateWishlistBadge();
+
+console.log('✅ Wishlist page loaded');
+</script>
+
+<!-- ========================================== -->
+<!-- ACCOUNT PAGE HTML -->
+<!-- Add this to your HTML file before closing </body> tag -->
+<!-- ========================================== -->
+
+<!-- Account Page (Hidden by default) -->
+<div class="account-page" id="accountPage">
+    <div class="account-header">
+        <button class="back-btn" id="backFromAccount">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <h2>My Account</h2>
+    </div>
+    
+    <div class="account-content">
+        <!-- Profile Section -->
+        <div class="account-profile-card">
+            <div class="profile-avatar">👤</div>
+            <div class="profile-info">
+                <h3 id="profileName">Guest User</h3>
+                <p id="profilePhone">Not logged in</p>
+            </div>
+            <button class="edit-profile-btn" onclick="editProfile()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Account Menu -->
+        <div class="account-menu">
+            <!-- Orders Section -->
+            <div class="menu-section">
+                <h4>Orders</h4>
+                <button class="menu-item" onclick="openOrderTracking()">
+                    <div class="menu-item-icon">📦</div>
+                    <div class="menu-item-text">
+                        <span class="menu-item-title">My Orders</span>
+                        <span class="menu-item-subtitle">Track and view orders</span>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Shopping Section -->
+            <div class="menu-section">
+                <h4>Shopping</h4>
+                <button class="menu-item" onclick="openWishlist()">
+                    <div class="menu-item-icon">💝</div>
+                    <div class="menu-item-text">
+                        <span class="menu-item-title">Wishlist</span>
+                        <span class="menu-item-subtitle">Saved items</span>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+                
+                <button class="menu-item" onclick="openCart()">
+                    <div class="menu-item-icon">🛒</div>
+                    <div class="menu-item-text">
+                        <span class="menu-item-title">Shopping Cart</span>
+                        <span class="menu-item-subtitle">View cart items</span>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Support Section -->
+            <div class="menu-section">
+                <h4>Support</h4>
+                <button class="menu-item" onclick="openChat()">
+                    <div class="menu-item-icon">💬</div>
+                    <div class="menu-item-text">
+                        <span class="menu-item-title">Chat with Ms Beauty</span>
+                        <span class="menu-item-subtitle">AI assistant support</span>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+                
+                <button class="menu-item" onclick="contactSupport()">
+                    <div class="menu-item-icon">📞</div>
+                    <div class="menu-item-text">
+                        <span class="menu-item-title">Contact Support</span>
+                        <span class="menu-item-subtitle">Get help</span>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Settings Section -->
+            <div class="menu-section">
+                <h4>Settings</h4>
+                <button class="menu-item" onclick="aboutUs()">
+                    <div class="menu-item-icon">ℹ️</div>
+                    <div class="menu-item-text">
+                        <span class="menu-item-title">About Us</span>
+                        <span class="menu-item-subtitle">Learn more</span>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- App Info -->
+        <div class="app-info">
+            <p>Beauty Fair Store</p>
+            <p>Version 1.0.0</p>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="edit-profile-modal" id="editProfileModal">
+    <div class="modal-overlay" onclick="closeEditProfile()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Profile</h3>
+            <button class="modal-close" onclick="closeEditProfile()">×</button>
+        </div>
+        
+        <form class="edit-profile-form" id="editProfileForm">
+            <div class="form-group">
+                <label for="editName">Full Name</label>
+                <input type="text" id="editName" required placeholder="Enter your name">
+            </div>
+            
+            <div class="form-group">
+                <label for="editPhone">Phone Number</label>
+                <input type="tel" id="editPhone" required placeholder="e.g., 08012345678">
+            </div>
+            
+            <div class="form-group">
+                <label for="editEmail">Email (Optional)</label>
+                <input type="email" id="editEmail" placeholder="your.email@example.com">
+            </div>
+            
+            <button type="submit" class="save-profile-btn">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<style>
+/* ========================================== */
+/* ACCOUNT PAGE STYLES */
+/* ========================================== */
+
+.account-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 260;
+    display: none;
+    flex-direction: column;
+}
+
+.account-page.active {
+    display: flex;
+}
+
+.account-header {
+    background: linear-gradient(90deg, #001f3f, #003366);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 2px solid #FFD700;
+}
+
+.account-header h2 {
+    color: white;
+    font-size: 24px;
+    flex: 1;
+}
+
+.account-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Profile Card */
+.account-profile-card {
+    background: linear-gradient(135deg, #FFD700, #FF69B4);
+    border-radius: 16px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.profile-avatar {
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-info h3 {
+    font-size: 20px;
+    color: black;
+    margin-bottom: 5px;
+}
+
+.profile-info p {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.edit-profile-btn {
+    background: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-profile-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Account Menu */
+.account-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.menu-section h4 {
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.menu-item {
+    background: white;
+    border: 2px solid #FFD700;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    width: 100%;
+}
+
+.menu-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+.menu-item-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.menu-item-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.menu-item-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1a1a1a;
+}
+
+.menu-item-subtitle {
+    font-size: 13px;
+    color: #666;
+}
+
+.menu-item svg {
+    color: #999;
+    flex-shrink: 0;
+}
+
+/* App Info */
+.app-info {
+    text-align: center;
+    padding: 30px 20px;
+    color: #999;
+    font-size: 13px;
+}
+
+.app-info p {
+    margin: 3px 0;
+}
+
+/* Edit Profile Modal */
+.edit-profile-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 280;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.edit-profile-modal.active {
+    display: flex;
+}
+
+.edit-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+}
+
+.save-profile-btn {
+    padding: 12px;
+    background: linear-gradient(90deg, #FFD700, #FF69B4);
+    border: none;
+    border-radius: 25px;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.save-profile-btn:hover {
+    transform: scale(1.02);
+}
+</style>
+
+<script>
+// ========================================
+// ACCOUNT PAGE FUNCTIONALITY
+// ========================================
+
+let userProfile = JSON.parse(localStorage.getItem('beautyfair_profile')) || {
+    name: 'Guest User',
+    phone: '',
+    email: ''
+};
+
+// Open account page
+function openAccount() {
+    displayProfile();
+    document.getElementById('accountPage').classList.add('active');
+}
+
+// Close account page
+function closeAccountPage() {
+    document.getElementById('accountPage').classList.remove('active');
+}
+
+// Display profile
+function displayProfile() {
+    if (userProfile.name && userProfile.name !== 'Guest User') {
+        document.getElementById('profileName').textContent = userProfile.name;
+        document.getElementById('profilePhone').textContent = userProfile.phone || 'No phone number';
+    } else {
+        document.getElementById('profileName').textContent = 'Guest User';
+        document.getElementById('profilePhone').textContent = 'Tap edit to add your info';
+    }
+}
+
+// Edit profile
+function editProfile() {
+    document.getElementById('editName').value = userProfile.name;
+    document.getElementById('editPhone').value = userProfile.phone || '';
+    document.getElementById('editEmail').value = userProfile.email || '';
+    document.getElementById('editProfileModal').classList.add('active');
+}
+
+// Close edit profile
+function closeEditProfile() {
+    document.getElementById('editProfileModal').classList.remove('active');
+}
+
+// Save profile
+document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    userProfile = {
+        name: document.getElementById('editName').value.trim(),
+        phone: document.getElementById('editPhone').value.trim(),
+        email: document.getElementById('editEmail').value.trim()
+    };
+    
+    localStorage.setItem('beautyfair_profile', JSON.stringify(userProfile));
+    displayProfile();
+    closeEditProfile();
+    showNotification('✅ Profile updated successfully!');
+});
+
+// Open chat
+function openChat() {
+    closeAccountPage();
+    document.getElementById('chatPage').classList.add('active');
+}
+
+// Contact support
+function contactSupport() {
+    alert('📞 Contact Support\n\nPhone: 0801-234-5678\nEmail: support@beautyfair.com\nWhatsApp: +234 801 234 5678\n\nOr chat with Ms Beauty for instant help!');
+}
+
+// About us
+function aboutUs() {
+    alert('ℹ️ About Beauty Fair Store\n\nYour #1 destination for premium skincare products!\n\nWe offer:\n✨ Premium perfumes\n🌸 Quality creams\n💝 Authentic products\n🚚 Fast delivery\n\nThank you for shopping with us!');
+}
+
+// Back button
+document.getElementById('backFromAccount').addEventListener('click', closeAccountPage);
+
+// Make functions global
+window.openAccount = openAccount;
+window.closeAccountPage = closeAccountPage;
+window.editProfile = editProfile;
+window.closeEditProfile = closeEditProfile;
+window.openChat = openChat;
+window.contactSupport = contactSupport;
+window.aboutUs = aboutUs;
+
+// Initialize
+displayProfile();
+
+console.log('✅ Account page loaded');
+</script>
+
+<!-- Custom Notification -->
+<div class="custom-notification-overlay" id="customNotificationOverlay">
+    <div class="custom-notification">
+        <div class="notification-icon" id="notificationIcon">💝</div>
+        <div class="notification-title" id="notificationTitle">Notification</div>
+        <div class="notification-message" id="notificationMessage">This is a message</div>
+        <button class="notification-btn" onclick="closeCustomNotification()">OK</button>
+    </div>
+</div>
+
+    <script src="5app.js"></script>
+</body>
+</html>
+

@@ -1,6 +1,12 @@
-
 // FIREBASE AUTHENTICATION WITH ACCESS CODE SYSTEM
 // ============================================
+
+// 🔒 AUTH CHECK - Protect this page
+window.auth.onAuthStateChanged((user) => {
+    if (!user) {
+        window.location.href = 'index.html';
+    }
+});
 
 let isRecording = false;
 let mediaRecorder = null;
@@ -11,9 +17,9 @@ let selectedDepartment = null;
 let sessionTimeout;
 let isRemembered = false;
 let profilePicFile = null;
-let currentUser = { 
+let currentUser = {
     accessCode: '',
-    name: '', 
+    name: '',
     initials: '',
     role: '',
     department: ''

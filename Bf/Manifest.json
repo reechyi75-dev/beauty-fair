@@ -1,12 +1,13 @@
 {
-  "name": "Beauty Fair",
+  "name": "Beauty Fair Staff Management",
   "short_name": "Beauty Fair",
   "description": "Staff management system for Beauty Fair company",
-  "start_url": "/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#003049",
   "theme_color": "#669bbc",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icon-192.png",
@@ -21,4 +22,4 @@
       "purpose": "any maskable"
     }
   ]
-} 
+}
