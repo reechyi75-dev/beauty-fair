@@ -12,18 +12,33 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <!-- Firebase Config -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDx9rgfPO-_mTIBLau0fclXILcaghzWow4",
-            authDomain: "beauty-fair-store.firebaseapp.com",
-            projectId: "beauty-fair-store",
-            storageBucket: "beauty-fair-store.firebasestorage.app",
-            messagingSenderId: "527909034598",
-            appId: "1:527909034598:web:ad5cce4a7f2e2e5bf02ba7"
-        };
-        firebase.initializeApp(firebaseConfig);
-        window.db = firebase.firestore();
-    </script>
+   <script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDx9rgfPO-_mTIBLau0fclXILcaghzWow4",
+    authDomain: "beauty-fair-store.firebaseapp.com",
+    projectId: "beauty-fair-store",
+    storageBucket: "beauty-fair-store.firebasestorage.app",
+    messagingSenderId: "527909034598",
+    appId: "1:527909034598:web:ad5cce4a7f2e2e5bf02ba7"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+// ✅ ADD THIS - Enable offline cache
+firebase.firestore().enablePersistence()
+    .catch((err) => {
+        console.warn('Cache error:', err.code);
+    });
+
+// ✅ Reduce timeout from 10 seconds to 5 seconds
+firebase.firestore().settings({
+    cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+    experimentalForceLongPolling: false,
+    experimentalAutoDetectLongPolling: true
+});
+
+window.db = firebase.firestore();
+</script> 
 </head>
 <body>
     <!-- Top Header Bar -->
