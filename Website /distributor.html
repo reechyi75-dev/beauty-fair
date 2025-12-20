@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become a Distributor - BeautyFair Laboratory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300,400,600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%);
+        }
+
+        .logo-container h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #d4af37 0%, #f2d06b 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .logo-container p {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1em;
+            font-weight: 300;
+            letter-spacing: 4px;
+            color: #f2d06b;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #d4af37;
+            text-decoration: none;
+            font-size: 1em;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #f2d06b;
+        }
+
+        /* Distributor Section */
+        .distributor-section {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 40px;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #d4af37 0%, #f2d06b 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: distributorGlow 3.5s ease-in-out infinite;
+        }
+
+        @keyframes distributorGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.7))
+                        drop-shadow(0 0 50px rgba(242, 208, 107, 0.4));
+            }
+            50% {
+                filter: drop-shadow(0 0 45px rgba(212, 175, 55, 1))
+                        drop-shadow(0 0 70px rgba(242, 208, 107, 0.7));
+            }
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.3em;
+            color: #ccc;
+            margin-bottom: 60px;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 15px;
+            border-left: 4px solid #d4af37;
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+        }
+
+        .content-block h2 {
+            color: #f2d06b;
+            font-size: 2em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .content-block h3 {
+            color: #f2d06b;
+            font-size: 1.5em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .content-block p {
+            color: #e0e0e0;
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .content-block p:last-child {
+            margin-bottom: 0;
+        }
+
+        .content-block strong {
+            color: #f2d06b;
+        }
+
+        /* Benefits Grid */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .benefit-card {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(242, 208, 107, 0.08));
+            padding: 35px;
+            border-radius: 15px;
+            border: 2px solid #d4af37;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.3);
+        }
+
+        .benefit-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .benefit-card h3 {
+            color: #f2d06b;
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            margin-top: 0;
+        }
+
+        .benefit-card p {
+            color: #e0e0e0;
+            font-size: 1.05em;
+            line-height: 1.7;
+            margin-bottom: 0;
+        }
+
+        /* What We Look For Box */
+        .lookfor-box {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(242, 208, 107, 0.1));
+            border: 3px solid #d4af37;
+            padding: 50px;
+            border-radius: 20px;
+            margin: 60px 0;
+            box-shadow: 0 15px 50px rgba(212, 175, 55, 0.3);
+        }
+
+        .lookfor-box h2 {
+            color: #f2d06b;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .lookfor-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .lookfor-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid #d4af37;
+        }
+
+        .lookfor-item h3 {
+            color: #f2d06b;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .lookfor-item p {
+            color: #e0e0e0;
+            font-size: 1.05em;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* CTA Box */
+        .cta-box {
+            background: linear-gradient(135deg, #d4af37, #f2d06b);
+            padding: 60px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 60px 0;
+            box-shadow: 0 20px 60px rgba(212, 175, 55, 0.5);
+        }
+
+        .cta-box h2 {
+            color: #1a1a1a;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .cta-box p {
+            color: #2d2d2d;
+            font-size: 1.3em;
+            margin-bottom: 40px;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            flex-wrap: wrap;
+        }
+
+        .contact-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 25px 40px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .contact-item h3 {
+            color: #1a1a1a;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .contact-item a {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .contact-item a:hover {
+            color: #000;
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+            border-top: 3px solid #d4af37;
+            margin-top: 100px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        footer p {
+            color: #888;
+            margin: 5px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .distributor-section {
+                padding: 0 20px;
+            }
+
+            .page-title {
+                font-size: 2.2em;
+            }
+
+            .content-block {
+                padding: 30px 20px;
+            }
+
+            .content-block h2 {
+                font-size: 1.6em;
+            }
+
+            .lookfor-box {
+                padding: 30px 20px;
+            }
+
+            .lookfor-box h2 {
+                font-size: 2em;
+            }
+
+            .cta-box {
+                padding: 40px 20px;
+            }
+
+            .cta-box h2 {
+                font-size: 2em;
+            }
+
+            .contact-info {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo-container">
+            <h1>BeautyFair</h1>
+            <p>Laboratory</p>
+        </div>
+        <a href="Bf.html" class="back-link">← Back to Home</a>
+    </header>
+
+    <!-- Distributor Section -->
+    <section class="distributor-section">
+        <h1 class="page-title">Become a Distributor</h1>
+        <p class="subtitle">Partner with a Proven Winner</p>
+
+        <div class="content-block">
+            <p>Are you ready to align yourself with a legacy of excellence? BeautyFair is seeking ambitious, driven individuals and businesses to join our expanding network of distributors across the country. Since 1976, we've built a reputation for quality, reliability, and profitability—and now, we're inviting you to share in our continued success.</p>
+        </div>
+
+        <div class="content-block">
+            <h2>Why Become a BeautyFair Distributor?</h2>
+        </div>
+
+        <!-- Benefits Grid -->
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">✅</div>
+                <h3>Proven Product Portfolio</h3>
+                <p>You're not gambling on untested products. Our extensive range of moisturizing creams and captivating fragrances has a nearly 50-year track record of customer satisfaction and repeat purchases. When products sell themselves, your job becomes easier and more profitable.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🏆</div>
+                <h3>Strong Brand Recognition</h3>
+                <p>BeautyFair is a trusted household name with loyal customers nationwide. You'll be representing a brand that people already know, love, and actively seek out—giving you an immediate competitive advantage in the marketplace.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">💰</div>
+                <h3>Exceptional Profit Margins</h3>
+                <p>Our business model is designed for mutual success. With competitive wholesale pricing and high-demand products, our distributors enjoy healthy profit margins that reward your entrepreneurial efforts.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🤝</div>
+                <h3>Comprehensive Support</h3>
+                <p>We don't just hand you products and wish you luck. BeautyFair provides ongoing support, including product training, marketing materials, and direct access to our management team. Your success is our success, and we invest in making sure you thrive.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">📈</div>
+                <h3>Growing Market Demand</h3>
+                <p>The beauty and skincare industry continues to expand, and BeautyFair's commitment to affordable luxury positions you perfectly to capture market share. Our products appeal to a broad demographic, ensuring consistent demand and sales opportunities.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🚀</div>
+                <h3>Low Barrier to Entry</h3>
+                <p>Unlike many distribution opportunities that require massive capital investment, BeautyFair offers accessible entry points that allow entrepreneurs at various levels to participate and grow their businesses.</p>
+            </div>
+        </div>
+
+        <!-- What We Look For -->
+        <div class="lookfor-box">
+            <h2>What We Look For in Distributors</h2>
+            <p style="text-align: center; color: #e0e0e0; font-size: 1.1em; margin-bottom: 30px;">We seek partners who share our values:</p>
+            
+            <div class="lookfor-list">
+                <div class="lookfor-item">
+                    <h3>Commitment to Quality</h3>
+                    <p>You understand that our reputation is built on authentic, top-notch products</p>
+                </div>
+
+                <div class="lookfor-item">
+                    <h3>Customer-First Mentality</h3>
+                    <p>You prioritize customer satisfaction and building long-term relationships</p>
+                </div>
+
+                <div class="lookfor-item">
+                    <h3>Entrepreneurial Drive</h3>
+                    <p>You're motivated, organized, and ready to build a profitable business</p>
+                </div>
+
+                <div class="lookfor-item">
+                    <h3>Integrity</h3>
+                    <p>You conduct business ethically and professionally</p>
+                </div>
+
+                <div class="lookfor-item">
+                    <h3>Growth Mindset</h3>
+                    <p>You're ambitious and see this as a long-term opportunity, not a quick venture</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-block">
+            <h2>Start Your Journey Today</h2>
+            <p>Whether you're an experienced distributor looking to add a winning product line or an entrepreneur ready to launch your first venture, BeautyFair offers the perfect opportunity to build a sustainable, profitable business.</p>
+            
+            <p>Don't just take our word for it—our network of successful distributors across the country speaks volumes about the opportunity we offer.</p>
+        </div>
+
+        <!-- CTA Box -->
+        <div class="cta-box">
+            <h2>Ready to Join the BeautyFair Family?</h2>
+            <p>Take the first step toward a rewarding partnership. Reach out to our management team today to discuss distribution opportunities, pricing structures, and how we can help you succeed.</p>
+            
+            <div class="contact-info">
+                <div class="contact-item">
+                    <h3>Email Us</h3>
+                    <a href="mailto:beautyfair@info.com">beautyfair@info.com</a>
+                </div>
+
+                <div class="contact-item">
+                    <h3>Call Us</h3>
+                    <a href="tel:08168987884">0816 898 7884</a>
+                </div>
+            </div>
+
+            <p style="margin-top: 40px; font-size: 1.4em; font-weight: 600;">Let's build success together.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 BeautyFair Laboratory. All rights reserved.</p>
+        <p>Nurturing Beauty Since 1976</p>
+        <p style="margin-top: 15px;"><a href="Bf.html" style="color: #d4af37; text-decoration: none;">← Back to Home</a></p>
+    </footer>
+</body>
+</html>

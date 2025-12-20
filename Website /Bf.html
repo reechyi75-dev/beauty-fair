@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeautyFair Laboratory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300,400,600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #fff;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%);
+        }
+
+        .logo-container h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #d4af37 0%, #f2d06b 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .logo-container p {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1em;
+            font-weight: 300;
+            letter-spacing: 4px;
+            color: #f2d06b;
+            text-transform: uppercase;
+        }
+
+        /* Hero Box with Sliding Text */
+        .hero-box {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #2c1810 0%, #4a2c1f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            border-top: 2px solid #d4af37;
+            border-bottom: 2px solid #d4af37;
+        }
+
+        .hero-slider {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-text {
+            position: absolute;
+            font-size: 2.5em;
+            font-weight: 600;
+            text-align: center;
+            padding: 0 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideText 10s infinite;
+            background: linear-gradient(135deg, #fff 0%, #f2d06b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(242, 208, 107, 0.6),
+                         0 0 80px rgba(242, 208, 107, 0.4),
+                         0 0 120px rgba(242, 208, 107, 0.2);
+            filter: drop-shadow(0 0 20px rgba(242, 208, 107, 0.8));
+        }
+
+        .hero-text:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .hero-text:nth-child(2) {
+            animation-delay: 2s;
+        }
+
+        .hero-text:nth-child(3) {
+            animation-delay: 4s;
+        }
+
+        .hero-text:nth-child(4) {
+            animation-delay: 6s;
+        }
+
+        .hero-text:nth-child(5) {
+            animation-delay: 8s;
+        }
+
+        @keyframes slideText {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            2% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            18% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            20% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Shop Now Button */
+        .shop-section {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .shop-btn {
+            display: inline-block;
+            padding: 20px 60px;
+            font-size: 1.4em;
+            font-weight: 600;
+            text-decoration: none;
+            color: #1a1a1a;
+            background: linear-gradient(135deg, #d4af37 0%, #f2d06b 50%, #d4af37 100%);
+            border-radius: 50px;
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.4),
+                        0 0 60px rgba(242, 208, 107, 0.3);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shop-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .shop-btn:hover:before {
+            left: 100%;
+        }
+
+        .shop-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.6),
+                        0 0 80px rgba(242, 208, 107, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo-container h1 {
+                font-size: 2.5em;
+            }
+
+            .logo-container p {
+                font-size: 0.9em;
+                letter-spacing: 3px;
+            }
+
+            .hero-box {
+                height: 250px;
+            }
+
+            .hero-text {
+                font-size: 1.8em;
+                padding: 0 20px;
+            }
+
+            .shop-btn {
+                padding: 18px 50px;
+                font-size: 1.2em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo-container h1 {
+                font-size: 2em;
+            }
+
+            .hero-text {
+                font-size: 1.4em;
+            }
+
+            .shop-btn {
+                padding: 15px 40px;
+                font-size: 1em;
+            }
+        }
+
+        /* About Us Section */
+        .about-section {
+            max-width: 1200px;
+            margin: 80px auto;
+            padding: 0 40px;
+        }
+
+        .section-header {
+            text-align: center;
+            font-size: 3em;
+            font-weight: 600;
+            margin-bottom: 60px;
+            background: linear-gradient(135deg, #d4af37 0%, #f2d06b 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(212, 175, 55, 0.5);
+            filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.6));
+            animation: gentleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes gentleGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.6));
+            }
+            50% {
+                filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.9));
+            }
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .text-block {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 15px;
+            border-left: 4px solid #d4af37;
+            backdrop-filter: blur(10px);
+        }
+
+        .text-block h3 {
+            color: #f2d06b;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .text-block p {
+            color: #e0e0e0;
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .text-block p:last-child {
+            margin-bottom: 0;
+        }
+
+        .text-block strong {
+            color: #f2d06b;
+            font-weight: 600;
+        }
+
+        .product-image-container {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .product-image {
+            max-width: 600px;
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);
+            border: 3px solid #d4af37;
+        }
+
+        .image-caption {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #f2d06b;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .about-section {
+                padding: 0 20px;
+                margin: 60px auto;
+            }
+
+            .section-header {
+                font-size: 2.2em;
+            }
+
+            .text-block {
+                padding: 30px;
+            }
+
+            .text-block h3 {
+                font-size: 1.5em;
+            }
+
+            .text-block p {
+                font-size: 1em;
+            }
+        }
+        
+          /* About Our Products Section */
+        .products-section {
+            max-width: 1200px;
+            margin: 80px auto;
+            padding: 0 40px;
+        }
+
+        .products-header {
+            animation: productsGlow 3.5s ease-in-out infinite;
+        }
+
+        @keyframes productsGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 20px rgba(242, 208, 107, 0.5)) 
+                        drop-shadow(0 0 40px rgba(212, 175, 55, 0.3));
+            }
+            50% {
+                filter: drop-shadow(0 0 30px rgba(242, 208, 107, 0.8)) 
+                        drop-shadow(0 0 60px rgba(212, 175, 55, 0.5));
+            }
+        }
+
+        .product-showcase {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px 0;
+            position: relative;
+        }
+
+        .showcase-image {
+            text-align: center;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(242, 208, 107, 0.05));
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 15px 50px rgba(212, 175, 55, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .showcase-image:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(212, 175, 55, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .products-section {
+                padding: 0 20px;
+                margin: 60px auto;
+            }
+
+            .product-showcase {
+                padding: 30px 0;
+            }
+
+            .showcase-image {
+                padding: 25px;
+            }
+        }
+        
+        /* Leadership Section */
+.leadership-section {
+    max-width: 1200px;
+    margin: 80px auto;
+    padding: 0 40px;
+}
+
+.leadership-header {
+    animation: leadershipGlow 4s ease-in-out infinite;
+}
+
+@keyframes leadershipGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.6))
+                drop-shadow(0 0 45px rgba(242, 208, 107, 0.3))
+                drop-shadow(0 0 65px rgba(212, 175, 55, 0.2));
+    }
+    50% {
+        filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.9))
+                drop-shadow(0 0 60px rgba(242, 208, 107, 0.6))
+                drop-shadow(0 0 85px rgba(212, 175, 55, 0.4));
+    }
+}
+
+.chairman-showcase {
+    display: flex;
+    justify-content: center;
+    padding: 60px 0;
+}
+
+.chairman-card {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(242, 208, 107, 0.08));
+    padding: 50px;
+    border-radius: 25px;
+    border: 3px solid #d4af37;
+    box-shadow: 0 20px 60px rgba(212, 175, 55, 0.3),
+                0 0 80px rgba(242, 208, 107, 0.2);
+    text-align: center;
+    max-width: 600px;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.chairman-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 25px 70px rgba(212, 175, 55, 0.5),
+                0 0 100px rgba(242, 208, 107, 0.4);
+}
+
+.chairman-image {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border-radius: 20px;
+    border: 4px solid #d4af37;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    margin-bottom: 30px;
+}
+
+.chairman-info h3 {
+    font-size: 2em;
+    color: #f2d06b;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.chairman-title {
+    font-size: 1.3em;
+    color: #d4af37;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.leadership-quote {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(242, 208, 107, 0.1));
+    border-left: 6px solid #d4af37;
+    padding: 50px;
+    margin-top: 40px;
+    box-shadow: 0 10px 40px rgba(212, 175, 55, 0.2);
+}
+
+.leadership-quote h3 {
+    color: #f2d06b;
+    font-size: 2em;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.leadership-quote p {
+    font-size: 1.15em;
+    line-height: 1.9;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .leadership-section {
+        padding: 0 20px;
+        margin: 60px auto;
+    }
+
+    .chairman-showcase {
+        padding: 40px 0;
+    }
+
+    .chairman-card {
+        padding: 30px;
+    }
+
+    .chairman-info h3 {
+        font-size: 1.6em;
+    }
+
+    .chairman-title {
+        font-size: 1.1em;
+    }
+
+    .leadership-quote {
+        padding: 30px 20px;
+    }
+
+    .leadership-quote h3 {
+        font-size: 1.6em;
+    }
+}
+      /* Hamburger Menu */
+.hamburger-menu {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    z-index: 1000;
+    cursor: pointer;
+    background: linear-gradient(135deg, #d4af37, #f2d06b);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(212, 175, 55, 0.5);
+    transition: transform 0.3s ease;
+}
+
+.hamburger-menu:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 30px rgba(212, 175, 55, 0.7);
+}
+
+.menu-icon span {
+    display: block;
+    width: 30px;
+    height: 3px;
+    background: #1a1a1a;
+    margin: 6px 0;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+/* Navigation Overlay */
+.nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.98), rgba(45, 45, 45, 0.98));
+    backdrop-filter: blur(10px);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.nav-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.close-menu {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    font-size: 50px;
+    color: #f2d06b;
+    cursor: pointer;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.close-menu:hover {
+    transform: rotate(90deg);
+    color: #d4af37;
+}
+
+.mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    text-align: center;
+}
+
+.nav-link {
+    font-size: 1.8em;
+    color: #e0e0e0;
+    text-decoration: none;
+    font-weight: 400;
+    transition: all 0.3s ease;
+    padding: 15px 30px;
+    border-radius: 10px;
+}
+
+.nav-link:hover {
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+    transform: translateX(10px);
+}
+
+.shop-link {
+    background: linear-gradient(135deg, #d4af37, #f2d06b);
+    color: #1a1a1a;
+    font-weight: 600;
+    margin-top: 20px;
+    box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+}
+
+.shop-link:hover {
+    transform: translateX(0) scale(1.05);
+    box-shadow: 0 8px 30px rgba(212, 175, 55, 0.6);
+}
+
+/* Footer */
+.footer {
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    border-top: 3px solid #d4af37;
+    margin-top: 100px;
+    padding: 60px 40px 30px;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 60px;
+    margin-bottom: 50px;
+}
+
+.footer-brand h2 {
+    font-family: 'Dancing Script', cursive;
+    font-size: 2.5em;
+    background: linear-gradient(135deg, #d4af37, #f2d06b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 5px;
+}
+
+.footer-brand > p {
+    font-size: 0.9em;
+    color: #f2d06b;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+
+.footer-tagline {
+    color: #aaa;
+    font-style: italic;
+    margin-top: 20px;
+}
+
+.footer-links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+}
+
+.footer-column h4 {
+    color: #f2d06b;
+    font-size: 1.3em;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.footer-column a {
+    display: block;
+    color: #ccc;
+    text-decoration: none;
+    margin-bottom: 12px;
+    transition: color 0.3s ease, transform 0.3s ease;
+    font-size: 1em;
+}
+
+.footer-column a:hover {
+    color: #d4af37;
+    transform: translateX(5px);
+}
+
+.footer-column p {
+    color: #aaa;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
+    padding-top: 30px;
+    text-align: center;
+    color: #888;
+}
+
+.footer-bottom p {
+    margin: 5px 0;
+    font-size: 0.95em;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .footer-links {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .hamburger-menu {
+        top: 20px;
+        right: 20px;
+        padding: 12px;
+    }
+
+    .menu-icon span {
+        width: 25px;
+    }
+
+    .nav-link {
+        font-size: 1.4em;
+    }
+
+    .footer {
+        padding: 40px 20px 20px;
+    }
+
+    .footer-brand h2 {
+        font-size: 2em;
+    }
+}
+        
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo-container">
+            <h1>BeautyFair</h1>
+            <p>Laboratory</p>
+        </div>
+    </header>
+
+    <!-- Hero Box with Sliding Text -->
+    <div class="hero-box">
+        <div class="hero-slider">
+            <div class="hero-text">BEAUTYFAIR SINCE 1976</div>
+            <div class="hero-text">GET REJUVENATED WITH BEAUTYFAIR PRODUCTS </div>
+            <div class="hero-text">WE HAVE THE  BEST FRAGRANCES IN THE WORLD </div>
+            <div class="hero-text">GET MORE BEAUTIFUL WITH BEAUTYFAIR </div>
+            <div class="hero-text">TESTED AND TRUSTED </div>
+        </div>
+    </div>
+
+    <!-- Shop Now Button -->
+    <div class="shop-section">
+        <a href="https://reechyi75-dev.github.io/beauty-fair/Beautyfair-store/Cust.html" class="shop-btn" target="_blank">Shop Now</a>
+    </div>
+
+    <!-- About Us Section -->
+    <section class="about-section" id="about">
+        <h2 class="section-header">ABOUT US</h2>
+        
+        <div class="content-wrapper">
+            <div class="text-block">
+                <h3>Nearly Five Decades of Skincare Excellence</h3>
+                <p>Since 1976, BeautyFair has been at the forefront of skincare innovation, dedicated to one powerful belief: beautiful, healthy skin is a right, not a privilege. For nearly fifty years, we've crafted premium skincare solutions and captivating fragrances that have become household favorites across the nation.</p>
+            </div>
+
+            <div class="text-block">
+                <h3>Our Mission</h3>
+                <p>At BeautyFair, we understand that every skin tone is unique, and every individual deserves access to effective, luxurious skincare. Our mission is simple yet profound—to provide exceptional moisturizing solutions that work for everybody, regardless of skin type or complexion. We believe that quality skincare should be accessible to all, which is why we've committed ourselves to delivering professional-grade products at prices that welcome everyone into the BeautyFair family.</p>
+            </div>
+
+            <div class="product-image-container">
+                <img src="https://placeholder-image-url.com/cream.jpg" alt="BeautyFair Sweet Almonds Herbal Lotion" class="product-image">
+                <p class="image-caption">Our Premium Moisturizing Solutions</p>
+            </div>
+
+            <div class="text-block">
+                <h3>What Sets Us Apart</h3>
+                <p>Our success story is written in the countless testimonials from satisfied customers who have experienced the BeautyFair difference. From our deeply nourishing creams that transform dry skin into silky smoothness, to our signature fragrances that captivate the senses with their irresistibly charming aromas, every product is formulated with care, precision, and your wellbeing in mind.</p>
+                
+                <p>What truly distinguishes BeautyFair is our unwavering commitment to three pillars:</p>
+                
+                <p><strong>Quality Without Compromise</strong> – Decades of expertise have refined our formulations to deliver visible results that speak for themselves.</p>
+                
+                <p><strong>Universal Beauty</strong> – Our inclusive approach ensures that every product works harmoniously with all skin tones, celebrating the diversity of beauty.</p>
+                
+                <p><strong>Accessible Luxury</strong> – We've mastered the art of creating premium products that remain affordable, because everyone deserves to feel confident in their skin.</p>
+            </div>
+
+            <div class="text-block">
+                <h3>Our Legacy, Your Confidence</h3>
+                <p>With an extensive portfolio of successful products trusted by generations, BeautyFair continues to innovate while honoring the timeless principles that established our reputation. Each cream, each fragrance, each formulation is a testament to our dedication to your beauty and confidence.</p>
+                
+                <p>Experience the BeautyFair difference—where heritage meets innovation, where quality meets affordability, and where your skin's health is our highest priority.</p>
+            </div>
+        </div>
+    </section>
+
+   <!-- ABOUT OUR PRODUCTS -->
+    <section class="products-section" id="products">
+        <h2 class="section-header products-header">ABOUT OUR PRODUCTS</h2>
+        
+        <div class="content-wrapper">
+            <div class="text-block">
+                <h3>Crafted with Care, Designed for You</h3>
+                <p>At BeautyFair, every product in our collection is the result of meticulous research, premium ingredients, and decades of skincare expertise. Our range is thoughtfully designed to address your daily beauty needs while delivering an experience that's both luxurious and accessible.</p>
+            </div>
+
+            <div class="text-block">
+                <h3>Our Signature Creams</h3>
+                <p>Our moisturizing creams are the heart of the BeautyFair legacy. Formulated with advanced hydration technology, each cream penetrates deep into the skin to deliver lasting moisture, restore natural radiance, and protect against environmental stressors. Whether you have dry, combination, or sensitive skin, our creams adapt to your unique needs, leaving your skin feeling soft, supple, and rejuvenated.</p>
+            </div>
+
+            <div class="product-showcase">
+                <div class="showcase-image">
+                    <img src="https://placeholder-cream-image.com" alt="BeautyFair Moisturizing Cream" class="product-image">
+                    <p class="image-caption">Advanced Hydration Technology</p>
+                </div>
+            </div>
+
+            <div class="text-block">
+                <h3>What makes our creams exceptional:</h3>
+                <p>• Deep, long-lasting hydration that works with all skin tones<br>
+                • Lightweight, non-greasy formulas that absorb quickly<br>
+                • Enriched with nourishing ingredients that promote healthy, glowing skin<br>
+                • Suitable for daily use, morning and night<br>
+                • Clinically tested for safety and effectiveness</p>
+            </div>
+
+            <div class="text-block">
+                <h3>Our Captivating Fragrances</h3>
+                <p>A signature scent is more than just a fragrance—it's an expression of who you are. BeautyFair perfumes are crafted to leave a lasting impression with their irresistibly charming aromas. Each fragrance tells a story, blending carefully selected notes that create a captivating, memorable scent experience.</p>
+            </div>
+
+            <div class="product-showcase">
+                <div class="showcase-image">
+                    <img src="https://placeholder-perfume-image.com" alt="BeautyFair Fragrances" class="product-image">
+                    <p class="image-caption">Irresistibly Charming Aromas</p>
+                </div>
+            </div>
+
+            <div class="text-block">
+                <h3>Our fragrance promise:</h3>
+                <p>• Long-lasting wear that carries you through the day<br>
+                • Enchanting compositions that suit every occasion<br>
+                • Universally appealing scents that garner compliments<br>
+                • Elegant bottles that reflect the quality within<br>
+                • Exceptional value without compromising on luxury</p>
+            </div>
+
+            <div class="text-block">
+                <h3>The BeautyFair Difference</h3>
+                <p>What truly sets our products apart is our commitment to inclusivity and accessibility. We don't believe that premium skincare should be reserved for the few—it should be available to everyone. That's why every BeautyFair product combines professional-grade quality with affordability, ensuring that radiant skin and captivating confidence are within everyone's reach.</p>
+            </div>
+
+            <div class="text-block">
+                <h3>Proven Results, Trusted by Thousands</h3>
+                <p>Our products speak for themselves through the countless testimonials from satisfied customers who have made BeautyFair a part of their daily beauty ritual. From first-time users to lifelong devotees, people across the country trust BeautyFair to deliver results that exceed expectations.</p>
+                
+                <p style="text-align: center; font-size: 1.3em; color: #f2d06b; margin-top: 30px;"><strong>Discover the BeautyFair collection and experience skincare that works as beautifully as it promises.</strong></p>
+            </div>
+        </div>
+    </section>
+
+<!-- Leadership Section -->
+<section class="leadership-section" id="leadership">
+    <h2 class="section-header leadership-header">OUR LEADERSHIP</h2>
+    
+    <div class="content-wrapper">
+        <div class="text-block">
+            <h3>Visionary Excellence at the Helm</h3>
+        </div>
+
+        <!-- Chairman Photo -->
+        <div class="chairman-showcase">
+            <div class="chairman-card">
+                <img src="https://placeholder-chairman-image.com" alt="Fola Anthony Ogunlesi - Chairman & CEO" class="chairman-image">
+                <div class="chairman-info">
+                    <h3>Fola Anthony Ogunlesi (FAO)</h3>
+                    <p class="chairman-title">Chairman & Chief Executive Officer</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-block">
+            <h3>A Leader Who Delivers on Every Promise</h3>
+            <p>Behind every exceptional product and every satisfied customer stands a leader whose vision, dedication, and unwavering commitment to excellence have shaped BeautyFair into the trusted brand it is today. Fola Anthony Ogunlesi, our esteemed Chairman and CEO, embodies the values that define our company: integrity, innovation, and an uncompromising pursuit of quality.</p>
+            
+            <p>Mr. Ogunlesi's leadership philosophy is simple yet powerful—deliver exactly what you promise, every single time. This principle has become the cornerstone of BeautyFair's reputation and the foundation of trust we've built with customers across the nation. Under his guidance, "customer first" is not just a slogan; it's a practice embedded in every decision, every product, and every interaction.</p>
+        </div>
+
+        <div class="text-block">
+            <h3>From Vision to Reality</h3>
+            <p>What sets FAO apart is his remarkable ability to bring every aspect of the business to life with precision and passion. From product development to staff management, from customer relations to market strategy, his hands-on approach ensures that excellence permeates every level of the organization. His intimate involvement in the business means that no detail is too small, no standard too high, and no compromise acceptable when it comes to quality.</p>
+        </div>
+
+        <div class="text-block">
+            <h3>The Hallmarks of His Leadership</h3>
+            
+            <p><strong>Intelligence & Strategic Vision</strong> – His sharp business acumen keeps BeautyFair consistently ahead of competitors, anticipating market needs and setting industry standards rather than following them.</p>
+            
+            <p><strong>Unwavering Discipline</strong> – His disciplined approach to business operations ensures that every product meets the highest quality benchmarks before reaching our customers.</p>
+            
+            <p><strong>Relentless Work Ethic</strong> – His dedication and hard work inspire every member of the BeautyFair team to pursue excellence in their respective roles.</p>
+            
+            <p><strong>Perseverance</strong> – Through changing market dynamics and evolving consumer needs, his steadfast commitment has steered BeautyFair through nearly five decades of continuous growth and success.</p>
+            
+            <p><strong>Authenticity & Integrity</strong> – Under his leadership, BeautyFair maintains a zero-tolerance policy for counterfeit or substandard products. What you see is what you get—genuine, top-notch quality, always.</p>
+        </div>
+
+        <div class="text-block">
+            <h3>Professionalism in Action</h3>
+            <p>FAO's professional excellence extends beyond business metrics. He has cultivated a corporate culture where staff are empowered, customers are valued, and quality is non-negotiable. His leadership style demonstrates that business success and ethical practices are not mutually exclusive—they are, in fact, inseparable.</p>
+        </div>
+
+        <div class="text-block leadership-quote">
+            <h3>A Legacy of Trust</h3>
+            <p>Through his visionary leadership, Fola Anthony Ogunlesi has transformed BeautyFair from a skincare company into a trusted household name. His commitment to delivering authentic, effective products at accessible prices has touched countless lives and set a standard that competitors aspire to reach.</p>
+            
+            <p>Under FAO's stewardship, BeautyFair doesn't just promise beauty—we deliver it, authentically and consistently, to every customer who trusts us with their skincare needs.</p>
+        </div>
+    </div>
+</section>
+<!-- Hamburger Menu -->
+<div class="hamburger-menu" id="hamburgerMenu">
+    <div class="menu-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</div>
+
+<!-- Mobile Navigation Overlay -->
+<div class="nav-overlay" id="navOverlay">
+    <div class="close-menu" id="closeMenu">&times;</div>
+    <nav class="mobile-nav">
+        <a href="#about" class="nav-link">About Us</a>
+        <a href="#products" class="nav-link">About Our Products</a>
+        <a href="#leadership" class="nav-link">Our Leadership</a>
+        <a href="support.html" class="nav-link">Support</a>
+        <a href="distributor.html" class="nav-link">Become a Distributor</a>
+        <a href="https://reechyi75-dev.github.io/beauty-fair/Beautyfair-store/Cust.html" class="nav-link shop-link" target="_blank">Shop Now</a>
+    </nav>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-brand">
+            <h2>BeautyFair</h2>
+            <p>Laboratory</p>
+            <p class="footer-tagline">Nurturing Beauty Since 1976</p>
+        </div>
+
+        <div class="footer-links">
+            <div class="footer-column">
+                <h4>Quick Links</h4>
+                <a href="#about">About Us</a>
+                <a href="#products">Our Products</a>
+                <a href="#leadership">Our Leadership</a>
+            </div>
+
+            <div class="footer-column">
+                <h4>Get Started</h4>
+                <a href="support.html">Support</a>
+                <a href="distributor.html">Become a Distributor</a>
+                <a href="https://reechyi75-dev.github.io/beauty-fair/Beautyfair-store/Cust.html" target="_blank">Shop Now</a>
+            </div>
+
+            <div class="footer-column">
+                <h4>Contact Us</h4>
+                <p>Email: beautyfair@info.com</p>
+                <p>Phone: 0816 898 7884</p>
+                <p>Address: 12, Redemption Crescent<br>Industrial Estate, Gbagada</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2025 BeautyFair Laboratory. All rights reserved.</p>
+        <p>Decades of Skincare Excellence</p>
+    </div>
+</footer>
+<script>
+// Hamburger Menu Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const navOverlay = document.getElementById('navOverlay');
+    const closeMenu = document.getElementById('closeMenu');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    // Open menu
+    hamburgerMenu.addEventListener('click', function() {
+        navOverlay.classList.add('active');
+    });
+
+    // Close menu
+    closeMenu.addEventListener('click', function() {
+        navOverlay.classList.remove('active');
+    });
+
+    // Close menu when clicking on a nav link (except external links)
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Only close for internal anchor links
+            if (this.getAttribute('href').startsWith('#')) {
+                navOverlay.classList.remove('active');
+            }
+        });
+    });
+
+    // Close menu when clicking outside
+    navOverlay.addEventListener('click', function(e) {
+        if (e.target === navOverlay) {
+            navOverlay.classList.remove('active');
+        }
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>
