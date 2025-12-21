@@ -36,24 +36,49 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  
+  // DON'T cache Firebase API calls or dynamic requests
+  if (
+    url.hostname.includes('firebaseio.com') ||
+    url.hostname.includes('googleapis.com') ||
+    url.hostname.includes('firestore.googleapis.com') ||
+    event.request.method !== 'GET'
+  ) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
     .then(response => {
-      // Return cached version or fetch from network
-      return response || fetch(event.request)
-        .then(fetchResponse => {
-          // Cache new requests
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, fetchResponse.clone());
-            return fetchResponse;
-          });
-        });
-    })
-    .catch(() => {
-      // Return offline page if available
-      if (event.request.destination === 'document') {
-        return caches.match('./index.html');
+      if (response) {
+        return response;
       }
+      
+      return fetch(event.request)
+        .then(fetchResponse => {
+          // Only cache successful responses
+          if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type === 'error') {
+            return fetchResponse;
+          }
+          
+          // Only cache static assets (CSS, JS, HTML, images)
+          if (event.request.url.match(/\.(css|js|html|png|jpg|jpeg|gif|svg|woff|woff2|ttf)$/)) {
+            const responseToCache = fetchResponse.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          
+          return fetchResponse;
+        })
+        .catch(() => {
+          // Return offline page if available
+          if (event.request.destination === 'document') {
+            return caches.match('./index.html');
+          }
+        });
     })
   );
 });
