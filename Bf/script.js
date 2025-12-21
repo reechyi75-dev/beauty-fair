@@ -1,12 +1,13 @@
 // FIREBASE AUTHENTICATION WITH ACCESS CODE SYSTEM
 // ============================================
-
 // 🔒 AUTH CHECK - Protect this page
-window.auth.onAuthStateChanged((user) => {
-    if (!user) {
-        window.location.href = 'index.html';
-    }
-});
+if (sessionStorage.getItem('loggingIn') !== 'true') {
+    window.auth.onAuthStateChanged((user) => {
+        if (!user) {
+            window.location.href = 'index.html';
+        }
+    });
+}
 
 let isRecording = false;
 let mediaRecorder = null;
@@ -70,13 +71,17 @@ function handleLogin(e) {
     
     showNotification('Verifying access code...', 'info');
     
+    // Set login flag to prevent redirect loop
+    sessionStorage.setItem('loggingIn', 'true');
+    
     // Check access code in Firestore
     db.collection('access-codes').doc(accessCode).get()
         .then((doc) => {
-                console.log("🔍 Access code found:", doc.exists);
-    console.log("📄 Code data:", doc.data());
-    
+            console.log("🔍 Access code found:", doc.exists);
+            console.log("📄 Code data:", doc.data());
+            
             if (!doc.exists) {
+                sessionStorage.removeItem('loggingIn');
                 showNotification('Invalid access code', 'error');
                 return Promise.reject('Invalid code');
             }
@@ -105,16 +110,18 @@ function handleLogin(e) {
                                     
                                     // Redirect based on role
                                     setTimeout(() => {
+                                        sessionStorage.removeItem('loggingIn');
                                         if (userRole === 'admin') {
-                           window.location.href = 'Admin.html';
+                                            window.location.href = 'Admin.html';
                                         } else if (userRole === 'supervisor') {
-                         window.location.href = 'Supervisor.html';
+                                            window.location.href = 'Supervisor.html';
                                         } else {
                                             showDashboard();
                                         }
-                                    }, 1000);
+                                    }, 1500);
                                 });
                         } else {
+                            sessionStorage.removeItem('loggingIn');
                             showNotification('Please complete your profile setup', 'error');
                             return Promise.reject('Incomplete profile');
                         }
@@ -137,27 +144,31 @@ function handleLogin(e) {
                     // Staff goes through profile setup
                     if (userRole === 'staff') {
                         setTimeout(() => {
+                            sessionStorage.removeItem('loggingIn');
                             checkStaffProfile(accessCode);
-                        }, 1000);
+                        }, 1500);
                     } else {
                         // Admin/Supervisor go straight to dashboard
                         setTimeout(() => {
+                            sessionStorage.removeItem('loggingIn');
                             if (userRole === 'admin') {
                                 window.location.href = 'Admin.html';
                             } else if (userRole === 'supervisor') {
                                 window.location.href = 'Supervisor.html';
                             }
-                        }, 1000);
+                        }, 1500);
                     }
                 });
         })
         .catch((error) => {
+            sessionStorage.removeItem('loggingIn');
             if (error !== 'Invalid code' && error !== 'Incomplete profile') {
                 console.error("Login error:", error);
                 showNotification('Login failed. Please try again.', 'error');
             }
         });
 }
+
 
 // Create temporary Firebase Auth account for access code users
 // Create temporary Firebase Auth account for access code users
