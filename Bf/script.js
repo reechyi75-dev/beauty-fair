@@ -1,13 +1,6 @@
+
 // FIREBASE AUTHENTICATION WITH ACCESS CODE SYSTEM
 // ============================================
-// 🔒 AUTH CHECK - Protect this page
-if (sessionStorage.getItem('loggingIn') !== 'true') {
-    window.auth.onAuthStateChanged((user) => {
-        if (!user) {
-            window.location.href = 'index.html';
-        }
-    });
-}
 
 let isRecording = false;
 let mediaRecorder = null;
@@ -18,9 +11,9 @@ let selectedDepartment = null;
 let sessionTimeout;
 let isRemembered = false;
 let profilePicFile = null;
-let currentUser = {
+let currentUser = { 
     accessCode: '',
-    name: '',
+    name: '', 
     initials: '',
     role: '',
     department: ''
@@ -71,17 +64,10 @@ function handleLogin(e) {
     
     showNotification('Verifying access code...', 'info');
     
-    // Set login flag to prevent redirect loop
-    sessionStorage.setItem('loggingIn', 'true');
-    
     // Check access code in Firestore
     db.collection('access-codes').doc(accessCode).get()
         .then((doc) => {
-            console.log("🔍 Access code found:", doc.exists);
-            console.log("📄 Code data:", doc.data());
-            
             if (!doc.exists) {
-                sessionStorage.removeItem('loggingIn');
                 showNotification('Invalid access code', 'error');
                 return Promise.reject('Invalid code');
             }
@@ -110,18 +96,16 @@ function handleLogin(e) {
                                     
                                     // Redirect based on role
                                     setTimeout(() => {
-                                        sessionStorage.removeItem('loggingIn');
                                         if (userRole === 'admin') {
-                                            window.location.href = 'Admin.html';
+                                            window.location.href = 'admin.html';
                                         } else if (userRole === 'supervisor') {
-                                            window.location.href = 'Supervisor.html';
+                                            window.location.href = 'supervisor.html';
                                         } else {
                                             showDashboard();
                                         }
-                                    }, 1500);
+                                    }, 1000);
                                 });
                         } else {
-                            sessionStorage.removeItem('loggingIn');
                             showNotification('Please complete your profile setup', 'error');
                             return Promise.reject('Incomplete profile');
                         }
@@ -144,31 +128,27 @@ function handleLogin(e) {
                     // Staff goes through profile setup
                     if (userRole === 'staff') {
                         setTimeout(() => {
-                            sessionStorage.removeItem('loggingIn');
                             checkStaffProfile(accessCode);
-                        }, 1500);
+                        }, 1000);
                     } else {
                         // Admin/Supervisor go straight to dashboard
                         setTimeout(() => {
-                            sessionStorage.removeItem('loggingIn');
                             if (userRole === 'admin') {
-                                window.location.href = 'Admin.html';
+                                window.location.href = 'admin.html';
                             } else if (userRole === 'supervisor') {
-                                window.location.href = 'Supervisor.html';
+                                window.location.href = 'supervisor.html';
                             }
-                        }, 1500);
+                        }, 1000);
                     }
                 });
         })
         .catch((error) => {
-            sessionStorage.removeItem('loggingIn');
             if (error !== 'Invalid code' && error !== 'Incomplete profile') {
                 console.error("Login error:", error);
                 showNotification('Login failed. Please try again.', 'error');
             }
         });
 }
-
 
 // Create temporary Firebase Auth account for access code users
 // Create temporary Firebase Auth account for access code users
@@ -201,26 +181,11 @@ function createTempFirebaseAccount(accessCode, userData) {
 } 
 // Check if staff has completed profile
 function checkStaffProfile(accessCode) {
-    const user = auth.currentUser;
-    if (!user) {
-        showDepartmentPage();
-        return;
-    }
-    
-    // Check in 'users' collection using user.uid
-    db.collection('users').doc(user.uid).get()
+    db.collection('staff-profiles').doc(accessCode).get()
         .then((doc) => {
-            if (doc.exists) {
-                const userData = doc.data();
-                // Check if onboarding is complete
-                if (userData.onboardingStep === 'complete' || userData.profileComplete) {
-                    showDashboard();
-                } else {
-                    // Resume from where they left off
-                    showDepartmentPage();
-                }
+            if (doc.exists && doc.data().profileComplete) {
+                showDashboard();
             } else {
-                // No profile found, start onboarding
                 showDepartmentPage();
             }
         })
@@ -228,7 +193,8 @@ function checkStaffProfile(accessCode) {
             console.error("Profile check error:", error);
             showDepartmentPage();
         });
-} 
+}
+
 // Check auto login on page load
 // Check auto login on page load
 function checkAutoLogin() {
@@ -249,9 +215,9 @@ function checkAutoLogin() {
                         .then(() => {
                             // Check role and redirect appropriately
                             if (savedRole === 'admin') {
-                                window.location.href = 'Admin.html';
+                                window.location.href = 'admin.html';
                             } else if (savedRole === 'supervisor') {
-                                window.location.href = 'Supervisor.html';
+                                window.location.href = 'supervisor.html';
                             } else {
                                 // For staff, check if profile is complete
                                 return db.collection('staff-profiles').doc(savedCode).get()
@@ -539,20 +505,28 @@ function setupDepartmentSelection() {
 
         }
         
-async function showDashboard() {
-    hideAllPages();
-    document.getElementById('dashboard').style.display = 'block';
-    currentPage = 'dashboard';
-    
-    // Load user data first
-    await loadUserData();
-    
-    // Then update UI
-    updateGreeting();
-    updateDateTime();
-    loadPosts();
-    updateNotificationBadges();
-} 
+
+
+
+        function showDashboard() {
+           loadUserData();
+           loadPosts();
+            hideAllPages();
+
+            document.getElementById('dashboard').style.display = 'block';
+
+            currentPage = 'dashboard';
+
+            updateGreeting();
+
+            updateDateTime();
+            loadUserData();
+            updateNotificationBadges();
+
+        }
+
+
+
         function showOTPPage() {
 
             hideAllPages();
@@ -708,7 +682,8 @@ function hideAllPages() {
 
 
         // Dashboard Functions
-function updateGreeting() {
+
+        function updateGreeting() {
 
             const hour = new Date().getHours();
 
@@ -1082,26 +1057,17 @@ async function submitComplaint() {
             userName: userData.fullName || 'User',
             userEmail: userData.email,
             userDepartment: userData.department || 'N/A',
-            complaint: complaintText,
-            message: complaintText,
+            text: complaintText,
             attachments: attachments,
-            replies: [],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'pending'
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'pending',
+            response: null,
+            respondedAt: null,
+            respondedBy: null
         };
         
-        // Save to Firebase and get the ID
-        const complaintDoc = await db.collection('complaints').add(complaint);
-        
-        // CREATE ADMIN NOTIFICATION ⬇️ NEW
-        await db.collection('adminNotifications').add({
-            type: 'complaint',
-            title: 'New Complaint',
-            message: `${userData.fullName || 'A staff member'} filed a complaint`,
-            complaintId: complaintDoc.id,
-            unread: true,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        // Save to Firebase
+        await db.collection('complaints').add(complaint);
         
         // Create notification for user
         await createNotification(
@@ -1130,6 +1096,9 @@ async function submitComplaint() {
         showNotification('Failed to submit complaint', 'error');
     }
 }
+
+
+
 
 function toggleVoiceRecording() {
 
@@ -1273,32 +1242,37 @@ function updateFilePreview() {
     const preview = document.getElementById('filePreview');
     if (!preview) return;
     
-    console.log('Updating preview, files:', selectedFiles); // Keep this for testing
-    
-    if (selectedFiles.length === 0) {
-        preview.innerHTML = '';
-        return;
-    }
-    
     preview.innerHTML = '';
+    
     selectedFiles.forEach((file, index) => {
         const fileItem = document.createElement('div');
-        fileItem.style.cssText = 'display: flex; align-items: center; padding: 10px; background: #f5f5f5; border-radius: 8px; margin-bottom: 8px;';
+        fileItem.className = 'file-preview-item';
+        fileItem.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:10px; background:#f5f5f5; border-radius:8px; margin-bottom:8px;';
         
-        const iconType = file.type.startsWith('image/') ? 'image' :
-            file.type.startsWith('video/') ? 'video' : 'file';
+        const fileInfo = document.createElement('div');
+        fileInfo.style.cssText = 'display:flex; align-items:center; gap:10px;';
         
-        fileItem.innerHTML = `
-            <i class="fas fa-${iconType}" style="margin-right: 10px; color: #3498db;"></i>
-            <span style="flex: 1; font-size: 14px;">${file.name}</span>
-            <button onclick="removeFile(${index})" style="background: none; border: none; color: #e74c3c; cursor: pointer; padding: 5px;">
-                <i class="fas fa-times"></i>
-            </button>
+        const icon = file.type.startsWith('image/') ? 'fa-image' : 'fa-file';
+        fileInfo.innerHTML = `
+            <i class="fas ${icon}"></i>
+            <span>${file.name}</span>
         `;
         
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '×';
+        removeBtn.style.cssText = 'background:#ff4757; color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer;';
+        removeBtn.onclick = () => {
+            selectedFiles.splice(index, 1);
+            updateFilePreview();
+            updateSendButton();
+        };
+        
+        fileItem.appendChild(fileInfo);
+        fileItem.appendChild(removeBtn);
         preview.appendChild(fileItem);
     });
 }
+ 
 
 
 function getFileIcon(fileType) {
@@ -1344,6 +1318,8 @@ function updateSendButton() {
     }
 }
  
+
+
 async function showPreviousComplaints() {
     const modal = document.getElementById('previousComplaintsModal');
     const historyContainer = document.getElementById('complaintsHistory');
@@ -1374,11 +1350,9 @@ async function showPreviousComplaints() {
             
             // Sort by date (newest first)
             complaints.sort((a, b) => {
-                if (!a.createdAt && !a.submittedAt) return 1;
-                if (!b.createdAt && !b.submittedAt) return -1;
-                const timeA = (a.createdAt || a.submittedAt).toMillis();
-                const timeB = (b.createdAt || b.submittedAt).toMillis();
-                return timeB - timeA;
+                if (!a.submittedAt) return 1;
+                if (!b.submittedAt) return -1;
+                return b.submittedAt.toMillis() - a.submittedAt.toMillis();
             });
             
             // Display each complaint
@@ -1386,18 +1360,16 @@ async function showPreviousComplaints() {
                 const statusClass = complaint.status === 'resolved' ? 'status-resolved' : 'status-pending';
                 const statusText = complaint.status === 'resolved' ? 'Resolved' : 'Pending';
                 
-                const timestamp = complaint.createdAt || complaint.submittedAt;
-                const date = timestamp ? 
-                    timestamp.toDate().toLocaleDateString('en-US', {
+                const date = complaint.submittedAt ? 
+                    complaint.submittedAt.toDate().toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric'
                     }) : 'Just now';
                 
-                const complaintText = complaint.complaint || complaint.message || complaint.text || '';
-                const preview = complaintText.length > 80 ? 
-                    complaintText.substring(0, 80) + '...' : 
-                    complaintText;
+                const preview = complaint.text.length > 80 ? 
+                    complaint.text.substring(0, 80) + '...' : 
+                    complaint.text;
                 
                 const historyItem = document.createElement('div');
                 historyItem.className = 'complaint-history-item';
@@ -1425,7 +1397,8 @@ async function showPreviousComplaints() {
         console.error('Load complaints error:', error);
         historyContainer.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 20px;">Failed to load complaints</p>';
     }
-}
+} 
+
 
 
 function closePreviousComplaints() {
@@ -1473,6 +1446,8 @@ function showAnnouncementsPage() {
     loadAnnouncements();
 
 }
+
+
 
 
 
@@ -1534,45 +1509,18 @@ async function loadAnnouncements() {
                 typeClass = 'warning';
             }
             
-            // Determine who posted it
-            let postedBy = 'Staff';
-            if (announcement.authorRole === 'admin') {
-                postedBy = 'Admin';
-            } else if (announcement.authorRole === 'supervisor') {
-                postedBy = 'Supervisor';
-            } else if (announcement.authorName) {
-                postedBy = announcement.authorName;
-            }
-            
             card.innerHTML = `
-                <div class="announcement-card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px 12px 0 0; color: white; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: -20px; right: -20px; font-size: 80px; opacity: 0.2;">${typeIcon}</div>
-                    <div style="position: relative; z-index: 1;">
-                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; line-height: 1.4;">${announcement.title}</div>
-                        <div style="font-size: 13px; opacity: 0.9; display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-calendar-alt"></i>
-                            ${date}
-                        </div>
-                    </div>
+                <div class="announcement-card-header">
+                    <div class="announcement-type ${typeClass}">${typeIcon}</div>
+                    <div class="announcement-card-title">${announcement.title}</div>
+                    <div class="announcement-card-date">${date}</div>
                 </div>
-                
-                <div style="padding: 20px; background: white;">
-                    <div style="color: #2c3e50; font-size: 15px; line-height: 1.6; margin-bottom: 15px;">
-                        ${announcement.text.substring(0, 120)}${announcement.text.length > 120 ? '...' : ''}
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid #f0f0f0;">
-                        <div style="display: flex; align-items: center; gap: 8px; color: #667eea; font-weight: 500;">
-                            <i class="fas fa-user-shield"></i>
-                            ${postedBy}
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 12px; color: #999;">
-                            <div style="display: flex; align-items: center; gap: 6px; background: ${hasLiked ? '#e8f5e9' : '#f5f5f5'}; padding: 6px 12px; border-radius: 20px;">
-                                <i class="fas fa-thumbs-up" style="color: ${hasLiked ? '#4CAF50' : '#999'}; font-size: 14px;"></i>
-                                <span style="font-size: 14px; font-weight: 500; color: ${hasLiked ? '#4CAF50' : '#666'};">${likeCount}</span>
-                            </div>
-                            <i class="fas fa-chevron-right" style="color: #667eea;"></i>
-                        </div>
+                <div class="announcement-card-preview">${announcement.text.substring(0, 100)}${announcement.text.length > 100 ? '...' : ''}</div>
+                <div class="announcement-card-footer">
+                    <div class="announcement-author">By: ${announcement.authorName}</div>
+                    <div class="announcement-likes">
+                        <i class="fas fa-thumbs-up" style="color: ${hasLiked ? '#4CAF50' : '#999'}"></i>
+                        ${likeCount}
                     </div>
                 </div>
             `;
@@ -1586,7 +1534,7 @@ async function loadAnnouncements() {
     }
 }
 
- 
+
 
 function showAnnouncementDetail(announcement) {
     currentAnnouncementDetail = announcement;
@@ -5274,41 +5222,65 @@ function resetDayoffForm() {
 
 
 
-let selectedRepaymentPlan
+
 
 // LOAN FUNCTIONS
-function setupLoanForm() {
-    // Reset form
-    document.getElementById('loanAmountDropdown').value = '';
-    document.getElementById('customLoanAmount').value = '';
-    document.getElementById('repaymentPlanDropdown').value = ''; // NEW
-    document.getElementById('guarantorName').value = '';
-    document.getElementById('guarantorDepartment').value = '';
-    document.getElementById('guarantorPhone').value = '';
-    guarantorPicture = null;
-    selectedRepaymentPlan = ''; // NEW
-    updateGuarantorPreview();
-    updateLoanSubmitButton();
-    
-    // Setup guarantor picture upload
-    const uploadBox = document.getElementById('guarantorUploadBox');
-    const pictureInput = document.getElementById('guarantorPictureInput');
-    
-    if (uploadBox && pictureInput) {
-        uploadBox.onclick = () => pictureInput.click();
-        pictureInput.onchange = handleGuarantorPictureUpload;
-    }
-    
-    // Setup form validation
-    ['repaymentPlanDropdown', 'guarantorName', 'guarantorDepartment', 'guarantorPhone'].forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.oninput = updateLoanSubmitButton;
-            input.onchange = updateLoanSubmitButton;
-        }
-    });
-}
 
+function setupLoanForm() {
+
+    // Reset form
+
+    document.getElementById('loanAmountDropdown').value = '';
+
+    document.getElementById('customLoanAmount').value = '';
+
+    document.getElementById('guarantorName').value = '';
+
+    document.getElementById('guarantorDepartment').value = '';
+
+    document.getElementById('guarantorPhone').value = '';
+
+    guarantorPicture = null;
+
+    updateGuarantorPreview();
+
+    updateLoanSubmitButton();
+
+    
+
+    // Setup guarantor picture upload
+
+    const uploadBox = document.getElementById('guarantorUploadBox');
+
+    const pictureInput = document.getElementById('guarantorPictureInput');
+
+    
+
+    if (uploadBox && pictureInput) {
+
+        uploadBox.onclick = () => pictureInput.click();
+
+        pictureInput.onchange = handleGuarantorPictureUpload;
+
+    }
+
+    
+
+    // Setup form validation
+
+    ['guarantorName', 'guarantorDepartment', 'guarantorPhone'].forEach(id => {
+
+        const input = document.getElementById(id);
+
+        if (input) {
+
+            input.oninput = updateLoanSubmitButton;
+
+        }
+
+    });
+
+}
 
 
 
@@ -5412,42 +5384,49 @@ function changeGuarantorPicture() {
 
 }
 
+
+
 function updateLoanSubmitButton() {
+
     const submitBtn = document.getElementById('loanSubmitBtn');
+
     const dropdown = document.getElementById('loanAmountDropdown');
+
     const customInput = document.getElementById('customLoanAmount');
-    const repaymentPlan = document.getElementById('repaymentPlanDropdown').value; // NEW
-    const guarantorName = document.getElementById('guarantorName').value.trim();
-    const guarantorDept = document.getElementById('guarantorDepartment').value;
-    const guarantorPhone = document.getElementById('guarantorPhone').value.trim();
+
+    const guarantorName = document.getElementById('guarantorName');
+
+    const guarantorDept = document.getElementById('guarantorDepartment');
+
+    const guarantorPhone = document.getElementById('guarantorPhone');
+
     
-    const loanAmount = dropdown.value || customInput.value;
-    const isValid = loanAmount && 
-                    repaymentPlan && // NEW
-                    guarantorName && 
-                    guarantorDept && 
-                    guarantorPhone && 
-                    guarantorPicture;
-    
+
     if (submitBtn) {
-        submitBtn.disabled = !isValid;
+
+        const hasAmount = dropdown.value || (customInput.value && parseInt(customInput.value) >= 1000);
+
+        const hasPicture = guarantorPicture !== null;
+
+        const hasGuarantorInfo = guarantorName.value.trim() && guarantorDept.value && guarantorPhone.value.trim();
+
+        
+
+        submitBtn.disabled = !(hasAmount && hasPicture && hasGuarantorInfo);
+
     }
+
 }
+
 
 async function submitLoanRequest() {
     const dropdown = document.getElementById('loanAmountDropdown');
     const customInput = document.getElementById('customLoanAmount');
-    const repaymentPlan = document.getElementById('repaymentPlanDropdown').value;
     const guarantorName = document.getElementById('guarantorName').value.trim();
     const guarantorDept = document.getElementById('guarantorDepartment').value;
     const guarantorPhone = document.getElementById('guarantorPhone').value.trim();
     
     // Validate
-    if (!repaymentPlan) {
-        showNotification('Please select repayment plan', 'error');
-        return;
-    }
-    
     if (!guarantorPicture) {
         showNotification('Please upload guarantor picture', 'error');
         return;
@@ -5481,6 +5460,7 @@ async function submitLoanRequest() {
         let guarantorPictureBase64 = null;
         
         if (guarantorPicture instanceof File || guarantorPicture instanceof Blob) {
+            // It's a file, convert to base64
             guarantorPictureBase64 = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
@@ -5488,6 +5468,7 @@ async function submitLoanRequest() {
                 reader.readAsDataURL(guarantorPicture);
             });
         } else if (typeof guarantorPicture === 'string') {
+            // Already base64
             guarantorPictureBase64 = guarantorPicture;
         } else {
             throw new Error('Invalid guarantor picture format');
@@ -5501,14 +5482,13 @@ async function submitLoanRequest() {
             userDepartment: userData.department || 'N/A',
             type: 'loan',
             amount: parseInt(loanAmount),
-            repaymentPlan: repaymentPlan, // NEW - Save repayment plan
             guarantor: {
                 name: guarantorName,
                 department: guarantorDept,
                 phone: guarantorPhone,
                 picture: guarantorPictureBase64
             },
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(), // CHANGED from submittedAt
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'pending'
         };
         
@@ -5537,7 +5517,7 @@ async function submitLoanRequest() {
         console.error('Submit loan error:', error);
         showNotification('Failed to submit application: ' + error.message, 'error');
     }
-} 
+}
 
 
 
@@ -5665,7 +5645,6 @@ function closeNotifications() {
 
 }
 
-// ==================== LOAD NOTIFICATIONS (FIXED) ====================
 async function loadNotifications() {
     const container = document.getElementById('notificationsList');
     if (!container) return;
@@ -5702,20 +5681,17 @@ async function loadNotifications() {
             notifications.push({ id: doc.id, ...doc.data() });
         });
         
-        // Sort by newest first - check both timestamp and createdAt
+        // Sort manually by timestamp
         notifications.sort((a, b) => {
-            const timestampA = a.createdAt || a.timestamp;
-            const timestampB = b.createdAt || b.timestamp;
-            
-            if (!timestampA) return 1;
-            if (!timestampB) return -1;
-            
-            return timestampB.toMillis() - timestampA.toMillis();
+            if (!a.timestamp) return 1;
+            if (!b.timestamp) return -1;
+            return b.timestamp.toMillis() - a.timestamp.toMillis();
         });
         
         updateUnreadCount();
         renderNotifications(notifications);
-        updateNotificationBadges();
+        unreadNotifications =unreadCount;
+updateNotificationBadges();
         
     } catch (error) {
         console.error('Load notifications error:', error);
@@ -5723,7 +5699,6 @@ async function loadNotifications() {
     }
 }
 
-// ==================== RENDER NOTIFICATIONS (FIXED) ====================
 function renderNotifications(notificationsList) {
     const container = document.getElementById('notificationsList');
     
@@ -5747,13 +5722,9 @@ function renderNotifications(notificationsList) {
         
         const iconClass = getNotificationIcon(notification.type);
         
-        // Format time - check both fields
-        const timestamp = notification.createdAt || notification.timestamp;
-        const time = timestamp ?
-            formatNotificationTime(timestamp.toDate()) : 'Just now';
-        
-        // Get message text - check multiple possible fields
-        const messageText = notification.message || notification.text || 'No details available';
+        // Format time
+        const time = notification.timestamp ?
+            formatNotificationTime(notification.timestamp.toDate()) : 'Just now';
         
         notificationElement.innerHTML = `
             ${notification.unread ? '<div class="unread-indicator"></div>' : ''}
@@ -5762,8 +5733,8 @@ function renderNotifications(notificationsList) {
                     <i class="${iconClass}"></i>
                 </div>
                 <div class="notification-content">
-                    <div class="notification-title">${notification.title || 'Notification'}</div>
-                    <div class="notification-text">${messageText}</div>
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-text">${notification.text}</div>
                     <div class="notification-meta">
                         <div class="notification-time">
                             <i class="fas fa-clock"></i>
@@ -5779,49 +5750,7 @@ function renderNotifications(notificationsList) {
     });
 }
 
-// ==================== HANDLE NOTIFICATION CLICK (NEW) ====================
-async function handleNotificationClick(notification) {
-    // Mark as read
-    try {
-        await db.collection('notifications').doc(notification.id).update({
-            unread: false,
-            read: true
-        });
-        
-        // Update local state
-        notification.unread = false;
-        updateUnreadCount();
-        updateNotificationBadges();
-        
-    } catch (error) {
-        console.error('Mark as read error:', error);
-    }
-    
-    // Handle different notification types
-    switch(notification.type) {
-        case 'request_approved':
-        case 'request_rejected':
-        case 'dayoff_approved':
-        case 'dayoff_rejected':
-            // Show alert with admin's response
-            showNotification(`${notification.title}: ${notification.message}`, 'success');
-            break;
-            
-        case 'complaint_reply':
-            // Open complaints page to see admin's reply
-            closeNotifications();
-            showComplaints();
-            break;
-            
-        case 'announcement':
-        case 'system':
-        case 'message':
-        default:
-            // Just show the notification content
-            showNotification(notification.message || notification.text, 'success');
-            break;
-    }
-}
+
 
 
 function getNotificationIcon(type) {
@@ -5961,15 +5890,21 @@ async function markAllAsRead() {
 
 
 function updateUnreadCount() {
-    const unreadCount = notifications.filter(n => n.unread).length;
+    unreadCount = notifications.filter(n => n.unread).length;
     
-    // Update any unread count displays
-    const countElements = document.querySelectorAll('.unread-count');
-    countElements.forEach(el => {
-        el.textContent = unreadCount;
-    });
+    // Update notification badge in navigation
+    const notificationBadge = document.querySelector('#notificationIcon .notification-badge');
+    if (notificationBadge) {
+        if (unreadCount > 0) {
+            notificationBadge.textContent = unreadCount;
+            notificationBadge.style.display = 'flex';
+        } else {
+            notificationBadge.style.display = 'none';
+        }
+    }
 }
- 
+
+
 
 
 // Function to add new notification (for future use with backend)
@@ -9106,42 +9041,51 @@ document.getElementById('profilePicInput').addEventListener('change', function(e
         document.getElementById('uploadBtn').classList.remove('hidden');
     }
 });
-async function uploadProfilePic() {
+function uploadProfilePic() {
     if (!profilePicFile) {
         showNotification('Please select a profile picture first', 'error');
         return;
     }
     
-    const currentUser = auth.currentUser;
+    const accessCode = localStorage.getItem('accessCode');
     
-    if (!currentUser) {
-        showNotification('No user logged in!', 'error');
+    if (!accessCode) {
+        showNotification('No access code found!', 'error');
         return;
     }
     
     showNotification('Uploading profile picture...', 'info');
     
+    // Convert image to base64
     const reader = new FileReader();
-    reader.onload = async function(e) {
+    reader.onload = function(e) {
         const base64Image = e.target.result;
         
-        try {
-            await db.collection('users').doc(currentUser.uid).update({
-                profilePicture: base64Image,
-                onboardingStep: 'complete',
-                profileComplete: true,
-                completedAt: firebase.firestore.FieldValue.serverTimestamp()
+        // Save to Firebase with profile complete flag
+        db.collection('staff-profiles').doc(accessCode).set({
+            profilePicture: base64Image,
+            profileComplete: true,
+            onboardingStep: 'complete',
+            completedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true })
+        .then(() => {
+            // Mark access code as used - THIS IS CRITICAL
+            return db.collection('access-codes').doc(accessCode).update({
+                used: true,
+                usedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                usedBy: localStorage.getItem('userName') || 'Unknown'
             });
-            
+        })
+        .then(() => {
             showNotification('Profile complete! Welcome aboard!', 'success');
             setTimeout(() => {
                 showDashboard();
             }, 1500);
-            
-        } catch (error) {
+        })
+        .catch((error) => {
             console.error("Profile picture upload error:", error);
             showNotification('Failed to upload: ' + error.message, 'error');
-        }
+        });
     };
     
     reader.onerror = function() {
@@ -9150,6 +9094,7 @@ async function uploadProfilePic() {
     
     reader.readAsDataURL(profilePicFile);
 } 
+
 // Skip profile picture
 function skipProfilePic() {
     const user = auth.currentUser;
@@ -9196,11 +9141,8 @@ function loadUserData() {
             if (doc.exists) {
                 const data = doc.data();
                 
-                // CHANGED THIS LINE - Added console log
-                currentUser.name = data.fullName;
-                console.log("Setting name to:", data.fullName);
-                console.log("Full data from Firebase:", data);
-                
+                // Update current user object
+                currentUser.name = data.fullName || 'User';
                 currentUser.initials = getInitials(data.fullName);
                 
                 // Update greeting text with real name
@@ -9218,8 +9160,10 @@ function loadUserData() {
                 const profilePicElement = document.getElementById('dashboardProfilePic');
                 if (profilePicElement) {
                     if (data.profilePicture && data.profilePicture.startsWith('data:image')) {
+                        // Show actual image
                         profilePicElement.innerHTML = `<img src="${data.profilePicture}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
                     } else {
+                        // Show initials
                         profilePicElement.textContent = currentUser.initials;
                     }
                 }
@@ -9231,6 +9175,7 @@ function loadUserData() {
             console.error("Error loading user data:", error);
         });
 }
+
 // Helper function to get initials
 function getInitials(name) {
     if (!name) return 'U';
@@ -10210,18 +10155,16 @@ function initializeNotifications() {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
     
-    // Real-time listener for new notifications
+    // Listen for new notifications in real-time
     db.collection('notifications')
         .where('userId', '==', currentUser.uid)
         .where('unread', '==', true)
         .onSnapshot(snapshot => {
             if (!snapshot.empty) {
-                loadNotifications();
-                updateNotificationBadges();
+                loadNotifications(); // Reload when new notification arrives
             }
         });
 }
- 
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -10349,19 +10292,39 @@ function fileToBase64(file) {
 }
 console.log('Queries Firebase integration loaded successfully!');
 function updateNotificationBadges() {
-    const unreadCount = notifications.filter(n => n.unread).length;
-    
-    // Update badge in navigation
-    const badgeElements = document.querySelectorAll('.notification-badge-count');
-    badgeElements.forEach(badge => {
-        if (unreadCount > 0) {
-            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-            badge.style.display = 'flex';
+    // Update message badge
+    const msgBadge = document.querySelector('#messageIcon .notification-badge');
+    if (msgBadge) {
+        if (unreadMessages > 0) {
+            msgBadge.textContent = unreadMessages;
+            msgBadge.style.display = 'flex';
         } else {
-            badge.style.display = 'none';
+            msgBadge.style.display = 'none';
         }
-    });
-} 
+    }
+    
+    // Update announcement badge
+    const annBadge = document.querySelector('#announcementIcon .notification-badge');
+    if (annBadge) {
+        if (unreadAnnouncements > 0) {
+            annBadge.textContent = unreadAnnouncements;
+            annBadge.style.display = 'flex';
+        } else {
+            annBadge.style.display = 'none';
+        }
+    }
+    
+    // Update notification badge
+    const notifBadge = document.querySelector('#notificationIcon .notification-badge');
+    if (notifBadge) {
+        if (unreadNotifications > 0) {
+            notifBadge.textContent = unreadNotifications;
+            notifBadge.style.display = 'flex';
+        } else {
+            notifBadge.style.display = 'none';
+        }
+    }
+}
 async function loadRepliesForComment(postId, commentId) {
     try {
         const snapshot = await db.collection('posts')
@@ -10456,12 +10419,3 @@ async function toggleReplyLike(postId, commentId, replyId) {
         showNotification('Failed to like reply', 'error');
     }
 }
-
-// Call this when user logs in or app loads
-document.addEventListener('DOMContentLoaded', function() {
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            initializeNotifications();
-        }
-    });
-});
