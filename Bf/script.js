@@ -19,6 +19,10 @@ let currentUser = {
     department: ''
 };
 
+let allPosts = [];
+let currentPostMenuId = null;
+let currentEditingPostId = null;
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
@@ -9262,22 +9266,36 @@ function loadPosts() {
         .get()
         .then((snapshot) => {
             const feedContainer = document.getElementById('feedPosts');
-            if (!feedContainer) return;
+            if (!feedContainer) {
+                console.log('Feed container not found');
+                return;
+            }
             
             feedContainer.innerHTML = '';
+            allPosts = []; // ✅ Clears old posts
+            
+            if (snapshot.empty) {
+                feedContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">No posts yet. Be the first to post!</div>';
+                return;
+            }
             
             snapshot.forEach((doc) => {
-                const post = { id: doc.id, ...doc.data() };
-                if (post.createdAt) {
-                    post.time = getTimeAgo(post.createdAt.toDate());
+                const postData = { id: doc.id, ...doc.data() };
+                if (postData.createdAt) {
+                    postData.time = getTimeAgo(postData.createdAt.toDate());
                 }
-                addPostToFeed(post);
+                allPosts.push(postData); // ✅ Saves posts for editing
+                displayPost(postData);
             });
         })
         .catch((error) => {
             console.error('Load posts error:', error);
+            const feedContainer = document.getElementById('feedPosts');
+            if (feedContainer) {
+                feedContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#e74c3c;">Failed to load posts. Please refresh.</div>';
+            }
         });
-}
+} 
 
 // Helper: Time ago
 function getTimeAgo(date) {
@@ -9308,41 +9326,7 @@ async function loadCommentCountForPost(postId) {
         console.error('Load comment count error:', error);
     }
 }
-function loadPosts() {
-    db.collection('posts')
-        .orderBy('createdAt', 'desc')
-        .limit(20)
-        .get()
-        .then((snapshot) => {
-            const feedContainer = document.getElementById('feedPosts');
-            if (!feedContainer) {
-                console.log('Feed container not found');
-                return;
-            }
-            
-            feedContainer.innerHTML = '';
-            
-            if (snapshot.empty) {
-                feedContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">No posts yet. Be the first to post!</div>';
-                return;
-            }
-            
-            snapshot.forEach((doc) => {
-                const postData = { id: doc.id, ...doc.data() };
-                if (postData.createdAt) {
-                    postData.time = getTimeAgo(postData.createdAt.toDate());
-                }
-                displayPost(postData);
-            });
-        })
-        .catch((error) => {
-            console.error('Load posts error:', error);
-            const feedContainer = document.getElementById('feedPosts');
-            if (feedContainer) {
-                feedContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#e74c3c;">Failed to load posts. Please refresh.</div>';
-            }
-        });
-}
+
 // ========== POLL FUNCTIONS FOR STAFF ==========
 
 // Update your displayPost function to detect and show polls
