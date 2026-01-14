@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="description" content="Reechyi Todo List - Your ultimate task management app">
+    <title>Reechyi Todo List</title>
+    <link rel="manifest" href="#" id="manifest-placeholder">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .scrolling-text {
+            animation: scroll 15s linear infinite;
+            white-space: nowrap;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const ReechiYiTodoApp = () => {
+            const [currentPage, setCurrentPage] = useState('splash');
+            const [completedTasks, setCompletedTasks] = useState({
+                drinkWater: false,
+                studyNewThing: false,
+                hitTheGym: false,
+                brainTesting: false,
+                programming: false,
+                officeTask: false,
+                completedTodayTask: false
+            });
+            const [tasks, setTasks] = useState([]);
+            const [activeNav, setActiveNav] = useState('home');
+            const [showAddTask, setShowAddTask] = useState(false);
+            const [newTask, setNewTask] = useState({ text: '', category: 'home', date: '', time: '' });
+            const [showShare, setShowShare] = useState(false);
+            const [notifications, setNotifications] = useState([]);
+            const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
+            const [showCancelTask, setShowCancelTask] = useState(false);
+            const [selectedTaskToCancel, setSelectedTaskToCancel] = useState(null);
+            const [showAbout, setShowAbout] = useState(false);
+            const [currentSlide, setCurrentSlide] = useState(0);
+
+            const slidingTexts = [
+                "never miss any task today",
+                "skipping any task is not an option",
+                "keep the memory of yesterday completed task"
+            ];
+
+            useEffect(() => {
+                if (currentPage === 'splash') {
+                    const interval = setInterval(() => {
+                        setCurrentSlide((prev) => (prev + 1) % slidingTexts.length);
+                    }, 2000);
+                    return () => clearInterval(interval);
+                }
+            }, [currentPage]);
+
+            const anyTaskCompleted = Object.values(completedTasks).some(v => v);
+
+            const handleAddTask = () => {
+                if (newTask.text.trim()) {
+                    setTasks([...tasks, { 
+                        ...newTask, 
+                        id: Date.now(),
+                        category: activeNav === 'home' ? 'home' : activeNav
+                    }]);
+                    setNewTask({ text: '', category: activeNav, date: '', time: '' });
+                    setShowAddTask(false);
+                }
+            };
+
+            const handleSetDateTime = () => {
+                const dateInput = document.createElement('input');
+                dateInput.type = 'date';
+                dateInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;padding:20px;font-size:18px;border:2px solid #333;border-radius:8px;';
+                document.body.appendChild(dateInput);
+                
+                dateInput.onchange = (e) => {
+                    const selectedDate = e.target.value;
+                    document.body.removeChild(dateInput);
+                    
+                    const timeInput = document.createElement('input');
+                    timeInput.type = 'time';
+                    timeInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;padding:20px;font-size:18px;border:2px solid #333;border-radius:8px;';
+                    document.body.appendChild(timeInput);
+                    
+                    timeInput.onchange = (te) => {
+                        setNewTask({...newTask, date: selectedDate, time: te.target.value});
+                        document.body.removeChild(timeInput);
+                    };
+                    timeInput.click();
+                };
+                dateInput.click();
+            };
+
+            const handleShare = (platform) => {
+                const shareText = "This todo app is the best for you";
+                const shareUrl = window.location.href;
+                
+                let url = '';
+                switch(platform) {
+                    case 'facebook':
+                        url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+                        break;
+                    case 'whatsapp':
+                        url = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+                        break;
+                    case 'twitter':
+                        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+                        break;
+                    case 'sms':
+                        url = `sms:?body=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+                        break;
+                }
+                
+                if (url) window.open(url, '_blank');
+                setShowShare(false);
+            };
+
+            const getCategoryTasks = (category) => {
+                if (category === 'home') return tasks;
+                return tasks.filter(t => t.category === category);
+            };
+
+            if (currentPage === 'splash') {
+                return (
+                    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6">
+                        <h1 className="text-5xl font-bold text-white text-center mb-8 animate-pulse" 
+                            style={{ fontFamily: 'sans-serif' }}>
+                            REECHYI TODO LIST
+                        </h1>
+                        
+                        <div className="h-16 mb-12 flex items-center justify-center overflow-hidden">
+                            <p className="text-xl text-white text-center animate-pulse transition-all duration-500">
+                                {slidingTexts[currentSlide]}
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={() => setCurrentPage('completed')}
+                            className="px-8 py-3 text-xl font-semibold rounded-lg transition-all duration-300 text-white"
+                            style={{ border: '2px solid gold', background: 'transparent' }}>
+                            Continue
+                        </button>
+                    </div>
+                );
+            }
+
+            if (currentPage === 'completed') {
+                return (
+                    <div className="min-h-screen bg-white p-6">
+                        <h1 className="text-4xl font-bold text-black mb-2">Completed Task</h1>
+                        <p className="text-green-600 mb-8">Kindly tick the task u have successfully completed today</p>
+
+                        <div className="space-y-4">
+                            {[
+                                { key: 'drinkWater', label: 'Drink water', gradient: 'from-blue-400 to-cyan-300' },
+                                { key: 'studyNewThing', label: 'Study new thing', gradient: 'from-purple-400 to-pink-300' },
+                                { key: 'hitTheGym', label: 'Hit the gym', gradient: 'from-red-400 to-orange-300' },
+                                { key: 'brainTesting', label: 'Brain testing', gradient: 'from-green-400 to-teal-300' },
+                                { key: 'programming', label: 'Programming', gradient: 'from-indigo-400 to-blue-300' },
+                                { key: 'officeTask', label: 'Office task', gradient: 'from-yellow-400 to-orange-300' },
+                                { key: 'completedTodayTask', label: 'Completed today task', gradient: 'from-pink-400 to-rose-300' }
+                            ].map(task => (
+                                <div key={task.key} 
+                                     className={`bg-gradient-to-r ${task.gradient} p-4 rounded-lg flex items-center justify-between cursor-pointer`}
+                                     onClick={() => setCompletedTasks({...completedTasks, [task.key]: !completedTasks[task.key]})}>
+                                    <span className="text-white font-semibold">{task.label}</span>
+                                    <div className="w-6 h-6 border-2 border-white rounded flex items-center justify-center">
+                                        {completedTasks[task.key] && <span className="text-white text-xl">✓</span>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {anyTaskCompleted && (
+                            <button
+                                onClick={() => setCurrentPage('home')}
+                                className="mt-8 w-full bg-blue-600 text-white py-3 rounded-lg font-semibold">
+                                Continue
+                            </button>
+                        )}
+                    </div>
+                );
+            }
+
+            if (currentPage === 'notification') {
+                return (
+                    <div className="min-h-screen bg-white p-6">
+                        <h1 className="text-3xl font-bold text-black mb-6">Notification</h1>
+                        <div className="space-y-4">
+                            {notifications.length === 0 ? (
+                                <p className="text-gray-500 text-center mt-12">No notifications yet</p>
+                            ) : (
+                                notifications.map(notif => (
+                                    <div key={notif.id} className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-600">
+                                        <p className="font-semibold text-lg">It's time for your {notif.task} task</p>
+                                        <p className="text-gray-600 mt-2">Please make sure you don't skip the task</p>
+                                        <p className="text-sm text-gray-400 mt-2">{notif.time}</p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <button
+                            onClick={() => setCurrentPage('home')}
+                            className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg">
+                            Back to Home
+                        </button>
+                    </div>
+                );
+            }
+
+            if (currentPage === 'settings') {
+                return (
+                    <div className="min-h-screen bg-white p-6">
+                        <h1 className="text-3xl font-bold text-black mb-6">Setting</h1>
+                        <div className="space-y-4">
+                            <button
+                                onClick={() => setShowCancelTask(true)}
+                                className="w-full bg-red-50 text-red-600 p-4 rounded-lg text-left font-semibold border border-red-200">
+                                Cancel Task
+                            </button>
+                            <button 
+                                onClick={() => setPushNotificationsEnabled(!pushNotificationsEnabled)}
+                                className="w-full bg-gray-50 text-gray-700 p-4 rounded-lg text-left font-semibold border flex items-center justify-between">
+                                <span>Turn off Push Notification</span>
+                                <div className={`w-12 h-6 rounded-full transition-all ${pushNotificationsEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                                    <div className={`w-5 h-5 bg-white rounded-full m-0.5 transition-all ${pushNotificationsEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setShowShare(true)}
+                                className="w-full bg-blue-50 text-blue-600 p-4 rounded-lg text-left font-semibold border border-blue-200">
+                                Share
+                            </button>
+                            <button 
+                                onClick={() => setShowAbout(true)}
+                                className="w-full bg-purple-50 text-purple-600 p-4 rounded-lg text-left font-semibold border border-purple-200">
+                                About Reechyi Todo List
+                            </button>
+                        </div>
+
+                        {showCancelTask && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
+                                <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                                    <h2 className="text-2xl font-bold mb-4">Incoming Tasks</h2>
+                                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                                        {tasks.length === 0 ? (
+                                            <p className="text-gray-500 text-center py-8">No tasks to cancel</p>
+                                        ) : (
+                                            tasks.map(task => (
+                                                <div
+                                                    key={task.id}
+                                                    onClick={() => setSelectedTaskToCancel(task)}
+                                                    className="p-3 bg-gray-50 rounded border cursor-pointer hover:bg-gray-100">
+                                                    <p className="font-semibold">{task.text}</p>
+                                                    <p className="text-sm text-gray-500">{task.date} {task.time}</p>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => setShowCancelTask(false)}
+                                        className="mt-4 w-full bg-gray-600 text-white py-2 rounded">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedTaskToCancel && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
+                                <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+                                    <p className="text-lg mb-4">Do you want to turn off this task?</p>
+                                    <p className="font-semibold mb-6">{selectedTaskToCancel.text}</p>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => {
+                                                setTasks(tasks.filter(t => t.id !== selectedTaskToCancel.id));
+                                                setSelectedTaskToCancel(null);
+                                                setShowCancelTask(false);
+                                            }}
+                                            className="flex-1 bg-red-600 text-white py-2 rounded">
+                                            YES
+                                        </button>
+                                        <button
+                                            onClick={() => setSelectedTaskToCancel(null)}
+                                            className="flex-1 bg-gray-600 text-white py-2 rounded">
+                                            NO
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {showAbout && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
+                                <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-2xl font-bold">About Reechyi</h2>
+                                        <button
+                                            onClick={() => setShowAbout(false)}
+                                            className="text-gray-500 hover:text-gray-700 text-3xl font-bold leading-none">
+                                            ×
+                                        </button>
+                                    </div>
+                                    <div className="text-gray-700 space-y-3">
+                                        <p>Reechyi Todo List is a comprehensive task management application designed to help you stay organized, focused, and productive throughout your day.</p>
+                                        
+                                        <p>Our mission is to empower individuals to take control of their daily tasks with an intuitive, feature-rich platform that makes task management effortless and enjoyable.</p>
+                                        
+                                        <p className="font-bold">Key Features:</p>
+                                        <ul className="list-disc ml-6 space-y-1">
+                                            <li>Smart task categorization across multiple life domains</li>
+                                            <li>Customizable reminders and push notifications</li>
+                                            <li>Daily completion tracking to build consistency</li>
+                                            <li>Easy task scheduling with date and time selection</li>
+                                            <li>Social sharing capabilities to motivate friends and family</li>
+                                        </ul>
+                                        
+                                        <p>At Reechyi, we believe that consistency is the key to success. Every task completed brings you one step closer to your goals. Our app is built on the principle that skipping tasks is not an option – with the right tools and motivation, you can achieve anything you set your mind to.</p>
+                                        
+                                        <p className="text-sm text-gray-500 mt-4">Version 1.0.0 | © 2026 Reechyi Todo List</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowAbout(false)}
+                                        className="mt-6 w-full bg-blue-600 text-white py-3 rounded-lg font-semibold">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => setCurrentPage('home')}
+                            className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg">
+                            Back to Home
+                        </button>
+                    </div>
+                );
+            }
+
+            const categoryTasks = getCategoryTasks(activeNav);
+
+            return (
+                <div className="min-h-screen bg-white pb-24">
+                    <div className="bg-blue-900 text-white p-4">
+                        <h1 className="text-2xl font-bold">REECHYI TODO LIST</h1>
+                        <div className="flex gap-4 mt-4 overflow-x-auto">
+                            <button onClick={() => setActiveNav('home')} className={activeNav === 'home' ? 'text-white font-semibold' : 'text-gray-300'}>Home</button>
+                            <button onClick={() => setActiveNav('programming')} className={activeNav === 'programming' ? 'text-white font-semibold' : 'text-gray-300'}>Programming</button>
+                            <button onClick={() => setActiveNav('office')} className={activeNav === 'office' ? 'text-white font-semibold' : 'text-gray-300'}>Office</button>
+                            <button onClick={() => setActiveNav('studying')} className={activeNav === 'studying' ? 'text-white font-semibold' : 'text-gray-300'}>Studying</button>
+                            <button onClick={() => setCurrentPage('notification')} className="text-gray-300 flex items-center gap-1">
+                                🔔
+                                {notifications.length > 0 && <span className="bg-red-500 text-xs px-1 rounded-full">{notifications.length}</span>}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="p-6">
+                        <h2 className="text-2xl font-bold mb-4">Upcoming Task(s)</h2>
+                        {categoryTasks.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center mt-12">
+                                <div className="text-6xl mb-4 animate-bounce">📋</div>
+                                <p className="text-gray-500 text-center">There is no task here</p>
+                                <p className="text-gray-400 text-sm">Click on the plus icon to set task</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {categoryTasks.map(task => (
+                                    <div key={task.id} className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-lg">
+                                        <p className="font-semibold">{task.text}</p>
+                                        <p className="text-sm text-gray-600">{task.date} at {task.time}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="fixed bottom-16 right-6 z-40">
+                        <button
+                            onClick={() => setShowAddTask(true)}
+                            className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg animate-pulse text-3xl">
+                            +
+                        </button>
+                    </div>
+
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-3 z-30">
+                        <button onClick={() => setActiveNav('gym')} className={`flex flex-col items-center ${activeNav === 'gym' ? 'text-blue-900' : 'text-gray-400'}`}>
+                            <span className="text-xl">🏋️</span>
+                            <span className="text-xs">Hit the gym</span>
+                        </button>
+                        <button onClick={() => setActiveNav('brain')} className={`flex flex-col items-center ${activeNav === 'brain' ? 'text-blue-900' : 'text-gray-400'}`}>
+                            <span className="text-xl">🧠</span>
+                            <span className="text-xs">Brain testing</span>
+                        </button>
+                        <button onClick={() => setActiveNav('water')} className={`flex flex-col items-center ${activeNav === 'water' ? 'text-blue-900' : 'text-gray-400'}`}>
+                            <span className="text-xl">💧</span>
+                            <span className="text-xs">Drink water</span>
+                        </button>
+                        <button onClick={() => setActiveNav('study')} className={`flex flex-col items-center ${activeNav === 'study' ? 'text-blue-900' : 'text-gray-400'}`}>
+                            <span className="text-xl">📚</span>
+                            <span className="text-xs">Study new thing</span>
+                        </button>
+                        <button onClick={() => setCurrentPage('settings')} className="flex flex-col items-center text-gray-400">
+                            <span className="text-xl">⚙️</span>
+                            <span className="text-xs">Setting</span>
+                        </button>
+                    </div>
+
+                    {showAddTask && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
+                            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                                <h2 className="text-2xl font-bold mb-4">Add New Task</h2>
+                                <input
+                                    type="text"
+                                    placeholder="Please write your task here"
+                                    value={newTask.text}
+                                    onChange={(e) => setNewTask({...newTask, text: e.target.value})}
+                                    className="w-full border p-3 rounded mb-4"
+                                />
+                                <div className="flex gap-4 mb-4">
+                                    <div className="flex-1">
+                                        <p className="text-sm text-gray-600 mb-1">Category: {activeNav}</p>
+                                    </div>
+                                    <button
+                                        onClick={handleSetDateTime}
+                                        className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50">
+                                        <span>🕐</span>
+                                        <span className="text-sm">Set Time</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setShowShare(true)}
+                                        className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50">
+                                        <span>📤</span>
+                                    </button>
+                                </div>
+                                {newTask.date && newTask.time && (
+                                    <p className="text-sm text-gray-600 mb-4">Scheduled: {newTask.date} at {newTask.time}</p>
+                                )}
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleAddTask}
+                                        className="flex-1 bg-blue-600 text-white py-2 rounded">
+                                        Schedule Now
+                                    </button>
+                                    <button
+                                        onClick={() => setShowAddTask(false)}
+                                        className="flex-1 bg-gray-600 text-white py-2 rounded">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showShare && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
+                            <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+                                <h3 className="text-xl font-bold mb-4">Share Reechyi Todo</h3>
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <button 
+                                        onClick={() => handleShare('facebook')}
+                                        className="bg-blue-600 text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-blue-700">
+                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                        </svg>
+                                    </button>
+                                    <button 
+                                        onClick={() => handleShare('whatsapp')}
+                                        className="bg-green-500 text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-green-600">
+                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                                        </svg>
+                                    </button>
+                                    <button 
+                                        onClick={() => handleShare('sms')}
+                                        className="bg-gray-700 text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-gray-800">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                        </svg>
+                                    </button>
+                                    <button 
+                                        onClick={() => handleShare('twitter')}
+                                        className="bg-black text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-gray-900">
+                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => setShowShare(false)}
+                                    className="w-full bg-gray-600 text-white py-2 rounded">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="fixed bottom-16 left-0 right-0 bg-gradient-to-r from-blue-900 to-purple-900 text-white py-2 px-4 overflow-hidden z-20">
+                        <p className="text-sm text-center scrolling-text">
+                            Remember each task properly executed push you ahead to perfection! Skipping a task is not an option, consistency is the key, you got this day!
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<ReechiYiTodoApp />, document.getElementById('root'));
+    </script>
+
+    <script>
+        // Service Worker inline
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => {
+                    e.waitUntil(
+                        caches.open('reechyi-v1').then((cache) => {
+                            return cache.addAll(['/']);
+                        })
+                    );
+                });
+
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(
+                        caches.match(e.request).then((response) => {
+                            return response || fetch(e.request);
+                        })
+                    );
+                });
+            `;
+            
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl);
+        }
+
+        // Manifest inline
+        const manifestData = {
+            "name": "Reechyi Todo List",
+            "short_name": "Reechyi",
+            "description": "Your ultimate task management app",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#1e3a8a",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231e3a8a' width='100' height='100'/%3E%3Ctext y='75' font-size='80' fill='white'%3E✓%3C/text%3E%3C/svg%3E",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                },
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231e3a8a' width='100' height='100'/%3E%3Ctext y='75' font-size='80' fill='white'%3E✓%3C/text%3E%3C/svg%3E",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml"
+                }
+            ]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        document.getElementById('manifest-placeholder').setAttribute('href', manifestUrl);
+    </script>
+</body>
+</html>
