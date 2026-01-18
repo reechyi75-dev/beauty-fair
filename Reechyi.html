@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1e3a8a">
     <meta name="description" content="Reechyi Todo List - Your ultimate task management app">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Reechyi">
     <title>Reechyi Todo List</title>
     <link rel="manifest" href="#" id="manifest-placeholder">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,6 +31,10 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #root {
+            min-height: 100vh;
         }
     </style>
 </head>
@@ -37,9 +44,59 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // Storage utilities with localStorage
+        const Storage = {
+            save: (key, data) => {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch (e) {
+                    console.error('Storage save error:', e);
+                }
+            },
+            load: (key, defaultValue = null) => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : defaultValue;
+                } catch (e) {
+                    console.error('Storage load error:', e);
+                    return defaultValue;
+                }
+            },
+            remove: (key) => {
+                try {
+                    localStorage.removeItem(key);
+                } catch (e) {
+                    console.error('Storage remove error:', e);
+                }
+            }
+        };
+
+        // Notification utilities
+        const NotificationManager = {
+            async requestPermission() {
+                if ('Notification' in window) {
+                    const permission = await Notification.requestPermission();
+                    return permission === 'granted';
+                }
+                return false;
+            },
+            
+            show(title, body, tag) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification(title, {
+                        body: body,
+                        icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%231e3a8a" width="100" height="100"/%3E%3Ctext y="75" font-size="80" fill="white"%3E✓%3C/text%3E%3C/svg%3E',
+                        tag: tag,
+                        requireInteraction: true,
+                        vibrate: [200, 100, 200]
+                    });
+                }
+            }
+        };
+
         const ReechiYiTodoApp = () => {
-            const [currentPage, setCurrentPage] = useState('splash');
-            const [completedTasks, setCompletedTasks] = useState({
+            const [currentPage, setCurrentPage] = useState(() => Storage.load('currentPage', 'splash'));
+            const [completedTasks, setCompletedTasks] = useState(() => Storage.load('completedTasks', {
                 drinkWater: false,
                 studyNewThing: false,
                 hitTheGym: false,
@@ -47,18 +104,19 @@
                 programming: false,
                 officeTask: false,
                 completedTodayTask: false
-            });
-            const [tasks, setTasks] = useState([]);
+            }));
+            const [tasks, setTasks] = useState(() => Storage.load('tasks', []));
             const [activeNav, setActiveNav] = useState('home');
             const [showAddTask, setShowAddTask] = useState(false);
             const [newTask, setNewTask] = useState({ text: '', category: 'home', date: '', time: '' });
             const [showShare, setShowShare] = useState(false);
-            const [notifications, setNotifications] = useState([]);
-            const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
+            const [notifications, setNotifications] = useState(() => Storage.load('notifications', []));
+            const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(() => Storage.load('pushEnabled', true));
             const [showCancelTask, setShowCancelTask] = useState(false);
             const [selectedTaskToCancel, setSelectedTaskToCancel] = useState(null);
             const [showAbout, setShowAbout] = useState(false);
             const [currentSlide, setCurrentSlide] = useState(0);
+            const [notifiedTasks, setNotifiedTasks] = useState(() => Storage.load('notifiedTasks', []));
 
             const slidingTexts = [
                 "never miss any task today",
@@ -66,6 +124,39 @@
                 "keep the memory of yesterday completed task"
             ];
 
+            // Save to localStorage whenever state changes
+            useEffect(() => {
+                Storage.save('completedTasks', completedTasks);
+            }, [completedTasks]);
+
+            useEffect(() => {
+                Storage.save('tasks', tasks);
+            }, [tasks]);
+
+            useEffect(() => {
+                Storage.save('notifications', notifications);
+            }, [notifications]);
+
+            useEffect(() => {
+                Storage.save('pushEnabled', pushNotificationsEnabled);
+            }, [pushNotificationsEnabled]);
+
+            useEffect(() => {
+                Storage.save('notifiedTasks', notifiedTasks);
+            }, [notifiedTasks]);
+
+            useEffect(() => {
+                Storage.save('currentPage', currentPage);
+            }, [currentPage]);
+
+            // Request notification permission on first load
+            useEffect(() => {
+                if (pushNotificationsEnabled && 'Notification' in window) {
+                    NotificationManager.requestPermission();
+                }
+            }, []);
+
+            // Sliding text animation
             useEffect(() => {
                 if (currentPage === 'splash') {
                     const interval = setInterval(() => {
@@ -75,15 +166,53 @@
                 }
             }, [currentPage]);
 
+            // Check for task notifications every minute
+            useEffect(() => {
+                const checkTaskTimes = setInterval(() => {
+                    if (!pushNotificationsEnabled) return;
+                    
+                    const now = new Date();
+                    tasks.forEach(task => {
+                        if (task.date && task.time && !notifiedTasks.includes(task.id)) {
+                            const taskDateTime = new Date(`${task.date}T${task.time}`);
+                            const diff = taskDateTime - now;
+                            
+                            // Notify 5 minutes before and at exact time
+                            if ((diff > 0 && diff < 300000) || (diff > -60000 && diff < 0)) {
+                                const newNotif = {
+                                    id: task.id,
+                                    task: task.text,
+                                    category: task.category,
+                                    time: new Date().toLocaleString()
+                                };
+                                
+                                setNotifications(prev => [...prev, newNotif]);
+                                setNotifiedTasks(prev => [...prev, task.id]);
+                                
+                                // Show system notification
+                                NotificationManager.show(
+                                    'Reechyi Todo Reminder',
+                                    `It's time for: ${task.text}`,
+                                    `task-${task.id}`
+                                );
+                            }
+                        }
+                    });
+                }, 30000); // Check every 30 seconds
+                
+                return () => clearInterval(checkTaskTimes);
+            }, [tasks, pushNotificationsEnabled, notifiedTasks]);
+
             const anyTaskCompleted = Object.values(completedTasks).some(v => v);
 
             const handleAddTask = () => {
                 if (newTask.text.trim()) {
-                    setTasks([...tasks, { 
-                        ...newTask, 
+                    const taskToAdd = {
+                        ...newTask,
                         id: Date.now(),
                         category: activeNav === 'home' ? 'home' : activeNav
-                    }]);
+                    };
+                    setTasks([...tasks, taskToAdd]);
                     setNewTask({ text: '', category: activeNav, date: '', time: '' });
                     setShowAddTask(false);
                 }
@@ -92,7 +221,8 @@
             const handleSetDateTime = () => {
                 const dateInput = document.createElement('input');
                 dateInput.type = 'date';
-                dateInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;padding:20px;font-size:18px;border:2px solid #333;border-radius:8px;';
+                dateInput.min = new Date().toISOString().split('T')[0];
+                dateInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;padding:20px;font-size:18px;border:2px solid #333;border-radius:8px;background:white;';
                 document.body.appendChild(dateInput);
                 
                 dateInput.onchange = (e) => {
@@ -101,16 +231,18 @@
                     
                     const timeInput = document.createElement('input');
                     timeInput.type = 'time';
-                    timeInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;padding:20px;font-size:18px;border:2px solid #333;border-radius:8px;';
+                    timeInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;padding:20px;font-size:18px;border:2px solid #333;border-radius:8px;background:white;';
                     document.body.appendChild(timeInput);
                     
                     timeInput.onchange = (te) => {
                         setNewTask({...newTask, date: selectedDate, time: te.target.value});
                         document.body.removeChild(timeInput);
                     };
-                    timeInput.click();
+                    
+                    setTimeout(() => timeInput.click(), 100);
                 };
-                dateInput.click();
+                
+                setTimeout(() => dateInput.click(), 100);
             };
 
             const handleShare = (platform) => {
@@ -140,6 +272,19 @@
             const getCategoryTasks = (category) => {
                 if (category === 'home') return tasks;
                 return tasks.filter(t => t.category === category);
+            };
+
+            const handleTogglePushNotifications = async () => {
+                if (!pushNotificationsEnabled) {
+                    const granted = await NotificationManager.requestPermission();
+                    if (granted) {
+                        setPushNotificationsEnabled(true);
+                    } else {
+                        alert('Please enable notifications in your browser settings');
+                    }
+                } else {
+                    setPushNotificationsEnabled(false);
+                }
             };
 
             if (currentPage === 'splash') {
@@ -241,9 +386,9 @@
                                 Cancel Task
                             </button>
                             <button 
-                                onClick={() => setPushNotificationsEnabled(!pushNotificationsEnabled)}
+                                onClick={handleTogglePushNotifications}
                                 className="w-full bg-gray-50 text-gray-700 p-4 rounded-lg text-left font-semibold border flex items-center justify-between">
-                                <span>Turn off Push Notification</span>
+                                <span>Push Notifications</span>
                                 <div className={`w-12 h-6 rounded-full transition-all ${pushNotificationsEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}>
                                     <div className={`w-5 h-5 bg-white rounded-full m-0.5 transition-all ${pushNotificationsEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
                                 </div>
@@ -257,6 +402,22 @@
                                 onClick={() => setShowAbout(true)}
                                 className="w-full bg-purple-50 text-purple-600 p-4 rounded-lg text-left font-semibold border border-purple-200">
                                 About Reechyi Todo List
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (confirm('Clear all data including tasks and notifications?')) {
+                                        Storage.remove('tasks');
+                                        Storage.remove('notifications');
+                                        Storage.remove('completedTasks');
+                                        Storage.remove('notifiedTasks');
+                                        setTasks([]);
+                                        setNotifications([]);
+                                        setCompletedTasks({});
+                                        setNotifiedTasks([]);
+                                    }
+                                }}
+                                className="w-full bg-red-50 text-red-600 p-4 rounded-lg text-left font-semibold border border-red-200">
+                                Clear All Data
                             </button>
                         </div>
 
@@ -325,22 +486,23 @@
                                         </button>
                                     </div>
                                     <div className="text-gray-700 space-y-3">
-                                        <p>Reechyi Todo List is a comprehensive task management application designed to help you stay organized, focused, and productive throughout your day.</p>
+                                        <p>Reechyi Todo List is a comprehensive task management Progressive Web App designed to help you stay organized, focused, and productive throughout your day.</p>
                                         
                                         <p>Our mission is to empower individuals to take control of their daily tasks with an intuitive, feature-rich platform that makes task management effortless and enjoyable.</p>
                                         
                                         <p className="font-bold">Key Features:</p>
                                         <ul className="list-disc ml-6 space-y-1">
                                             <li>Smart task categorization across multiple life domains</li>
-                                            <li>Customizable reminders and push notifications</li>
+                                            <li>Real push notifications and reminders</li>
                                             <li>Daily completion tracking to build consistency</li>
                                             <li>Easy task scheduling with date and time selection</li>
+                                            <li>Works completely offline with data persistence</li>
                                             <li>Social sharing capabilities to motivate friends and family</li>
                                         </ul>
                                         
                                         <p>At Reechyi, we believe that consistency is the key to success. Every task completed brings you one step closer to your goals. Our app is built on the principle that skipping tasks is not an option – with the right tools and motivation, you can achieve anything you set your mind to.</p>
                                         
-                                        <p className="text-sm text-gray-500 mt-4">Version 1.0.0 | © 2026 Reechyi Todo List</p>
+                                        <p className="text-sm text-gray-500 mt-4">Version 2.0.0 (PWA) | © 2026 Reechyi Todo List</p>
                                     </div>
                                     <button
                                         onClick={() => setShowAbout(false)}
@@ -531,50 +693,98 @@
     </script>
 
     <script>
-        // Service Worker inline
+        // Enhanced Service Worker with proper caching
         if ('serviceWorker' in navigator) {
             const swCode = `
-                self.addEventListener('install', (e) => {
-                    e.waitUntil(
-                        caches.open('reechyi-v1').then((cache) => {
-                            return cache.addAll(['/']);
-                        })
+                const CACHE_NAME = 'reechyi-v2.0.0';
+                const urlsToCache = [
+                    './',
+                    'https://cdn.tailwindcss.com',
+                    'https://unpkg.com/react@18/umd/react.production.min.js',
+                    'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+                    'https://unpkg.com/@babel/standalone/babel.min.js'
+                ];
+
+                self.addEventListener('install', (event) => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then((cache) => cache.addAll(urlsToCache))
                     );
+                    self.skipWaiting();
                 });
 
-                self.addEventListener('fetch', (e) => {
-                    e.respondWith(
-                        caches.match(e.request).then((response) => {
-                            return response || fetch(e.request);
+                self.addEventListener('activate', (event) => {
+                    event.waitUntil(
+                        caches.keys().then((cacheNames) => {
+                            return Promise.all(
+                                cacheNames.map((cacheName) => {
+                                    if (cacheName !== CACHE_NAME) {
+                                        return caches.delete(cacheName);
+                                    }
+                                })
+                            );
                         })
+                    );
+                    self.clients.claim();
+                });
+
+                self.addEventListener('fetch', (event) => {
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then((response) => {
+                                if (response) {
+                                    return response;
+                                }
+                                return fetch(event.request).then((response) => {
+                                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                                        return response;
+                                    }
+                                    const responseToCache = response.clone();
+                                    caches.open(CACHE_NAME).then((cache) => {
+                                        cache.put(event.request, responseToCache);
+                                    });
+                                    return response;
+                                });
+                            })
+                            .catch(() => {
+                                return caches.match('./');
+                            })
                     );
                 });
             `;
             
             const blob = new Blob([swCode], { type: 'application/javascript' });
             const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl);
+            
+            navigator.serviceWorker.register(swUrl)
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed:', err));
         }
 
-        // Manifest inline
+        // Enhanced Manifest
         const manifestData = {
             "name": "Reechyi Todo List",
             "short_name": "Reechyi",
-            "description": "Your ultimate task management app",
+            "description": "Your ultimate task management Progressive Web App",
             "start_url": "./",
+            "scope": "./",
             "display": "standalone",
+            "orientation": "portrait",
             "background_color": "#ffffff",
             "theme_color": "#1e3a8a",
+            "prefer_related_applications": false,
             "icons": [
                 {
-                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231e3a8a' width='100' height='100'/%3E%3Ctext y='75' font-size='80' fill='white'%3E✓%3C/text%3E%3C/svg%3E",
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231e3a8a' width='100' height='100'/%3E%3Ctext x='50' y='75' font-size='70' text-anchor='middle' fill='white'%3E✓%3C/text%3E%3C/svg%3E",
                     "sizes": "192x192",
-                    "type": "image/svg+xml"
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
                 },
                 {
-                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231e3a8a' width='100' height='100'/%3E%3Ctext y='75' font-size='80' fill='white'%3E✓%3C/text%3E%3C/svg%3E",
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231e3a8a' width='100' height='100'/%3E%3Ctext x='50' y='75' font-size='70' text-anchor='middle' fill='white'%3E✓%3C/text%3E%3C/svg%3E",
                     "sizes": "512x512",
-                    "type": "image/svg+xml"
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
                 }
             ]
         };
