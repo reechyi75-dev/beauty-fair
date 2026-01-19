@@ -2,14 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1e3a8a">
     <meta name="description" content="Reechyi Todo List - Your ultimate task management app">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Reechyi">
     <title>Reechyi Todo List</title>
     <link rel="manifest" href="#" id="manifest-placeholder">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231e3a8a' width='100' height='100'/%3E%3Ctext x='50' y='75' font-size='70' text-anchor='middle' fill='white'%3E✓%3C/text%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -32,9 +34,11 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             -webkit-font-smoothing: antialiased;
             -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
         }
         #root {
             min-height: 100vh;
+            position: relative;
         }
     </style>
 </head>
@@ -42,9 +46,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
-        // Storage utilities with localStorage
+        // Storage utilities
         const Storage = {
             save: (key, data) => {
                 try {
@@ -71,29 +75,6 @@
             }
         };
 
-        // Notification utilities
-        const NotificationManager = {
-            async requestPermission() {
-                if ('Notification' in window) {
-                    const permission = await Notification.requestPermission();
-                    return permission === 'granted';
-                }
-                return false;
-            },
-            
-            show(title, body, tag) {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification(title, {
-                        body: body,
-                        icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%231e3a8a" width="100" height="100"/%3E%3Ctext y="75" font-size="80" fill="white"%3E✓%3C/text%3E%3C/svg%3E',
-                        tag: tag,
-                        requireInteraction: true,
-                        vibrate: [200, 100, 200]
-                    });
-                }
-            }
-        };
-
         const ReechiYiTodoApp = () => {
             const [currentPage, setCurrentPage] = useState(() => Storage.load('currentPage', 'splash'));
             const [completedTasks, setCompletedTasks] = useState(() => Storage.load('completedTasks', {
@@ -116,7 +97,7 @@
             const [selectedTaskToCancel, setSelectedTaskToCancel] = useState(null);
             const [showAbout, setShowAbout] = useState(false);
             const [currentSlide, setCurrentSlide] = useState(0);
-            const [notifiedTasks, setNotifiedTasks] = useState(() => Storage.load('notifiedTasks', []));
+            const notificationCheckInterval = useRef(null);
 
             const slidingTexts = [
                 "never miss any task today",
@@ -124,35 +105,21 @@
                 "keep the memory of yesterday completed task"
             ];
 
-            // Save to localStorage whenever state changes
-            useEffect(() => {
-                Storage.save('completedTasks', completedTasks);
-            }, [completedTasks]);
+            // Save state to localStorage
+            useEffect(() => { Storage.save('completedTasks', completedTasks); }, [completedTasks]);
+            useEffect(() => { Storage.save('tasks', tasks); }, [tasks]);
+            useEffect(() => { Storage.save('notifications', notifications); }, [notifications]);
+            useEffect(() => { Storage.save('pushEnabled', pushNotificationsEnabled); }, [pushNotificationsEnabled]);
+            useEffect(() => { Storage.save('currentPage', currentPage); }, [currentPage]);
 
+            // Request notification permission
             useEffect(() => {
-                Storage.save('tasks', tasks);
-            }, [tasks]);
-
-            useEffect(() => {
-                Storage.save('notifications', notifications);
-            }, [notifications]);
-
-            useEffect(() => {
-                Storage.save('pushEnabled', pushNotificationsEnabled);
-            }, [pushNotificationsEnabled]);
-
-            useEffect(() => {
-                Storage.save('notifiedTasks', notifiedTasks);
-            }, [notifiedTasks]);
-
-            useEffect(() => {
-                Storage.save('currentPage', currentPage);
-            }, [currentPage]);
-
-            // Request notification permission on first load
-            useEffect(() => {
-                if (pushNotificationsEnabled && 'Notification' in window) {
-                    NotificationManager.requestPermission();
+                if (pushNotificationsEnabled && 'Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission !== 'granted') {
+                            setPushNotificationsEnabled(false);
+                        }
+                    });
                 }
             }, []);
 
@@ -166,19 +133,23 @@
                 }
             }, [currentPage]);
 
-            // Check for task notifications every minute
+            // Notification checking - runs every 15 seconds
             useEffect(() => {
-                const checkTaskTimes = setInterval(() => {
-                    if (!pushNotificationsEnabled) return;
-                    
+                const checkNotifications = () => {
+                    if (!pushNotificationsEnabled || Notification.permission !== 'granted') return;
+
                     const now = new Date();
-                    tasks.forEach(task => {
+                    const storedTasks = Storage.load('tasks', []);
+                    const notifiedTasks = Storage.load('notifiedTasks', []);
+
+                    storedTasks.forEach(task => {
                         if (task.date && task.time && !notifiedTasks.includes(task.id)) {
-                            const taskDateTime = new Date(`${task.date}T${task.time}`);
+                            const taskDateTime = new Date(`${task.date}T${task.time}:00`);
                             const diff = taskDateTime - now;
-                            
-                            // Notify 5 minutes before and at exact time
-                            if ((diff > 0 && diff < 300000) || (diff > -60000 && diff < 0)) {
+
+                            // Notify if within 5 minutes before or 1 minute after
+                            if (diff > -60000 && diff < 300000) {
+                                // Add to notifications in app
                                 const newNotif = {
                                     id: task.id,
                                     task: task.text,
@@ -186,22 +157,49 @@
                                     time: new Date().toLocaleString()
                                 };
                                 
+                                const currentNotifs = Storage.load('notifications', []);
+                                Storage.save('notifications', [...currentNotifs, newNotif]);
                                 setNotifications(prev => [...prev, newNotif]);
-                                setNotifiedTasks(prev => [...prev, task.id]);
-                                
+
+                                // Mark as notified
+                                const updatedNotified = [...notifiedTasks, task.id];
+                                Storage.save('notifiedTasks', updatedNotified);
+
                                 // Show system notification
-                                NotificationManager.show(
-                                    'Reechyi Todo Reminder',
-                                    `It's time for: ${task.text}`,
-                                    `task-${task.id}`
-                                );
+                                try {
+                                    const notification = new Notification('Reechyi Todo Reminder ⏰', {
+                                        body: `It's time for: ${task.text}\nPlease make sure you don't skip this task!`,
+                                        icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%231e3a8a" width="100" height="100"/%3E%3Ctext x="50" y="75" font-size="70" text-anchor="middle" fill="white"%3E✓%3C/text%3E%3C/svg%3E',
+                                        tag: `task-${task.id}`,
+                                        requireInteraction: true,
+                                        vibrate: [200, 100, 200],
+                                        badge: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%231e3a8a" width="100" height="100"/%3E%3Ctext x="50" y="75" font-size="70" text-anchor="middle" fill="white"%3E✓%3C/text%3E%3C/svg%3E'
+                                    });
+
+                                    notification.onclick = () => {
+                                        window.focus();
+                                        notification.close();
+                                    };
+                                } catch (e) {
+                                    console.error('Notification error:', e);
+                                }
                             }
                         }
                     });
-                }, 30000); // Check every 30 seconds
-                
-                return () => clearInterval(checkTaskTimes);
-            }, [tasks, pushNotificationsEnabled, notifiedTasks]);
+                };
+
+                // Check immediately
+                checkNotifications();
+
+                // Then check every 15 seconds
+                notificationCheckInterval.current = setInterval(checkNotifications, 15000);
+
+                return () => {
+                    if (notificationCheckInterval.current) {
+                        clearInterval(notificationCheckInterval.current);
+                    }
+                };
+            }, [pushNotificationsEnabled]);
 
             const anyTaskCompleted = Object.values(completedTasks).some(v => v);
 
@@ -222,27 +220,49 @@
                 const dateInput = document.createElement('input');
                 dateInput.type = 'date';
                 dateInput.min = new Date().toISOString().split('T')[0];
-                dateInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;padding:20px;font-size:18px;border:2px solid #333;border-radius:8px;background:white;';
+                dateInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;padding:20px;font-size:18px;border:2px solid #1e3a8a;border-radius:8px;background:white;box-shadow:0 4px 6px rgba(0,0,0,0.1);';
                 document.body.appendChild(dateInput);
+                
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;';
+                document.body.appendChild(overlay);
+                
+                const cleanup = () => {
+                    if (document.body.contains(dateInput)) document.body.removeChild(dateInput);
+                    if (document.body.contains(overlay)) document.body.removeChild(overlay);
+                };
+                
+                overlay.onclick = cleanup;
                 
                 dateInput.onchange = (e) => {
                     const selectedDate = e.target.value;
-                    document.body.removeChild(dateInput);
+                    cleanup();
                     
                     const timeInput = document.createElement('input');
                     timeInput.type = 'time';
-                    timeInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;padding:20px;font-size:18px;border:2px solid #333;border-radius:8px;background:white;';
+                    timeInput.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;padding:20px;font-size:18px;border:2px solid #1e3a8a;border-radius:8px;background:white;box-shadow:0 4px 6px rgba(0,0,0,0.1);';
                     document.body.appendChild(timeInput);
+                    
+                    const overlay2 = document.createElement('div');
+                    overlay2.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;';
+                    document.body.appendChild(overlay2);
+                    
+                    const cleanup2 = () => {
+                        if (document.body.contains(timeInput)) document.body.removeChild(timeInput);
+                        if (document.body.contains(overlay2)) document.body.removeChild(overlay2);
+                    };
+                    
+                    overlay2.onclick = cleanup2;
                     
                     timeInput.onchange = (te) => {
                         setNewTask({...newTask, date: selectedDate, time: te.target.value});
-                        document.body.removeChild(timeInput);
+                        cleanup2();
                     };
                     
-                    setTimeout(() => timeInput.click(), 100);
+                    setTimeout(() => timeInput.showPicker?.() || timeInput.click(), 100);
                 };
                 
-                setTimeout(() => dateInput.click(), 100);
+                setTimeout(() => dateInput.showPicker?.() || dateInput.click(), 100);
             };
 
             const handleShare = (platform) => {
@@ -276,11 +296,15 @@
 
             const handleTogglePushNotifications = async () => {
                 if (!pushNotificationsEnabled) {
-                    const granted = await NotificationManager.requestPermission();
-                    if (granted) {
-                        setPushNotificationsEnabled(true);
+                    if ('Notification' in window) {
+                        const permission = await Notification.requestPermission();
+                        if (permission === 'granted') {
+                            setPushNotificationsEnabled(true);
+                        } else {
+                            alert('Please enable notifications in your browser settings to receive task reminders.');
+                        }
                     } else {
-                        alert('Please enable notifications in your browser settings');
+                        alert('Your browser does not support notifications.');
                     }
                 } else {
                     setPushNotificationsEnabled(false);
@@ -328,7 +352,7 @@
                                 { key: 'completedTodayTask', label: 'Completed today task', gradient: 'from-pink-400 to-rose-300' }
                             ].map(task => (
                                 <div key={task.key} 
-                                     className={`bg-gradient-to-r ${task.gradient} p-4 rounded-lg flex items-center justify-between cursor-pointer`}
+                                     className={`bg-gradient-to-r ${task.gradient} p-4 rounded-lg flex items-center justify-between cursor-pointer active:scale-95 transition-transform`}
                                      onClick={() => setCompletedTasks({...completedTasks, [task.key]: !completedTasks[task.key]})}>
                                     <span className="text-white font-semibold">{task.label}</span>
                                     <div className="w-6 h-6 border-2 border-white rounded flex items-center justify-center">
@@ -341,7 +365,7 @@
                         {anyTaskCompleted && (
                             <button
                                 onClick={() => setCurrentPage('home')}
-                                className="mt-8 w-full bg-blue-600 text-white py-3 rounded-lg font-semibold">
+                                className="mt-8 w-full bg-blue-600 text-white py-3 rounded-lg font-semibold active:scale-95 transition-transform">
                                 Continue
                             </button>
                         )}
@@ -357,8 +381,8 @@
                             {notifications.length === 0 ? (
                                 <p className="text-gray-500 text-center mt-12">No notifications yet</p>
                             ) : (
-                                notifications.map(notif => (
-                                    <div key={notif.id} className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-600">
+                                notifications.map((notif, index) => (
+                                    <div key={index} className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-600">
                                         <p className="font-semibold text-lg">It's time for your {notif.task} task</p>
                                         <p className="text-gray-600 mt-2">Please make sure you don't skip the task</p>
                                         <p className="text-sm text-gray-400 mt-2">{notif.time}</p>
@@ -368,7 +392,7 @@
                         </div>
                         <button
                             onClick={() => setCurrentPage('home')}
-                            className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg">
+                            className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg active:scale-95 transition-transform">
                             Back to Home
                         </button>
                     </div>
@@ -377,17 +401,17 @@
 
             if (currentPage === 'settings') {
                 return (
-                    <div className="min-h-screen bg-white p-6">
+                    <div className="min-h-screen bg-white p-6 pb-24">
                         <h1 className="text-3xl font-bold text-black mb-6">Setting</h1>
                         <div className="space-y-4">
                             <button
                                 onClick={() => setShowCancelTask(true)}
-                                className="w-full bg-red-50 text-red-600 p-4 rounded-lg text-left font-semibold border border-red-200">
+                                className="w-full bg-red-50 text-red-600 p-4 rounded-lg text-left font-semibold border border-red-200 active:scale-95 transition-transform">
                                 Cancel Task
                             </button>
                             <button 
                                 onClick={handleTogglePushNotifications}
-                                className="w-full bg-gray-50 text-gray-700 p-4 rounded-lg text-left font-semibold border flex items-center justify-between">
+                                className="w-full bg-gray-50 text-gray-700 p-4 rounded-lg text-left font-semibold border flex items-center justify-between active:scale-95 transition-transform">
                                 <span>Push Notifications</span>
                                 <div className={`w-12 h-6 rounded-full transition-all ${pushNotificationsEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}>
                                     <div className={`w-5 h-5 bg-white rounded-full m-0.5 transition-all ${pushNotificationsEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
@@ -395,12 +419,12 @@
                             </button>
                             <button
                                 onClick={() => setShowShare(true)}
-                                className="w-full bg-blue-50 text-blue-600 p-4 rounded-lg text-left font-semibold border border-blue-200">
+                                className="w-full bg-blue-50 text-blue-600 p-4 rounded-lg text-left font-semibold border border-blue-200 active:scale-95 transition-transform">
                                 Share
                             </button>
                             <button 
                                 onClick={() => setShowAbout(true)}
-                                className="w-full bg-purple-50 text-purple-600 p-4 rounded-lg text-left font-semibold border border-purple-200">
+                                className="w-full bg-purple-50 text-purple-600 p-4 rounded-lg text-left font-semibold border border-purple-200 active:scale-95 transition-transform">
                                 About Reechyi Todo List
                             </button>
                             <button
@@ -412,18 +436,26 @@
                                         Storage.remove('notifiedTasks');
                                         setTasks([]);
                                         setNotifications([]);
-                                        setCompletedTasks({});
-                                        setNotifiedTasks([]);
+                                        setCompletedTasks({
+                                            drinkWater: false,
+                                            studyNewThing: false,
+                                            hitTheGym: false,
+                                            brainTesting: false,
+                                            programming: false,
+                                            officeTask: false,
+                                            completedTodayTask: false
+                                        });
+                                        alert('All data cleared!');
                                     }
                                 }}
-                                className="w-full bg-red-50 text-red-600 p-4 rounded-lg text-left font-semibold border border-red-200">
+                                className="w-full bg-red-50 text-red-600 p-4 rounded-lg text-left font-semibold border border-red-200 active:scale-95 transition-transform">
                                 Clear All Data
                             </button>
                         </div>
 
                         {showCancelTask && (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
-                                <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50" onClick={() => setShowCancelTask(false)}>
+                                <div className="bg-white rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
                                     <h2 className="text-2xl font-bold mb-4">Incoming Tasks</h2>
                                     <div className="space-y-3 max-h-96 overflow-y-auto">
                                         {tasks.length === 0 ? (
@@ -433,7 +465,7 @@
                                                 <div
                                                     key={task.id}
                                                     onClick={() => setSelectedTaskToCancel(task)}
-                                                    className="p-3 bg-gray-50 rounded border cursor-pointer hover:bg-gray-100">
+                                                    className="p-3 bg-gray-50 rounded border cursor-pointer hover:bg-gray-100 active:scale-95 transition-transform">
                                                     <p className="font-semibold">{task.text}</p>
                                                     <p className="text-sm text-gray-500">{task.date} {task.time}</p>
                                                 </div>
@@ -442,7 +474,7 @@
                                     </div>
                                     <button
                                         onClick={() => setShowCancelTask(false)}
-                                        className="mt-4 w-full bg-gray-600 text-white py-2 rounded">
+                                        className="mt-4 w-full bg-gray-600 text-white py-2 rounded active:scale-95 transition-transform">
                                         Close
                                     </button>
                                 </div>
@@ -450,8 +482,8 @@
                         )}
 
                         {selectedTaskToCancel && (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
-                                <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50" onClick={() => setSelectedTaskToCancel(null)}>
+                                <div className="bg-white rounded-lg p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
                                     <p className="text-lg mb-4">Do you want to turn off this task?</p>
                                     <p className="font-semibold mb-6">{selectedTaskToCancel.text}</p>
                                     <div className="flex gap-3">
@@ -461,12 +493,12 @@
                                                 setSelectedTaskToCancel(null);
                                                 setShowCancelTask(false);
                                             }}
-                                            className="flex-1 bg-red-600 text-white py-2 rounded">
+                                            className="flex-1 bg-red-600 text-white py-2 rounded active:scale-95 transition-transform">
                                             YES
                                         </button>
                                         <button
                                             onClick={() => setSelectedTaskToCancel(null)}
-                                            className="flex-1 bg-gray-600 text-white py-2 rounded">
+                                            className="flex-1 bg-gray-600 text-white py-2 rounded active:scale-95 transition-transform">
                                             NO
                                         </button>
                                     </div>
@@ -475,8 +507,8 @@
                         )}
 
                         {showAbout && (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
-                                <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50" onClick={() => setShowAbout(false)}>
+                                <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center justify-between mb-4">
                                         <h2 className="text-2xl font-bold">About Reechyi</h2>
                                         <button
@@ -502,11 +534,11 @@
                                         
                                         <p>At Reechyi, we believe that consistency is the key to success. Every task completed brings you one step closer to your goals. Our app is built on the principle that skipping tasks is not an option – with the right tools and motivation, you can achieve anything you set your mind to.</p>
                                         
-                                        <p className="text-sm text-gray-500 mt-4">Version 2.0.0 (PWA) | © 2026 Reechyi Todo List</p>
+                                        <p className="text-sm text-gray-500 mt-4">Version 3.0.0 (PWA Pro) | © 2026 Reechyi Todo List</p>
                                     </div>
                                     <button
                                         onClick={() => setShowAbout(false)}
-                                        className="mt-6 w-full bg-blue-600 text-white py-3 rounded-lg font-semibold">
+                                        className="mt-6 w-full bg-blue-600 text-white py-3 rounded-lg font-semibold active:scale-95 transition-transform">
                                         Close
                                     </button>
                                 </div>
@@ -515,7 +547,7 @@
 
                         <button
                             onClick={() => setCurrentPage('home')}
-                            className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg">
+                            className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg active:scale-95 transition-transform">
                             Back to Home
                         </button>
                     </div>
@@ -563,7 +595,7 @@
                     <div className="fixed bottom-16 right-6 z-40">
                         <button
                             onClick={() => setShowAddTask(true)}
-                            className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg animate-pulse text-3xl">
+                            className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg animate-pulse text-3xl active:scale-95 transition-transform">
                             +
                         </button>
                     </div>
@@ -592,8 +624,8 @@
                     </div>
 
                     {showAddTask && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
-                            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50" onClick={() => setShowAddTask(false)}>
+                            <div className="bg-white rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
                                 <h2 className="text-2xl font-bold mb-4">Add New Task</h2>
                                 <input
                                     type="text"
@@ -608,13 +640,13 @@
                                     </div>
                                     <button
                                         onClick={handleSetDateTime}
-                                        className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50">
+                                        className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50 active:scale-95 transition-transform">
                                         <span>🕐</span>
                                         <span className="text-sm">Set Time</span>
                                     </button>
                                     <button
                                         onClick={() => setShowShare(true)}
-                                        className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50">
+                                        className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50 active:scale-95 transition-transform">
                                         <span>📤</span>
                                     </button>
                                 </div>
@@ -624,12 +656,12 @@
                                 <div className="flex gap-3">
                                     <button
                                         onClick={handleAddTask}
-                                        className="flex-1 bg-blue-600 text-white py-2 rounded">
+                                        className="flex-1 bg-blue-600 text-white py-2 rounded active:scale-95 transition-transform">
                                         Schedule Now
                                     </button>
                                     <button
                                         onClick={() => setShowAddTask(false)}
-                                        className="flex-1 bg-gray-600 text-white py-2 rounded">
+                                        className="flex-1 bg-gray-600 text-white py-2 rounded active:scale-95 transition-transform">
                                         Cancel
                                     </button>
                                 </div>
@@ -638,34 +670,34 @@
                     )}
 
                     {showShare && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
-                            <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50" onClick={() => setShowShare(false)}>
+                            <div className="bg-white rounded-lg p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
                                 <h3 className="text-xl font-bold mb-4">Share Reechyi Todo</h3>
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     <button 
                                         onClick={() => handleShare('facebook')}
-                                        className="bg-blue-600 text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-blue-700">
+                                        className="bg-blue-600 text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-95 transition-transform">
                                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                                         </svg>
                                     </button>
                                     <button 
                                         onClick={() => handleShare('whatsapp')}
-                                        className="bg-green-500 text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-green-600">
+                                        className="bg-green-500 text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-green-600 active:scale-95 transition-transform">
                                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
                                         </svg>
                                     </button>
                                     <button 
                                         onClick={() => handleShare('sms')}
-                                        className="bg-gray-700 text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-gray-800">
+                                        className="bg-gray-700 text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-gray-800 active:scale-95 transition-transform">
                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                                         </svg>
                                     </button>
                                     <button 
                                         onClick={() => handleShare('twitter')}
-                                        className="bg-black text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-gray-900">
+                                        className="bg-black text-white py-4 rounded flex items-center justify-center gap-2 hover:bg-gray-900 active:scale-95 transition-transform">
                                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                                         </svg>
@@ -673,7 +705,7 @@
                                 </div>
                                 <button
                                     onClick={() => setShowShare(false)}
-                                    className="w-full bg-gray-600 text-white py-2 rounded">
+                                    className="w-full bg-gray-600 text-white py-2 rounded active:scale-95 transition-transform">
                                     Close
                                 </button>
                             </div>
@@ -693,12 +725,13 @@
     </script>
 
     <script>
-        // Enhanced Service Worker with proper caching
+        // Professional Service Worker with proper offline caching
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'reechyi-v2.0.0';
+                const CACHE_NAME = 'reechyi-pwa-v3.0.0';
                 const urlsToCache = [
                     './',
+                    './?source=pwa',
                     'https://cdn.tailwindcss.com',
                     'https://unpkg.com/react@18/umd/react.production.min.js',
                     'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
@@ -709,6 +742,7 @@
                     event.waitUntil(
                         caches.open(CACHE_NAME)
                             .then((cache) => cache.addAll(urlsToCache))
+                            .catch((err) => console.log('Cache error:', err))
                     );
                     self.skipWaiting();
                 });
@@ -735,19 +769,20 @@
                                 if (response) {
                                     return response;
                                 }
-                                return fetch(event.request).then((response) => {
-                                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                                return fetch(event.request)
+                                    .then((response) => {
+                                        if (!response || response.status !== 200 || response.type !== 'basic') {
+                                            return response;
+                                        }
+                                        const responseToCache = response.clone();
+                                        caches.open(CACHE_NAME).then((cache) => {
+                                            cache.put(event.request, responseToCache);
+                                        });
                                         return response;
-                                    }
-                                    const responseToCache = response.clone();
-                                    caches.open(CACHE_NAME).then((cache) => {
-                                        cache.put(event.request, responseToCache);
+                                    })
+                                    .catch(() => {
+                                        return caches.match('./');
                                     });
-                                    return response;
-                                });
-                            })
-                            .catch(() => {
-                                return caches.match('./');
                             })
                     );
                 });
@@ -757,34 +792,59 @@
             const swUrl = URL.createObjectURL(blob);
             
             navigator.serviceWorker.register(swUrl)
-                .then(reg => console.log('Service Worker registered'))
-                .catch(err => console.log('Service Worker registration failed:', err));
+                .then(reg => {
+                    console.log('✅ Service Worker registered successfully');
+                })
+                .catch(err => {
+                    console.error('❌ Service Worker registration failed:', err);
+                });
         }
 
-        // Enhanced Manifest
+        // Professional PWA Manifest
         const manifestData = {
             "name": "Reechyi Todo List",
             "short_name": "Reechyi",
-            "description": "Your ultimate task management Progressive Web App",
+            "description": "Your ultimate task management Progressive Web App with offline support and push notifications",
             "start_url": "./",
             "scope": "./",
             "display": "standalone",
-            "orientation": "portrait",
+            "orientation": "portrait-primary",
             "background_color": "#ffffff",
             "theme_color": "#1e3a8a",
+            "categories": ["productivity", "lifestyle"],
             "prefer_related_applications": false,
             "icons": [
                 {
-                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231e3a8a' width='100' height='100'/%3E%3Ctext x='50' y='75' font-size='70' text-anchor='middle' fill='white'%3E✓%3C/text%3E%3C/svg%3E",
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%231e3a8a' width='192' height='192' rx='48'/%3E%3Ctext x='96' y='140' font-size='120' text-anchor='middle' fill='white' font-weight='bold'%3E✓%3C/text%3E%3C/svg%3E",
                     "sizes": "192x192",
                     "type": "image/svg+xml",
-                    "purpose": "any maskable"
+                    "purpose": "any"
                 },
                 {
-                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231e3a8a' width='100' height='100'/%3E%3Ctext x='50' y='75' font-size='70' text-anchor='middle' fill='white'%3E✓%3C/text%3E%3C/svg%3E",
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%231e3a8a' width='512' height='512' rx='128'/%3E%3Ctext x='256' y='380' font-size='320' text-anchor='middle' fill='white' font-weight='bold'%3E✓%3C/text%3E%3C/svg%3E",
                     "sizes": "512x512",
                     "type": "image/svg+xml",
-                    "purpose": "any maskable"
+                    "purpose": "any"
+                },
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%231e3a8a' width='192' height='192'/%3E%3Ctext x='96' y='140' font-size='120' text-anchor='middle' fill='white' font-weight='bold'%3E✓%3C/text%3E%3C/svg%3E",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml",
+                    "purpose": "maskable"
+                },
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%231e3a8a' width='512' height='512'/%3E%3Ctext x='256' y='380' font-size='320' text-anchor='middle' fill='white' font-weight='bold'%3E✓%3C/text%3E%3C/svg%3E",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "maskable"
+                }
+            ],
+            "screenshots": [
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'%3E%3Crect fill='%23000' width='540' height='720'/%3E%3Ctext x='270' y='360' font-size='60' text-anchor='middle' fill='white'%3EREECHYI TODO%3C/text%3E%3C/svg%3E",
+                    "sizes": "540x720",
+                    "type": "image/svg+xml",
+                    "form_factor": "narrow"
                 }
             ]
         };
@@ -792,6 +852,15 @@
         const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
         const manifestUrl = URL.createObjectURL(manifestBlob);
         document.getElementById('manifest-placeholder').setAttribute('href', manifestUrl);
+
+        // Log PWA installation status
+        window.addEventListener('load', () => {
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('✅ Running as PWA (Standalone Mode)');
+            } else {
+                console.log('ℹ️ Running in browser');
+            }
+        });
     </script>
 </body>
 </html>
